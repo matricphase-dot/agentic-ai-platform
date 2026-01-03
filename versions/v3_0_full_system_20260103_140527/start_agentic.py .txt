@@ -1,0 +1,137 @@
+# start_agentic.py - AUTO-START WITH DEPENDENCIES
+import os
+import sys
+import subprocess
+import socket
+from pathlib import Path
+
+def check_port(port):
+    """Check if port is available"""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) != 0
+
+def install_dependencies():
+    """Install required Python packages"""
+    print("📦 Installing dependencies...")
+    
+    dependencies = [
+        "fastapi",
+        "uvicorn[standard]",
+        "sqlalchemy",
+        "bcrypt",
+        "pyjwt",
+        "pynput",       # For REAL desktop recording
+        "pyautogui",    # For automation execution
+        "keyboard"      # For keyboard control
+    ]
+    
+    for dep in dependencies:
+        print(f"  Installing {dep}...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", dep])
+            print(f"  ✅ {dep} installed")
+        except:
+            print(f"  ⚠️  Could not install {dep}, trying without...")
+
+def find_available_port(start_port=8000):
+    """Find an available port"""
+    for port in range(start_port, start_port + 100):
+        if check_port(port):
+            return port
+    return 8000  # Fallback
+
+def main():
+    print("\n" + "="*60)
+    print("🚀 AGENTIC AI PLATFORM - AUTO-START")
+    print("="*60)
+    
+    # Check and install dependencies
+    install_dependencies()
+    
+    # Find available port
+    port = find_available_port(8080)
+    print(f"\n🔌 Using port: {port}")
+    
+    # Import and run the main system
+    print("\n🤖 Starting Agentic AI Platform...")
+    
+    # Set environment variable for port
+    os.environ["AGENTIC_PORT"] = str(port)
+    
+    # Import the main system
+    sys.path.insert(0, str(Path.cwd()))
+    
+    try:
+        # Import and run
+        from complete_agentic_system_final import app
+        import uvicorn
+        
+        print(f"\n✅ System ready!")
+        print(f"🌐 Open: http://localhost:{port}")
+        print(f"🔑 Login: admin / admin123")
+        print(f"\n📁 Workspace: {Path.cwd()}")
+        print("\n🚀 Press Ctrl+C to stop the server\n")
+        
+        # Run server
+        uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
+        
+    except ImportError as e:
+        print(f"\n❌ Import error: {e}")
+        print("💡 Make sure complete_agentic_system_final.py is in the same directory")
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+        print("💡 Trying alternative startup...")
+        start_alternative(port)
+
+def start_alternative(port):
+    """Alternative startup method"""
+    print("\n🔄 Starting alternative server...")
+    
+    # Create a simple server
+    server_code = '''
+import os
+import sys
+from pathlib import Path
+import uvicorn
+
+# Add current directory to path
+sys.path.insert(0, str(Path.cwd()))
+
+try:
+    from complete_agentic_system_final import app
+    
+    print(f"✅ Agentic AI Platform running on port {port}")
+    print(f"🌐 Open: http://localhost:{port}")
+    print("🔑 Login: admin / admin123")
+    
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
+    
+except Exception as e:
+    print(f"❌ Failed to start: {e}")
+    print("\\n💡 Creating minimal system instead...")
+    
+    # Create minimal system
+    from fastapi import FastAPI
+    app = FastAPI()
+    
+    @app.get("/")
+    def home():
+        return {"message": "Agentic AI Platform", "status": "starting"}
+    
+    print(f"✅ Minimal server running on port {port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)
+'''
+    
+    # Write and run server
+    server_file = Path("temp_server.py")
+    with open(server_file, 'w') as f:
+        f.write(f"port = {port}\n" + server_code)
+    
+    try:
+        subprocess.run([sys.executable, str(server_file)])
+    finally:
+        if server_file.exists():
+            server_file.unlink()
+
+if __name__ == "__main__":
+    main()

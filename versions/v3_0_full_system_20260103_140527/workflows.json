@@ -1,0 +1,21 @@
+[
+  {
+    "id": 1,
+    "name": "Daily Desktop Cleanup",
+    "description": "Automatically organize desktop files every day",
+    "tasks": [
+      {
+        "action": "organize_files",
+        "source": "~/Desktop",
+        "type": "by_type"
+      },
+      {
+        "action": "backup",
+        "target": "System/Backups/Daily"
+      }
+    ],
+    "schedule": "0 9 * * *",
+    "created_at": "2026-01-02T23:09:28.167237",
+    "status": "active"
+  }
+]

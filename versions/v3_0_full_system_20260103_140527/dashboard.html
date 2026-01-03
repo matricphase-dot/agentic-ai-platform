@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic AI Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .status-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card h2 i {
+            color: #667eea;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .logs {
+            background: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 0.9em;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .task-list {
+            list-style: none;
+        }
+        
+        .task-item {
+            background: white;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+        
+        .task-status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .status-running { background: #fff3cd; color: #856404; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-failed { background: #f8d7da; color: #721c24; }
+        
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1><i class="fas fa-robot"></i> Agentic AI Dashboard</h1>
+            <p>Autonomous Workflow Execution System</p>
+            <div class="status-badge" id="statusIndicator">
+                <i class="fas fa-circle"></i> Connecting...
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- File Organization Card -->
+            <div class="card">
+                <h2><i class="fas fa-folder-open"></i> File Organization</h2>
+                <div class="form-group">
+                    <label for="sourcePath">Source Directory</label>
+                    <input type="text" id="sourcePath" class="form-control" 
+                           placeholder="C:\Users\user\Desktop" value="C:\Users\user\Desktop">
+                </div>
+                <div class="form-group">
+                    <label for="orgType">Organization Type</label>
+                    <select id="orgType" class="form-control">
+                        <option value="by_type">By File Type</option>
+                        <option value="by_date">By Date</option>
+                        <option value="by_size">By Size</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="organizeFiles()">
+                    <i class="fas fa-play"></i> Start Organization
+                </button>
+            </div>
+            
+            <!-- Workflow Management Card -->
+            <div class="card">
+                <h2><i class="fas fa-project-diagram"></i> Workflow Manager</h2>
+                <div class="form-group">
+                    <label for="workflowName">Workflow Name</label>
+                    <input type="text" id="workflowName" class="form-control" 
+                           placeholder="Daily Backup">
+                </div>
+                <div class="form-group">
+                    <label for="workflowSchedule">Schedule (Cron)</label>
+                    <input type="text" id="workflowSchedule" class="form-control" 
+                           placeholder="0 9 * * * (9 AM daily)">
+                </div>
+                <button class="btn btn-success" onclick="createWorkflow()">
+                    <i class="fas fa-plus"></i> Create Workflow
+                </button>
+                <div id="workflowList" style="margin-top: 20px;">
+                    <!-- Workflows will be listed here -->
+                </div>
+            </div>
+            
+            <!-- System Stats Card -->
+            <div class="card">
+                <h2><i class="fas fa-chart-bar"></i> System Statistics</h2>
+                <div class="stats-grid" id="statsGrid">
+                    <!-- Stats will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Execution Logs Card -->
+            <div class="card">
+                <h2><i class="fas fa-terminal"></i> Live Execution Logs</h2>
+                <div class="logs" id="executionLogs">
+                    Waiting for first execution...
+                </div>
+                <button class="btn btn-secondary" onclick="clearLogs()" style="margin-top: 15px;">
+                    <i class="fas fa-trash"></i> Clear Logs
+                </button>
+            </div>
+            
+            <!-- Agent Tasks Card -->
+            <div class="card">
+                <h2><i class="fas fa-tasks"></i> Agent Tasks</h2>
+                <div class="form-group">
+                    <select id="agentType" class="form-control">
+                        <option value="organizer">File Organizer</option>
+                        <option value="analyzer">Content Analyzer</option>
+                        <option value="generator">Report Generator</option>
+                        <option value="backup">Backup Agent</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="executeAgent()">
+                    <i class="fas fa-bolt"></i> Execute Agent
+                </button>
+                <div id="taskList" style="margin-top: 20px;">
+                    <!-- Active tasks will be shown here -->
+                </div>
+            </div>
+            
+            <!-- Quick Actions Card -->
+            <div class="card">
+                <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <button class="btn btn-secondary" onclick="checkHealth()">
+                        <i class="fas fa-heartbeat"></i> Health Check
+                    </button>
+                    <button class="btn btn-secondary" onclick="getStructure()">
+                        <i class="fas fa-sitemap"></i> View Structure
+                    </button>
+                    <button class="btn btn-secondary" onclick="refreshStats()">
+                        <i class="fas fa-sync"></i> Refresh Stats
+                    </button>
+                    <button class="btn btn-secondary" onclick="showLogs()">
+                        <i class="fas fa-history"></i> View All Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let logs = [];
+        
+        // Update status indicator
+        async function updateStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+                
+                const indicator = document.getElementById('statusIndicator');
+                indicator.innerHTML = `<i class="fas fa-circle" style="color: #4CAF50"></i> System Healthy`;
+                indicator.style.color = '#4CAF50';
+                
+                return data;
+            } catch (error) {
+                const indicator = document.getElementById('statusIndicator');
+                indicator.innerHTML = `<i class="fas fa-circle" style="color: #f44336"></i> API Offline`;
+                indicator.style.color = '#f44336';
+                console.error('API connection failed:', error);
+                return null;
+            }
+        }
+        
+        // Organize files
+        async function organizeFiles() {
+            const sourcePath = document.getElementById('sourcePath').value;
+            const orgType = document.getElementById('orgType').value;
+            
+            if (!sourcePath) {
+                alert('Please enter a source directory');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/organize`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        source_path: sourcePath,
+                        organization_type: orgType
+                    })
+                });
+                
+                const result = await response.json();
+                addLog(`🎯 Started organizing: ${sourcePath} (${orgType})`);
+                addLog(`📁 Task ID: ${result.task_id}`);
+                
+                // Check status after 2 seconds
+                setTimeout(() => {
+                    fetchLogs();
+                    refreshStats();
+                }, 2000);
+                
+            } catch (error) {
+                addLog(`❌ Error: ${error.message}`);
+                console.error('Organization failed:', error);
+            }
+        }
+        
+        // Create workflow
+        async function createWorkflow() {
+            const name = document.getElementById('workflowName').value;
+            const schedule = document.getElementById('workflowSchedule').value;
+            
+            if (!name) {
+                alert('Please enter a workflow name');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/workflows`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        description: `Automated workflow: ${name}`,
+                        tasks: [
+                            {
+                                "action": "organize_files",
+                                "source": "~/Desktop",
+                                "type": "by_type"
+                            }
+                        ],
+                        schedule: schedule,
+                        notify_on_complete: true
+                    })
+                });
+                
+                const result = await response.json();
+                addLog(`✅ Workflow created: ${name} (ID: ${result.workflow_id})`);
+                loadWorkflows();
+                
+            } catch (error) {
+                addLog(`❌ Failed to create workflow: ${error.message}`);
+            }
+        }
+        
+        // Execute agent
+        async function executeAgent() {
+            const agentType = document.getElementById('agentType').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/agents/execute`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        agent_type: agentType,
+                        parameters: {
+                            timestamp: new Date().toISOString()
+                        },
+                        priority: 1
+                    })
+                });
+                
+                const result = await response.json();
+                addLog(`🤖 Agent executed: ${agentType}`);
+                addLog(`   Task ID: ${result.task_id}`);
+                addLog(`   Status: ${result.status}`);
+                
+                // Add to task list
+                addTaskToList(result);
+                
+            } catch (error) {
+                addLog(`❌ Agent execution failed: ${error.message}`);
+            }
+        }
+        
+        // Add log entry
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            logs.unshift(logEntry);
+            
+            // Keep only last 20 logs
+            if (logs.length > 20) logs = logs.slice(0, 20);
+            
+            // Update display
+            const logElement = document.getElementById('executionLogs');
+            logElement.textContent = logs.join('\n');
+            logElement.scrollTop = 0;
+        }
+        
+        // Add task to list
+        function addTaskToList(task) {
+            const taskList = document.getElementById('taskList');
+            const taskItem = document.createElement('div');
+            taskItem.className = 'task-item';
+            
+            const statusClass = task.status === 'completed' ? 'status-completed' : 
+                              task.status === 'failed' ? 'status-failed' : 'status-running';
+            
+            taskItem.innerHTML = `
+                <div>
+                    <strong>${task.agent_type}</strong><br>
+                    <small>${task.task_id}</small>
+                </div>
+                <div class="task-status ${statusClass}">
+                    ${task.status}
+                </div>
+            `;
+            
+            taskList.insertBefore(taskItem, taskList.firstChild);
+            
+            // Keep only last 5 tasks
+            if (taskList.children.length > 5) {
+                taskList.removeChild(taskList.lastChild);
+            }
+        }
+        
+        // Fetch logs from API
+        async function fetchLogs() {
+            try {
+                const response = await fetch(`${API_BASE}/api/logs?limit=10`);
+                const data = await response.json();
+                
+                if (data.logs && data.logs.length > 0) {
+                    data.logs.reverse().forEach(log => {
+                        addLog(`📝 ${log.task_type}: ${log.status} - ${log.details}`);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to fetch logs:', error);
+            }
+        }
+        
+        // Load workflows
+        async function loadWorkflows() {
+            try {
+                const response = await fetch(`${API_BASE}/api/workflows`);
+                const data = await response.json();
+                
+                const workflowList = document.getElementById('workflowList');
+                workflowList.innerHTML = '';
+                
+                if (data.workflows && data.workflows.length > 0) {
+                    data.workflows.forEach(workflow => {
+                        const item = document.createElement('div');
+                        item.className = 'task-item';
+                        item.innerHTML = `
+                            <div>
+                                <strong>${workflow.name}</strong><br>
+                                <small>${workflow.description}</small>
+                            </div>
+                            <div class="task-status ${workflow.status === 'active' ? 'status-running' : 'status-completed'}">
+                                ${workflow.status}
+                            </div>
+                        `;
+                        workflowList.appendChild(item);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load workflows:', error);
+            }
+        }
+        
+        // Refresh statistics
+        async function refreshStats() {
+            try {
+                const health = await updateStatus();
+                if (!health) return;
+                
+                const statsGrid = document.getElementById('statsGrid');
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${health.system.total_workflows || 0}</div>
+                        <div class="stat-label">Workflows</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${health.system.total_executions || 0}</div>
+                        <div class="stat-label">Executions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${logs.length}</div>
+                        <div class="stat-label">Log Entries</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">Uptime</div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Failed to refresh stats:', error);
+            }
+        }
+        
+        // Quick action functions
+        async function checkHealth() {
+            const health = await updateStatus();
+            if (health) {
+                addLog('✅ System health check passed');
+                addLog(`   Workspace: ${health.system.workspace}`);
+            } else {
+                addLog('❌ System health check failed');
+            }
+        }
+        
+        async function getStructure() {
+            try {
+                const response = await fetch(`${API_BASE}/api/workspace/structure`);
+                const data = await response.json();
+                addLog('📁 Workspace structure loaded');
+                console.log('Workspace structure:', data);
+            } catch (error) {
+                addLog(`❌ Failed to get structure: ${error.message}`);
+            }
+        }
+        
+        function clearLogs() {
+            logs = [];
+            document.getElementById('executionLogs').textContent = 'Logs cleared';
+        }
+        
+        function showLogs() {
+            fetchLogs();
+        }
+        
+        // Initialize dashboard
+        async function initializeDashboard() {
+            addLog('🚀 Agentic AI Dashboard initialized');
+            await updateStatus();
+            await refreshStats();
+            await loadWorkflows();
+            await fetchLogs();
+            
+            // Auto-refresh logs every 10 seconds
+            setInterval(fetchLogs, 10000);
+            setInterval(refreshStats, 15000);
+        }
+        
+        // Start everything when page loads
+        document.addEventListener('DOMContentLoaded', initializeDashboard);
+    </script>
+</body>
+</html># Dashboard 

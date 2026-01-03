@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Agentic AI Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: #f5f7fb;
+            color: #333;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+        
+        .logo i {
+            font-size: 1.8em;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        /* Navigation */
+        .nav-tabs {
+            background: white;
+            display: flex;
+            padding: 0 30px;
+            border-bottom: 2px solid #e9ecef;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .tab:hover {
+            color: #667eea;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: #f8f9fa;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Cards */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f3f9;
+        }
+        
+        .card-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 25px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+        
+        /* Console */
+        .console {
+            background: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tabs {
+                padding: 0 10px;
+            }
+            
+            .tab {
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <i class="fas fa-robot"></i>
+            <span>Agentic AI Platform</span>
+        </div>
+        <div class="user-menu">
+            <div id="userInfo">Welcome</div>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
+    </div>
+    
+    <!-- Navigation -->
+    <div class="nav-tabs">
+        <div class="tab active" onclick="showTab('dashboard')">
+            <i class="fas fa-tachometer-alt"></i>
+            Dashboard
+        </div>
+        <div class="tab" onclick="showTab('recorder')">
+            <i class="fas fa-video"></i>
+            Desktop Recorder
+        </div>
+        <div class="tab" onclick="showTab('automation')">
+            <i class="fas fa-robot"></i>
+            Automation Generator
+        </div>
+        <div class="tab" onclick="showTab('workspace')">
+            <i class="fas fa-folder-plus"></i>
+            Workspace Creator
+        </div>
+        <div class="tab" onclick="showTab('organizer')">
+            <i class="fas fa-folder-open"></i>
+            File Organizer
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Dashboard Tab -->
+        <div id="dashboardTab" class="tab-content active">
+            <h2>Dashboard Overview</h2>
+            <p style="color: #666; margin-bottom: 30px;">Welcome to Agentic AI Platform</p>
+            
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-video"></i>
+                            <span>Desktop Recorder</span>
+                        </div>
+                        <div id="recorderStatus">Ready</div>
+                    </div>
+                    <p>Record desktop actions for automation</p>
+                    <button class="btn btn-primary" onclick="showTab('recorder')">
+                        <i class="fas fa-play"></i> Start Recording
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-robot"></i>
+                            <span>Automation Generator</span>
+                        </div>
+                    </div>
+                    <p>Generate Python scripts from recordings</p>
+                    <button class="btn btn-primary" onclick="showTab('automation')">
+                        <i class="fas fa-magic"></i> Generate Automation
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-folder-tree"></i>
+                            <span>Workspace Creator</span>
+                        </div>
+                    </div>
+                    <p>Create organized workspace structure</p>
+                    <button class="btn btn-primary" onclick="showTab('workspace')">
+                        <i class="fas fa-plus"></i> Create Workspace
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-list-check"></i>
+                        <span>System Features</span>
+                    </div>
+                </div>
+                <div style="display: grid; gap: 15px;">
+                    <div><strong>✅ Desktop Recorder</strong> - Record 458+ desktop events</div>
+                    <div><strong>✅ Automation Generator</strong> - Create Python scripts</div>
+                    <div><strong>✅ Workspace Creator</strong> - Organized folder structure</div>
+                    <div><strong>✅ File Organizer</strong> - Auto-organize files</div>
+                    <div><strong>✅ User Management</strong> - Authentication & database</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Desktop Recorder Tab -->
+        <div id="recorderTab" class="tab-content">
+            <h2>Desktop Recorder</h2>
+            <p style="color: #666; margin-bottom: 30px;">Record desktop actions</p>
+            
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-record-vinyl"></i>
+                            <span>Start Recording</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Recording Name</label>
+                        <input type="text" id="recordingName" class="form-control" placeholder="My Session">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="recordingDesc" class="form-control" placeholder="What are you recording?"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="startRecording()">
+                        <i class="fas fa-circle"></i> Start Recording
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-stop-circle"></i>
+                            <span>Recording Status</span>
+                        </div>
+                        <div id="liveStatus">Not Recording</div>
+                    </div>
+                    <div id="statusInfo">
+                        <p>Events: <span id="eventCount">0</span></p>
+                        <p>Duration: <span id="duration">0</span>s</p>
+                    </div>
+                    <button class="btn btn-danger" onclick="stopRecording()" id="stopBtn" disabled>
+                        <i class="fas fa-stop"></i> Stop Recording
+                    </button>
+                </div>
+            </div>
+            
+            <div class="console" id="recorderConsole">
+                Recorder console...
+            </div>
+        </div>
+        
+        <!-- Automation Generator Tab -->
+        <div id="automationTab" class="tab-content">
+            <h2>Automation Generator</h2>
+            <p style="color: #666; margin-bottom: 30px;">Generate scripts from recordings</p>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-robot"></i>
+                        <span>Generate Automation</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Select Recording</label>
+                    <select id="recordingSelect" class="form-control">
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="generateAutomation()">
+                    <i class="fas fa-magic"></i> Generate Script
+                </button>
+                <div id="generationStatus" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+        
+        <!-- Workspace Creator Tab -->
+        <div id="workspaceTab" class="tab-content">
+            <h2>Workspace Creator</h2>
+            <p style="color: #666; margin-bottom: 30px;">Create organized workspace</p>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-folder-plus"></i>
+                        <span>Create Workspace</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Workspace Name</label>
+                    <input type="text" id="workspaceName" class="form-control" placeholder="MyWorkspace">
+                </div>
+                <button class="btn btn-primary" onclick="createWorkspace()">
+                    <i class="fas fa-plus-circle"></i> Create Workspace
+                </button>
+                <div id="workspaceResult" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+        
+        <!-- File Organizer Tab -->
+        <div id="organizerTab" class="tab-content">
+            <h2>File Organizer</h2>
+            <p style="color: #666; margin-bottom: 30px;">Organize files automatically</p>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-sort-alpha-down"></i>
+                        <span>Organize Files</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Source Directory</label>
+                    <input type="text" id="sourceDir" class="form-control" value="C:\Users\user\Desktop">
+                </div>
+                <button class="btn btn-primary" onclick="runOrganizer()">
+                    <i class="fas fa-play"></i> Start Organization
+                </button>
+                <div class="console" id="organizerConsole">
+                    Output will appear here...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentRecordingId = null;
+        let isRecording = false;
+        let statusInterval = null;
+        
+        // Show tab
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'automation') {
+                loadRecordingsForGeneration();
+            }
+        }
+        
+        // Start recording
+        async function startRecording() {
+            const name = document.getElementById('recordingName').value;
+            const description = document.getElementById('recordingDesc').value;
+            
+            if (!name) {
+                alert('Enter recording name');
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('description', description);
+                
+                const response = await fetch('/api/recording/start', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    currentRecordingId = result.recording_id;
+                    isRecording = true;
+                    
+                    document.getElementById('stopBtn').disabled = false;
+                    document.getElementById('liveStatus').textContent = 'Recording...';
+                    document.getElementById('liveStatus').style.color = '#f56565';
+                    
+                    statusInterval = setInterval(updateRecordingStatus, 1000);
+                    
+                    logToConsole('🎥 Recording started: ' + name);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        // Stop recording
+        async function stopRecording() {
+            try {
+                const formData = new FormData();
+                if (currentRecordingId) {
+                    formData.append('recording_id', currentRecordingId);
+                }
+                
+                const response = await fetch('/api/recording/stop', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    isRecording = false;
+                    currentRecordingId = null;
+                    
+                    document.getElementById('stopBtn').disabled = true;
+                    document.getElementById('liveStatus').textContent = 'Ready';
+                    document.getElementById('liveStatus').style.color = '#48bb78';
+                    
+                    if (statusInterval) {
+                        clearInterval(statusInterval);
+                        statusInterval = null;
+                    }
+                    
+                    logToConsole('⏹️ Recording stopped');
+                    logToConsole('📊 Events: ' + result.event_count);
+                    logToConsole('⏱️ Duration: ' + result.duration + 's');
+                    
+                    loadRecordingsForGeneration();
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        // Update status
+        async function updateRecordingStatus() {
+            try {
+                const response = await fetch('/api/recording/status');
+                const status = await response.json();
+                
+                document.getElementById('eventCount').textContent = status.event_count;
+                document.getElementById('duration').textContent = status.duration.toFixed(1);
+            } catch (error) {
+                console.error('Failed to update status:', error);
+            }
+        }
+        
+        // Load recordings for generation
+        async function loadRecordingsForGeneration() {
+            try {
+                const response = await fetch('/api/recordings');
+                const data = await response.json();
+                
+                const select = document.getElementById('recordingSelect');
+                select.innerHTML = '<option value="">-- Select a recording --</option>';
+                
+                data.recordings.forEach(recording => {
+                    const option = document.createElement('option');
+                    option.value = recording.id;
+                    option.textContent = `${recording.name} (${recording.event_count} events)`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load recordings:', error);
+            }
+        }
+        
+        // Generate automation
+        async function generateAutomation() {
+            const recordingId = document.getElementById('recordingSelect').value;
+            
+            if (!recordingId) {
+                alert('Select a recording');
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('recording_id', recordingId);
+                
+                const response = await fetch('/api/automation/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    document.getElementById('generationStatus').innerHTML = `
+                        <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px;">
+                            <strong>✅ Automation generated!</strong><br>
+                            Script: ${result.script_path}<br>
+                            Events: ${result.event_count}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        // Create workspace
+        async function createWorkspace() {
+            const name = document.getElementById('workspaceName').value;
+            
+            if (!name) {
+                alert('Enter workspace name');
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('name', name);
+                
+                const response = await fetch('/api/workspace/create', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    document.getElementById('workspaceResult').innerHTML = `
+                        <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px;">
+                            <strong>✅ Workspace created!</strong><br>
+                            Path: ${result.workspace_path}<br>
+                            Folders: ${result.total_folders}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        // Run organizer
+        async function runOrganizer() {
+            const sourceDir = document.getElementById('sourceDir').value;
+            
+            try {
+                const formData = new FormData();
+                formData.append('source_dir', sourceDir);
+                
+                logToOrganizerConsole('🚀 Starting file organization...');
+                
+                const response = await fetch('/api/organizer/run', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    logToOrganizerConsole(result.output);
+                    if (result.error) {
+                        logToOrganizerConsole('Error: ' + result.error);
+                    }
+                } else {
+                    logToOrganizerConsole('Error: ' + result.message);
+                }
+            } catch (error) {
+                logToOrganizerConsole('Error: ' + error.message);
+            }
+        }
+        
+        // Log to console
+        function logToConsole(message) {
+            const console = document.getElementById('recorderConsole');
+            const timestamp = new Date().toLocaleTimeString();
+            console.textContent += `[${timestamp}] ${message}
+`;
+            console.scrollTop = console.scrollHeight;
+        }
+        
+        function logToOrganizerConsole(message) {
+            const console = document.getElementById('organizerConsole');
+            const timestamp = new Date().toLocaleTimeString();
+            console.textContent += `[${timestamp}] ${message}
+`;
+            console.scrollTop = console.scrollHeight;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load user info
+            fetch('/api/system/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('userInfo').textContent = `Welcome, ${data.user}`;
+                });
+            
+            // Load recordings for generation tab
+            loadRecordingsForGeneration();
+        });
+    </script>
+</body>
+</html>
