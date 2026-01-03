@@ -1,21 +1,18 @@
-from fastapi import FastAPI
+# main.py - COMPLETE VERSION
 import os
-
-app = FastAPI(title="Agentic AI Platform")
-
-@app.get("/")
-def root():
-    return {"message": "Agentic AI Platform", "status": "online"}
-
-@app.get("/api/health")
-def health():
-    return {"status": "healthy", "version": "1.0.0"}
-
-@app.get("/api/workflows")
-def workflows():
-    return {"workflows": ["file_organizer", "data_extractor"]}
+from orchestrator import app
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+    port = int(os.environ.get("PORT", 8080))
+    print(f"🚀 Starting Agentic AI Platform on port {port}")
+    print(f"🌐 Access at: http://0.0.0.0:{port}")
+    print(f"📊 Dashboard: http://0.0.0.0:{port}/")
+    print(f"🔧 API Health: http://0.0.0.0:{port}/api/health")
+    
+    uvicorn.run(
+        "orchestrator:app",
+        host="0.0.0.0",
+        port=port,
+        log_level="info"
+    )
