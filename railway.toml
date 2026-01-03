@@ -1,0 +1,13 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
+
+[healthcheck]
+path = "/api/health"
+timeout = 30
+interval = 60
+
+[variables]
+PORT = "8000"
