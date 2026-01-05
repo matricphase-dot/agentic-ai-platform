@@ -1,4 +1,29 @@
+# Core dependencies
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-jinja2==3.1.2
+websockets==12.0
+sqlalchemy==2.0.23
 python-multipart==0.0.6
+python-dotenv==1.0.0
+
+# AI and Data dependencies
+ollama==0.6.1  # Changed from 0.1.10 to 0.6.1
+pandas==2.1.4
+numpy==1.26.2
+
+# UI and Visualization
+plotly==5.18.0
+seaborn==0.13.0
+
+# Mobile and Web
+aiohttp==3.9.1
+qrcode[pil]==7.4.2
+
+# Desktop Automation (optional - comment if not needed)
+# pyautogui==0.9.54
+# opencv-python==4.8.1.78
+# pynput==1.7.6
+
+# File operations
+watchdog==3.0.0
+pillow==10.1.0

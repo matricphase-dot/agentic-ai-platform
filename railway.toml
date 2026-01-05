@@ -2,12 +2,25 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
-
-[healthcheck]
-path = "/api/health"
-timeout = 30
-interval = 60
+startCommand = "python main.py"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 60
 
 [variables]
-PORT = "8000"
+PORT = "8080"
+HOST = "0.0.0.0"
+ENVIRONMENT = "production"
+LOG_LEVEL = "INFO"
+
+[healthcheck]
+enabled = true
+path = "/api/health"
+initialDelay = 30
+timeout = 10
+interval = 60
+maxRetries = 3
+
+[[services]]
+name = "agentic-ai"
+port = 8080
+protocol = "http"

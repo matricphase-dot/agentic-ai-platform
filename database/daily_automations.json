@@ -1,0 +1,117 @@
+[
+  {
+    "id": 1,
+    "title": "Smart Email Organizer",
+    "description": "Automatically sort emails by sender, priority, and topic",
+    "category": "email",
+    "difficulty": "Intermediate",
+    "estimated_time_saved": "3 hours/week",
+    "use_cases": [
+      "Sort work emails by project",
+      "Filter spam automatically",
+      "Archive old conversations"
+    ],
+    "code_snippet": "import imaplib\nimport email\nfrom email.header import decode_header\n\ndef organize_emails():\n    # Connect to email server\n    mail = imaplib.IMAP4_SSL(\"imap.gmail.com\")\n    mail.login(\"your_email@gmail.com\", \"password\")\n    \n    # Select inbox\n    mail.select(\"inbox\")\n    \n    # Search for all emails\n    status, messages = mail.search(None, \"ALL\")\n    \n    # Process emails\n    for num in messages[0].split():\n        status, msg_data = mail.fetch(num, \"(RFC822)\")\n        msg = email.message_from_bytes(msg_data[0][1])\n        \n        # Get sender\n        sender = msg.get(\"From\")\n        subject = decode_header(msg.get(\"Subject\"))[0][0]\n        \n        print(f\"From: {sender}\")\n        print(f\"Subject: {subject}\")\n        print(\"-\" * 50)",
+    "tags": [
+      "email",
+      "organization",
+      "productivity"
+    ],
+    "author": "Agentic AI",
+    "featured_date": null,
+    "times_featured": 0
+  },
+  {
+    "id": 2,
+    "title": "Auto Social Media Poster",
+    "description": "Schedule and post content to multiple social media platforms",
+    "category": "social_media",
+    "difficulty": "Advanced",
+    "estimated_time_saved": "5 hours/week",
+    "use_cases": [
+      "Schedule tweets",
+      "Post to LinkedIn",
+      "Share on Facebook",
+      "Instagram automation"
+    ],
+    "code_snippet": "import schedule\nimport time\nfrom datetime import datetime\n\nclass SocialMediaAutomation:\n    def __init__(self):\n        self.posts = []\n        self.scheduled = []\n    \n    def add_post(self, content, platforms, schedule_time):\n        post = {\n            \"content\": content,\n            \"platforms\": platforms,\n            \"time\": schedule_time,\n            \"posted\": False\n        }\n        self.posts.append(post)\n        \n        # Schedule the post\n        schedule.every().day.at(schedule_time).do(\n            self.post_to_social_media, content, platforms\n        )\n    \n    def post_to_social_media(self, content, platforms):\n        print(f\"Posting to {platforms}:\")\n        print(content)\n        print(\"-\" * 50)\n        \n        # Update post status\n        for post in self.posts:\n            if post[\"content\"] == content and not post[\"posted\"]:\n                post[\"posted\"] = True\n                self.scheduled.append({\n                    \"content\": content,\n                    \"time\": datetime.now(),\n                    \"platforms\": platforms\n                })\n    \n    def run_scheduler(self):\n        print(\"Social Media Scheduler Running...\")\n        while True:\n            schedule.run_pending()\n            time.sleep(60)  # Check every minute",
+    "tags": [
+      "social media",
+      "scheduling",
+      "marketing"
+    ],
+    "author": "Agentic AI",
+    "featured_date": null,
+    "times_featured": 0
+  },
+  {
+    "id": 3,
+    "title": "Data Backup & Sync Tool",
+    "description": "Automatically backup important files and sync between devices",
+    "category": "backup",
+    "difficulty": "Beginner",
+    "estimated_time_saved": "Prevents data loss",
+    "use_cases": [
+      "Daily backup of documents",
+      "Sync photos between devices",
+      "Cloud backup automation"
+    ],
+    "code_snippet": "import os\nimport shutil\nfrom datetime import datetime\nimport hashlib\n\nclass BackupAutomation:\n    def __init__(self, source_dir, backup_dir):\n        self.source_dir = source_dir\n        self.backup_dir = backup_dir\n        self.log_file = \"backup_log.txt\"\n    \n    def backup_files(self):\n        timestamp = datetime.now().strftime(\"%Y%m%d_%H%M%S\")\n        backup_path = os.path.join(self.backup_dir, f\"backup_{timestamp}\")\n        \n        os.makedirs(backup_path, exist_ok=True)\n        \n        copied_files = 0\n        for root, dirs, files in os.walk(self.source_dir):\n            for file in files:\n                source = os.path.join(root, file)\n                destination = os.path.join(backup_path, file)\n                \n                # Skip if file too large\n                if os.path.getsize(source) > 100 * 1024 * 1024:  # 100MB\n                    continue\n                \n                shutil.copy2(source, destination)\n                copied_files += 1\n        \n        self.log_backup(timestamp, copied_files)\n        return copied_files\n    \n    def log_backup(self, timestamp, file_count):\n        log_entry = f\"{timestamp}: Backed up {file_count} files\\n\"\n        with open(self.log_file, \"a\") as f:\n            f.write(log_entry)\n        \n        print(f\"\u2705 Backup completed: {file_count} files\")",
+    "tags": [
+      "backup",
+      "files",
+      "sync",
+      "safety"
+    ],
+    "author": "Agentic AI",
+    "featured_date": null,
+    "times_featured": 0
+  },
+  {
+    "id": 4,
+    "title": "Web Scraping & Data Collector",
+    "description": "Automatically collect data from websites and save to spreadsheet",
+    "category": "data",
+    "difficulty": "Intermediate",
+    "estimated_time_saved": "4 hours/week",
+    "use_cases": [
+      "Price monitoring",
+      "Competitor analysis",
+      "News aggregation",
+      "Research data collection"
+    ],
+    "code_snippet": "import requests\nfrom bs4 import BeautifulSoup\nimport csv\nimport time\n\nclass WebScraper:\n    def __init__(self, url):\n        self.url = url\n        self.data = []\n    \n    def scrape(self):\n        try:\n            response = requests.get(self.url)\n            response.raise_for_status()\n            \n            soup = BeautifulSoup(response.content, 'html.parser')\n            \n            # Example: Scrape product prices\n            products = soup.find_all('div', class_='product')\n            \n            for product in products:\n                name = product.find('h3').text.strip()\n                price = product.find('span', class_='price').text.strip()\n                \n                self.data.append({\n                    'name': name,\n                    'price': price,\n                    'timestamp': datetime.now().strftime(\"%Y-%m-%d %H:%M:%S\")\n                })\n            \n            return len(self.data)\n            \n        except Exception as e:\n            print(f\"Error scraping: {e}\")\n            return 0\n    \n    def save_to_csv(self, filename):\n        if not self.data:\n            print(\"No data to save\")\n            return\n        \n        with open(filename, 'w', newline='', encoding='utf-8') as f:\n            writer = csv.DictWriter(f, fieldnames=self.data[0].keys())\n            writer.writeheader()\n            writer.writerows(self.data)\n        \n        print(f\"\u2705 Saved {len(self.data)} records to {filename}\")",
+    "tags": [
+      "web scraping",
+      "data",
+      "automation",
+      "research"
+    ],
+    "author": "Agentic AI",
+    "featured_date": null,
+    "times_featured": 0
+  },
+  {
+    "id": 5,
+    "title": "Auto Report Generator",
+    "description": "Generate and email reports automatically on schedule",
+    "category": "reporting",
+    "difficulty": "Intermediate",
+    "estimated_time_saved": "6 hours/week",
+    "use_cases": [
+      "Daily sales reports",
+      "Weekly performance summaries",
+      "Monthly analytics reports"
+    ],
+    "code_snippet": "import pandas as pd\nimport smtplib\nfrom email.mime.text import MIMEText\nfrom email.mime.multipart import MIMEMultipart\nfrom datetime import datetime\nimport schedule\nimport time\n\nclass ReportGenerator:\n    def __init__(self):\n        self.template = \"\"\"\n        Daily Report - {date}\n        ======================\n        \n        Summary:\n        \u2022 Total Sales: ${total_sales}\n        \u2022 New Customers: {new_customers}\n        \u2022 Top Product: {top_product}\n        \n        Detailed Analysis:\n        {analysis}\n        \n        Generated automatically by Agentic AI\n        \"\"\"\n    \n    def generate_report(self, data):\n        report = self.template.format(\n            date=datetime.now().strftime(\"%Y-%m-%d\"),\n            total_sales=data.get(\"total_sales\", 0),\n            new_customers=data.get(\"new_customers\", 0),\n            top_product=data.get(\"top_product\", \"N/A\"),\n            analysis=self.generate_analysis(data)\n        )\n        \n        return report\n    \n    def generate_analysis(self, data):\n        analysis = \"\"\n        # Add analysis logic here\n        return analysis\n    \n    def send_email(self, recipient, subject, body):\n        msg = MIMEMultipart()\n        msg['From'] = 'reports@yourapp.com'\n        msg['To'] = recipient\n        msg['Subject'] = subject\n        \n        msg.attach(MIMEText(body, 'plain'))\n        \n        try:\n            server = smtplib.SMTP('smtp.gmail.com', 587)\n            server.starttls()\n            server.login('your_email@gmail.com', 'password')\n            server.send_message(msg)\n            server.quit()\n            \n            print(f\"\u2705 Report sent to {recipient}\")\n            return True\n            \n        except Exception as e:\n            print(f\"Error sending email: {e}\")\n            return False",
+    "tags": [
+      "reporting",
+      "email",
+      "automation",
+      "analytics"
+    ],
+    "author": "Agentic AI",
+    "featured_date": null,
+    "times_featured": 0
+  }
+]

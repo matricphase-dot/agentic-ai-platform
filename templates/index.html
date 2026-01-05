@@ -1,68 +1,314 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Agentic AI</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            height: 100vh;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .login-box {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            width: 300px;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-        }
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .demo {
-            background: #f0f0f0;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 20px;
-            font-size: 12px;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic AI Platform - Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 </head>
 <body>
-    <div class="login-box">
-        <h2>🤖 Agentic AI</h2>
-        <form action="/api/login" method="POST">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-        <div class="demo">
-            <strong>Demo:</strong><br>
-            Username: admin<br>
-            Password: admin123
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-robot"></i>
+                    <span>Agentic AI</span>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-menu">
+                <a href="/" class="menu-item active">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/desktop-recorder" class="menu-item">
+                    <i class="fas fa-video"></i>
+                    <span>Desktop Recorder</span>
+                </a>
+                <a href="/file-organizer" class="menu-item">
+                    <i class="fas fa-folder"></i>
+                    <span>File Organizer</span>
+                </a>
+                <a href="/ai-automation" class="menu-item">
+                    <i class="fas fa-brain"></i>
+                    <span>AI Automation</span>
+                </a>
+                <a href="/marketplace" class="menu-item">
+                    <i class="fas fa-store"></i>
+                    <span>Marketplace</span>
+                    <span class="badge" id="templateCount">4</span>
+                </a>
+                <a href="/analytics" class="menu-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="/mobile" class="menu-item">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>Mobile</span>
+                </a>
+                <a href="/settings" class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <span class="username">Administrator</span>
+                        <span class="user-role">Super Admin</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <h1>Dashboard Overview</h1>
+                    <p class="subtitle">Welcome back! Your platform is <span class="status-online">fully operational</span></p>
+                </div>
+                
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search automations, files, tools...">
+                    </div>
+                    
+                    <div class="header-actions">
+                        <button class="btn-notification">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                        <button class="btn-quick-action" id="quickAutomationBtn">
+                            <i class="fas fa-plus"></i>
+                            Quick Automation
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card stat-primary">
+                    <div class="stat-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalAutomations">0</h3>
+                        <p>Total Automations</p>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+12% this week</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-success">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="timeSaved">0h</h3>
+                        <p>Time Saved</p>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-chart-line"></i>
+                        <span>+45 hours</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-warning">
+                    <div class="stat-icon">
+                        <i class="fas fa-file"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="filesOrganized">0</h3>
+                        <p>Files Organized</p>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-history"></i>
+                        <span>Today</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card stat-info">
+                    <div class="stat-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="aiModels">2</h3>
+                        <p>AI Models Ready</p>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Llama3.2 Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-row">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Automation Performance</h3>
+                        <select class="chart-period" id="performancePeriod">
+                            <option value="7d">Last 7 Days</option>
+                            <option value="30d">Last 30 Days</option>
+                            <option value="90d">Last 90 Days</option>
+                        </select>
+                    </div>
+                    <canvas id="performanceChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Feature Usage</h3>
+                        <select class="chart-period" id="usagePeriod">
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                    </div>
+                    <canvas id="usageChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity & Quick Actions -->
+            <div class="content-row">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3>Recent Activity</h3>
+                        <a href="/api/logs" class="view-all">View All</a>
+                    </div>
+                    <div class="activity-list" id="recentActivity">
+                        <!-- Dynamic content from API -->
+                        <div class="activity-item">
+                            <div class="activity-icon success">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p>File organization completed successfully</p>
+                                <span class="activity-time">2 minutes ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3>Quick Actions</h3>
+                    </div>
+                    <div class="quick-actions-grid">
+                        <button class="quick-action-btn" onclick="startFileOrganizer()">
+                            <i class="fas fa-folder-open"></i>
+                            <span>Organize Files</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="startRecording()">
+                            <i class="fas fa-video"></i>
+                            <span>Start Recording</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="openAIChat()">
+                            <i class="fas fa-comment"></i>
+                            <span>AI Assistant</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="runMarketplaceScan()">
+                            <i class="fas fa-store"></i>
+                            <span>Marketplace Scan</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="openMobilePairing()">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>Pair Mobile</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="generateReport()">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Analytics Report</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marketplace Templates -->
+            <div class="content-card full-width">
+                <div class="card-header">
+                    <h3>Popular Automation Templates</h3>
+                    <a href="/marketplace" class="view-all">Browse Marketplace</a>
+                </div>
+                <div class="templates-grid" id="templatesGrid">
+                    <!-- Dynamic content from marketplace API -->
+                </div>
+            </div>
+        </main>
+
+        <!-- System Status Modal -->
+        <div class="modal" id="statusModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>System Status</h3>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="status-list">
+                        <div class="status-item online">
+                            <i class="fas fa-server"></i>
+                            <div>
+                                <h4>Core Server</h4>
+                                <p>Running on port 5000</p>
+                            </div>
+                            <span class="status-badge online">Online</span>
+                        </div>
+                        <div class="status-item online">
+                            <i class="fas fa-brain"></i>
+                            <div>
+                                <h4>AI Engine (Ollama)</h4>
+                                <p>Llama3.2:latest active</p>
+                            </div>
+                            <span class="status-badge online">Online</span>
+                        </div>
+                        <div class="status-item online">
+                            <i class="fas fa-database"></i>
+                            <div>
+                                <h4>Databases</h4>
+                                <p>4 databases initialized</p>
+                            </div>
+                            <span class="status-badge online">Online</span>
+                        </div>
+                        <div class="status-item online">
+                            <i class="fas fa-plug"></i>
+                            <div>
+                                <h4>WebSocket</h4>
+                                <p>Real-time updates active</p>
+                            </div>
+                            <span class="status-badge online">Online</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- JavaScript Files -->
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+    
+    <script>
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            loadDashboardData();
+        });
+    </script>
 </body>
 </html>
