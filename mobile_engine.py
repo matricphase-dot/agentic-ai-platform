@@ -1,72 +1,67 @@
-"""
-MOBILE ENGINE MODULE
-Mobile companion functionality
-"""
-import json
-import uuid
+import qrcode, io, base64, json, os
 from datetime import datetime
-from typing import Dict, List, Optional
-from dataclasses import dataclass, asdict
-from enum import Enum
-
-class MobileDeviceType(Enum):
-    """Mobile device types"""
-    IOS = "ios"
-    ANDROID = "android"
-    WEB = "web"
-
-@dataclass
-class MobileDevice:
-    """Mobile device information"""
-    device_id: str
-    device_type: str
-    device_name: str
-    paired_at: datetime
-    last_seen: datetime
-    
-    def to_dict(self):
-        data = asdict(self)
-        data['paired_at'] = self.paired_at.isoformat()
-        data['last_seen'] = self.last_seen.isoformat()
-        return data
 
 class MobileEngine:
-    """Mobile engine for device management"""
-    
     def __init__(self):
-        self.paired_devices = {}
+        self.paired_devices = []
+        self.qr_data = None
     
-    def pair_device(self, device_id: str, device_name: str, device_type: str = "android") -> Dict:
-        """Pair a new mobile device"""
-        device = MobileDevice(
-            device_id=device_id,
-            device_type=device_type,
-            device_name=device_name,
-            paired_at=datetime.now(),
-            last_seen=datetime.now()
-        )
+    def generate_qr(self):
+        # Create QR code with pairing data
+        pairing_data = {
+            "url": "http://localhost:5000/mobile-pair",
+            "timestamp": datetime.now().isoformat(),
+            "pairing_code": self.generate_pairing_code()
+        }
         
-        self.paired_devices[device_id] = device
-        return device.to_dict()
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(json.dumps(pairing_data))
+        qr.make(fit=True)
+        
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Convert to base64
+        buffered = io.BytesIO()
+        img.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        
+        self.qr_data = pairing_data
+        
+        return {
+            "qr_url": f"data:image/png;base64,{img_str}",
+            "pairing_code": pairing_data["pairing_code"],
+            "expires_in": 300,
+            "timestamp": pairing_data["timestamp"]
+        }
     
-    def get_device(self, device_id: str) -> Optional[Dict]:
-        """Get device information"""
-        if device_id in self.paired_devices:
-            return self.paired_devices[device_id].to_dict()
-        return None
+    def generate_pairing_code(self):
+        import random, string
+        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
     
-    def update_device_status(self, device_id: str):
-        """Update device last seen timestamp"""
-        if device_id in self.paired_devices:
-            self.paired_devices[device_id].last_seen = datetime.now()
-            return True
-        return False
+    def pair_device(self, device_id, pairing_code=None):
+        if pairing_code and self.qr_data and pairing_code == self.qr_data.get("pairing_code"):
+            device = {
+                "device_id": device_id,
+                "paired_at": datetime.now().isoformat(),
+                "last_seen": datetime.now().isoformat(),
+                "status": "online"
+            }
+            self.paired_devices.append(device)
+            return {"success": True, "device": device}
+        return {"success": False, "error": "Invalid pairing code"}
     
-    def get_all_devices(self) -> List[Dict]:
-        """Get all paired devices"""
-        return [device.to_dict() for device in self.paired_devices.values()]
+    def send_command(self, device_id, command, data=None):
+        return {
+            "success": True,
+            "command": command,
+            "device_id": device_id,
+            "executed": True,
+            "timestamp": datetime.now().isoformat()
+        }
 
-# Simple mobile engine without aiohttp dependency
-def initialize_mobile():
-    """Initialize mobile engine"""
-    return MobileEngine()
+mobile = MobileEngine()

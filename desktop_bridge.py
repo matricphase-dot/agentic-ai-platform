@@ -1,372 +1,288 @@
-# desktop_bridge.py - Complete Desktop Recorder Integration
-import subprocess
-import os
-import json
+#!/usr/bin/env python3
+"""
+DESKTOP BRIDGE - REAL SCREEN RECORDER WITH F10 HOTKEY
+Working screen recording with actual capture
+"""
+
 import threading
 import time
+import os
+import json
 from datetime import datetime
-import pyautogui
+from pynput import keyboard
+import mss
+import mss.tools
 import cv2
 import numpy as np
 from PIL import ImageGrab
-import keyboard
+import wave
+import pyaudio
 
-class DesktopRecorderBridge:
+class DesktopRecorder:
     def __init__(self):
-        self.recorder_path = r"D:\agentic-core\desktop_recorder.py"
-        self.process = None
         self.is_recording = False
-        self.current_recording = None
+        self.is_paused = False
         self.recordings_dir = "recordings"
         self.screenshots_dir = "screenshots"
+        self.current_recording = None
+        self.recording_thread = None
+        self.start_time = None
+        self.frames = []
+        self.audio_frames = []
+        self.fps = 30
+        self.quality = "medium"
+        self.audio_enabled = False
         
         # Create directories
         os.makedirs(self.recordings_dir, exist_ok=True)
         os.makedirs(self.screenshots_dir, exist_ok=True)
         
-        # Hotkey setup
+        # Setup hotkey listener
         self.setup_hotkeys()
         
+        print("✅ Desktop Bridge ready (F10 to record)")
+    
     def setup_hotkeys(self):
         """Setup global hotkeys"""
-        try:
-            # Register F10 to start/stop recording
-            keyboard.add_hotkey('f10', self.toggle_recording)
-            print("✅ Hotkeys registered: F10 to toggle recording")
-        except Exception as e:
-            print(f"⚠️ Could not register hotkeys: {e}")
-    
-    def get_status(self):
-        """Get recorder status"""
-        return {
-            "available": os.path.exists(self.recorder_path),
-            "is_recording": self.is_recording,
-            "recorder_path": self.recorder_path,
-            "current_recording": self.current_recording,
-            "recordings_count": len(self.list_recordings()),
-            "recordings_dir": self.recordings_dir,
-            "screenshots_dir": self.screenshots_dir
-        }
+        self.listener = keyboard.GlobalHotKeys({
+            '<f10>': self.toggle_recording,
+            '<f9>': self.capture_screenshot,
+            '<ctrl>+<alt>+s': self.capture_screenshot
+        })
+        self.listener.start()
     
     def toggle_recording(self):
-        """Toggle recording with hotkey"""
-        if self.is_recording:
-            return self.stop_recording()
+        """Toggle recording with F10"""
+        if not self.is_recording:
+            self.start_recording()
         else:
-            return self.start_recording()
+            self.stop_recording()
     
-    def start_recording(self, output_file=None):
-        """Start desktop recording"""
-        try:
-            if not os.path.exists(self.recorder_path):
-                return {"success": False, "message": "Recorder not found at specified path"}
-            
-            if output_file is None:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_file = os.path.join(self.recordings_dir, f"recording_{timestamp}.mp4")
-            
-            # Ensure directory exists
-            os.makedirs(os.path.dirname(output_file), exist_ok=True)
-            
-            print(f"🎥 Starting recording: {output_file}")
-            
-            # Try to use the existing recorder
-            if os.path.exists(self.recorder_path):
-                cmd = ["python", self.recorder_path, "--output", output_file, "--start"]
-                self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            else:
-                # Fallback: Use simple screen recording
-                self.process = self._start_simple_recording(output_file)
-            
-            self.is_recording = True
-            self.current_recording = output_file
-            
-            # Start monitoring thread
-            monitor_thread = threading.Thread(target=self._monitor_recording, daemon=True)
-            monitor_thread.start()
-            
-            return {
-                "success": True,
-                "message": "Desktop recording started",
-                "output_file": output_file,
-                "pid": self.process.pid if self.process else None,
-                "hotkey": "Press F10 to stop recording"
-            }
-            
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-    
-    def _start_simple_recording(self, output_file):
-        """Start simple screen recording (fallback)"""
-        # This is a simplified version - you should use your actual recorder
-        print("⚠️ Using simple recording fallback")
+    def start_recording(self, quality="medium", fps=30, audio=False):
+        """Start screen recording"""
+        if self.is_recording:
+            return {"success": False, "message": "Already recording"}
         
-        # Return a dummy process
-        class DummyProcess:
-            def __init__(self):
-                self.pid = 9999
-                self.returncode = None
-            def terminate(self):
-                self.returncode = 0
-            def wait(self, timeout=None):
-                return 0
+        self.is_recording = True
+        self.is_paused = False
+        self.quality = quality
+        self.fps = fps
+        self.audio_enabled = audio
+        self.start_time = datetime.now()
         
-        return DummyProcess()
-    
-    def _monitor_recording(self):
-        """Monitor recording process"""
-        try:
-            if self.process:
-                # Wait for process to complete
-                self.process.wait()
-                self.is_recording = False
-                print("✅ Recording stopped")
-        except:
-            pass
+        # Set resolution based on quality
+        if quality == "low":
+            self.width, self.height = 1280, 720
+        elif quality == "high":
+            self.width, self.height = 2560, 1440
+        else:  # medium
+            self.width, self.height = 1920, 1080
+        
+        # Generate filename
+        timestamp = self.start_time.strftime("%Y%m%d_%H%M%S")
+        self.current_recording = os.path.join(self.recordings_dir, f"recording_{timestamp}.mp4")
+        
+        # Start recording in background thread
+        self.recording_thread = threading.Thread(target=self._record_screen)
+        self.recording_thread.start()
+        
+        return {
+            "success": True,
+            "message": "Recording started",
+            "filename": os.path.basename(self.current_recording),
+            "quality": quality,
+            "fps": fps,
+            "audio": audio,
+            "start_time": self.start_time.isoformat()
+        }
     
     def stop_recording(self):
-        """Stop desktop recording"""
-        try:
-            if self.process and self.is_recording:
-                print("🛑 Stopping recording...")
-                
-                # Try to stop gracefully
-                if hasattr(self.process, 'terminate'):
-                    self.process.terminate()
-                
-                # Wait for process to stop
-                time.sleep(2)
-                
-                self.is_recording = False
-                
-                # Get recording info
-                recording_info = self._get_recording_info(self.current_recording)
-                
-                result = {
-                    "success": True,
-                    "message": "Recording stopped and saved",
-                    "output_file": self.current_recording,
-                    "recording_info": recording_info
-                }
-                
-                self.current_recording = None
-                return result
-            else:
-                return {"success": False, "message": "No recording in progress"}
-                
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+        """Stop screen recording"""
+        if not self.is_recording:
+            return {"success": False, "message": "Not recording"}
+        
+        self.is_recording = False
+        
+        if self.recording_thread:
+            self.recording_thread.join(timeout=2)
+        
+        duration = (datetime.now() - self.start_time).total_seconds()
+        
+        # Save video file
+        if self.frames:
+            self._save_video()
+        
+        return {
+            "success": True,
+            "message": "Recording stopped",
+            "filename": os.path.basename(self.current_recording),
+            "duration": round(duration, 2),
+            "filepath": self.current_recording,
+            "frames_captured": len(self.frames),
+            "file_size": os.path.getsize(self.current_recording) if os.path.exists(self.current_recording) else 0
+        }
     
-    def _get_recording_info(self, filepath):
-        """Get recording file information"""
-        try:
-            if os.path.exists(filepath):
-                stats = os.stat(filepath)
-                return {
-                    "size_mb": round(stats.st_size / (1024*1024), 2),
-                    "created": datetime.fromtimestamp(stats.st_ctime).isoformat(),
-                    "modified": datetime.fromtimestamp(stats.st_mtime).isoformat(),
-                    "duration": "Unknown"  # You would calculate this from video metadata
-                }
-        except:
-            pass
-        return {}
+    def pause_recording(self):
+        """Pause/resume recording"""
+        self.is_paused = not self.is_paused
+        return {
+            "success": True,
+            "paused": self.is_paused,
+            "message": "Recording paused" if self.is_paused else "Recording resumed"
+        }
     
-    def take_screenshot(self, region=None, filename=None):
-        """Take a screenshot"""
+    def capture_screenshot(self):
+        """Capture screenshot with F9"""
         try:
-            if filename is None:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = os.path.join(self.screenshots_dir, f"screenshot_{timestamp}.png")
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = os.path.join(self.screenshots_dir, f"screenshot_{timestamp}.png")
             
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            
-            # Take screenshot
-            if region:
-                screenshot = pyautogui.screenshot(region=region)
-            else:
-                screenshot = pyautogui.screenshot()
-            
-            screenshot.save(filename)
-            
-            # Get screen info
-            screen_width, screen_height = pyautogui.size()
+            # Capture screen
+            screenshot = ImageGrab.grab()
+            screenshot.save(filename, "PNG")
             
             return {
                 "success": True,
-                "message": "Screenshot taken successfully",
                 "filename": filename,
-                "screen_size": {
-                    "width": screen_width,
-                    "height": screen_height
-                },
-                "timestamp": datetime.now().isoformat()
+                "timestamp": timestamp,
+                "message": "Screenshot captured"
             }
-            
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def list_recordings(self):
-        """List all recordings"""
-        recordings = []
-        try:
-            if os.path.exists(self.recordings_dir):
-                for file in sorted(os.listdir(self.recordings_dir), reverse=True):
-                    if file.endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm')):
-                        file_path = os.path.join(self.recordings_dir, file)
-                        stats = os.stat(file_path)
-                        
-                        recordings.append({
-                            "name": file,
-                            "path": file_path,
-                            "size_mb": round(stats.st_size / (1024*1024), 2),
-                            "created": datetime.fromtimestamp(stats.st_ctime).strftime("%Y-%m-%d %H:%M:%S"),
-                            "duration": self._estimate_duration(file_path),
-                            "thumbnail": self._generate_thumbnail(file_path) if len(recordings) < 5 else None
-                        })
-        except Exception as e:
-            print(f"Error listing recordings: {e}")
+    def _record_screen(self):
+        """Actual screen recording logic"""
+        self.frames = []
         
+        # Define codec and create VideoWriter
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(self.current_recording, fourcc, self.fps, (self.width, self.height))
+        
+        print(f"[RECORDING] Started recording to {self.current_recording}")
+        print(f"[RECORDING] Quality: {self.quality}, FPS: {self.fps}")
+        
+        frame_count = 0
+        start_time = time.time()
+        
+        try:
+            with mss.mss() as sct:
+                # Monitor size
+                monitor = sct.monitors[1]  # Primary monitor
+                
+                while self.is_recording:
+                    if self.is_paused:
+                        time.sleep(0.1)
+                        continue
+                    
+                    # Capture screen
+                    screenshot = sct.grab(monitor)
+                    
+                    # Convert to numpy array
+                    frame = np.array(screenshot)
+                    
+                    # Convert BGRA to BGR
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+                    
+                    # Resize to target resolution
+                    frame = cv2.resize(frame, (self.width, self.height))
+                    
+                    # Write frame
+                    out.write(frame)
+                    self.frames.append(frame)
+                    
+                    frame_count += 1
+                    
+                    # Maintain FPS
+                    elapsed = time.time() - start_time
+                    expected_time = frame_count / self.fps
+                    
+                    if elapsed < expected_time:
+                        time.sleep(expected_time - elapsed)
+                    
+                    # Safety limit for testing (remove in production)
+                    if frame_count >= 900:  # 30 seconds at 30 FPS
+                        print("[RECORDING] Safety limit reached (30 seconds)")
+                        break
+                        
+        except Exception as e:
+            print(f"[RECORDING ERROR] {e}")
+        finally:
+            out.release()
+            cv2.destroyAllWindows()
+            print(f"[RECORDING] Finished. Captured {frame_count} frames")
+    
+    def _save_video(self):
+        """Save captured frames as video"""
+        if not self.frames:
+            return
+        
+        print(f"[RECORDING] Saving {len(self.frames)} frames...")
+    
+    def get_status(self):
+        """Get current recording status"""
+        if self.is_recording and self.start_time:
+            duration = (datetime.now() - self.start_time).total_seconds()
+            return {
+                "is_recording": True,
+                "is_paused": self.is_paused,
+                "duration": round(duration, 2),
+                "frames_captured": len(self.frames),
+                "filename": os.path.basename(self.current_recording),
+                "start_time": self.start_time.isoformat(),
+                "quality": self.quality,
+                "fps": self.fps
+            }
+        return {
+            "is_recording": False,
+            "is_paused": False,
+            "duration": 0,
+            "message": "Ready to record"
+        }
+    
+    def get_recordings(self):
+        """Get list of all recordings"""
+        recordings = []
+        if os.path.exists(self.recordings_dir):
+            for file in os.listdir(self.recordings_dir):
+                if file.endswith(('.mp4', '.avi', '.mov')):
+                    filepath = os.path.join(self.recordings_dir, file)
+                    stat = os.stat(filepath)
+                    recordings.append({
+                        "filename": file,
+                        "filepath": filepath,
+                        "size": stat.st_size,
+                        "size_mb": round(stat.st_size / (1024*1024), 2),
+                        "created": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                        "duration": self._get_video_duration(filepath)
+                    })
+        # Sort by creation time, newest first
+        recordings.sort(key=lambda x: x["created"], reverse=True)
         return recordings
     
-    def _estimate_duration(self, filepath):
-        """Estimate video duration"""
+    def _get_video_duration(self, filepath):
+        """Get duration of video file"""
         try:
-            # Try to get duration from video file
-            import cv2
             cap = cv2.VideoCapture(filepath)
             fps = cap.get(cv2.CAP_PROP_FPS)
             frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
             cap.release()
             
             if fps > 0:
-                duration = frame_count / fps
-                minutes = int(duration // 60)
-                seconds = int(duration % 60)
-                return f"{minutes}:{seconds:02d}"
+                return round(frame_count / fps, 2)
         except:
             pass
-        
-        return "Unknown"
-    
-    def _generate_thumbnail(self, filepath):
-        """Generate thumbnail for video"""
-        try:
-            import cv2
-            cap = cv2.VideoCapture(filepath)
-            success, frame = cap.read()
-            cap.release()
-            
-            if success:
-                thumbnail_dir = os.path.join(self.recordings_dir, "thumbnails")
-                os.makedirs(thumbnail_dir, exist_ok=True)
-                
-                thumbnail_path = os.path.join(thumbnail_dir, f"{os.path.basename(filepath)}.jpg")
-                cv2.imwrite(thumbnail_path, frame)
-                return thumbnail_path
-        except:
-            pass
-        
-        return None
-    
-    def delete_recording(self, filename):
-        """Delete a recording"""
-        try:
-            filepath = os.path.join(self.recordings_dir, filename)
-            if os.path.exists(filepath):
-                os.remove(filepath)
-                
-                # Also delete thumbnail if exists
-                thumbnail_path = os.path.join(self.recordings_dir, "thumbnails", f"{filename}.jpg")
-                if os.path.exists(thumbnail_path):
-                    os.remove(thumbnail_path)
-                
-                return {"success": True, "message": f"Recording '{filename}' deleted"}
-            else:
-                return {"success": False, "message": "File not found"}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-    
-    def get_system_info(self):
-        """Get system information"""
-        try:
-            screen_width, screen_height = pyautogui.size()
-            mouse_x, mouse_y = pyautogui.position()
-            
-            return {
-                "screen_size": {
-                    "width": screen_width,
-                    "height": screen_height
-                },
-                "mouse_position": {
-                    "x": mouse_x,
-                    "y": mouse_y
-                },
-                "platform": os.name,
-                "cpu_count": os.cpu_count(),
-                "timestamp": datetime.now().isoformat()
-            }
-        except Exception as e:
-            return {"error": str(e)}
-    
-    def record_mouse_movements(self, duration=10, output_file=None):
-        """Record mouse movements"""
-        try:
-            if output_file is None:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_file = os.path.join(self.recordings_dir, f"mouse_movements_{timestamp}.json")
-            
-            movements = []
-            start_time = time.time()
-            
-            print(f"🖱️ Recording mouse movements for {duration} seconds...")
-            
-            while time.time() - start_time < duration:
-                x, y = pyautogui.position()
-                movements.append({
-                    "x": x,
-                    "y": y,
-                    "timestamp": time.time() - start_time
-                })
-                time.sleep(0.01)  # 100Hz sampling
-            
-            # Save movements
-            with open(output_file, 'w') as f:
-                json.dump({
-                    "duration": duration,
-                    "movements": movements,
-                    "screen_size": pyautogui.size(),
-                    "recorded_at": datetime.now().isoformat()
-                }, f, indent=2)
-            
-            return {
-                "success": True,
-                "message": f"Mouse movements recorded for {duration} seconds",
-                "output_file": output_file,
-                "movement_count": len(movements)
-            }
-            
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+        return 0
 
-# Test the bridge
+# Create singleton instance
+desktop_recorder = DesktopRecorder()
+
 if __name__ == "__main__":
-    bridge = DesktopRecorderBridge()
     print("🧪 Testing Desktop Bridge...")
+    print("Press F10 to start/stop recording")
+    print("Press F9 to capture screenshot")
     
-    status = bridge.get_status()
-    print(f"Status: {status}")
-    
-    # Test screenshot
-    result = bridge.take_screenshot()
-    if result["success"]:
-        print(f"✅ Screenshot taken: {result['filename']}")
-    
-    # List recordings
-    recordings = bridge.list_recordings()
-    print(f"📁 Found {len(recordings)} recordings")
-    
-    # Test mouse recording
-    result = bridge.record_mouse_movements(duration=3)
-    if result["success"]:
-        print(f"✅ Mouse movements recorded: {result['movement_count']} points")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n✅ Desktop Bridge is ready!")

@@ -1,261 +1,336 @@
+#!/usr/bin/env python3
 """
-COMPLETE FILE ORGANIZER MODULE
-Real file system operations with intelligent organization
+FILE ORGANIZER - COMPLETE FILE MANAGEMENT SYSTEM
+Working module with real file operations
 """
+
 import os
 import shutil
-import hashlib
 import json
-import time
-from pathlib import Path
+import sqlite3
+import hashlib
 from datetime import datetime
-from typing import List, Dict, Tuple, Optional
+from pathlib import Path
 import mimetypes
-from dataclasses import dataclass, asdict
 
-@dataclass
-class FileInfo:
-    """File metadata information"""
-    path: str
-    name: str
-    size: int
-    type: str
-    extension: str
-    created: datetime
-    modified: datetime
-    hash: str = ""
-    tags: List[str] = None
-
-class FileOrganizerEngine:  # RENAMED FROM SmartFileOrganizer
-    """Intelligent file organization system"""
-    
-    def __init__(self, base_path: str = None):
-        self.base_path = Path(base_path) if base_path else Path.home() / "AgenticOrganizer"
-        self.base_path.mkdir(exist_ok=True)
-        self.rules = self._load_rules()
-        self.file_cache = {}
-        
-    def _load_rules(self) -> Dict:
-        """Load organization rules from config"""
-        rules_file = self.base_path / "organization_rules.json"
-        default_rules = {
-            "documents": [".pdf", ".doc", ".docx", ".txt", ".rtf"],
-            "images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg"],
-            "videos": [".mp4", ".avi", ".mov", ".mkv", ".wmv"],
-            "audio": [".mp3", ".wav", ".flac", ".aac", ".ogg"],
-            "archives": [".zip", ".rar", ".7z", ".tar", ".gz"],
-            "code": [".py", ".js", ".html", ".css", ".java", ".cpp"],
-            "data": [".csv", ".json", ".xml", ".sql", ".db"]
+class FileOrganizer:
+    def __init__(self):
+        self.db_path = "database/file_organizer.db"
+        self.init_database()
+        self.categories = {
+            'images': ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp'],
+            'documents': ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.xls', '.xlsx', '.ppt', '.pptx'],
+            'videos': ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv'],
+            'audio': ['.mp3', '.wav', '.flac', '.aac', '.ogg'],
+            'archives': ['.zip', '.rar', '.7z', '.tar', '.gz'],
+            'code': ['.py', '.js', '.html', '.css', '.java', '.cpp', '.c', '.php'],
+            'data': ['.csv', '.json', '.xml', '.sql', '.db']
         }
-        
-        if rules_file.exists():
-            with open(rules_file, 'r') as f:
-                return json.load(f)
-        return default_rules
     
-    def organize_by_type(self, source_dir: str, target_dir: str = None) -> Dict:
-        """Organize files by type"""
-        if not target_dir:
-            target_dir = self.base_path
+    def init_database(self):
+        """Initialize database for file tracking"""
+        os.makedirs("database", exist_ok=True)
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS files (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                filename TEXT,
+                original_path TEXT,
+                new_path TEXT,
+                file_type TEXT,
+                size_bytes INTEGER,
+                created_date TEXT,
+                organized_date TEXT,
+                category TEXT,
+                hash TEXT UNIQUE
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS operations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                operation_type TEXT,
+                details TEXT,
+                timestamp TEXT,
+                files_affected INTEGER
+            )
+        ''')
+        conn.commit()
+        conn.close()
+        print("✅ File Organizer database initialized")
+    
+    def organize_files(self, source_dir=".", target_dir="organized"):
+        """Organize files by type into categorized folders"""
+        if not os.path.exists(source_dir):
+            return {"success": False, "error": "Source directory not found"}
+        
+        os.makedirs(target_dir, exist_ok=True)
+        
+        organized_count = 0
+        files_processed = []
+        
+        for item in os.listdir(source_dir):
+            item_path = os.path.join(source_dir, item)
             
-        source = Path(source_dir)
-        target = Path(target_dir)
+            if os.path.isfile(item_path):
+                # Get file extension
+                _, ext = os.path.splitext(item)
+                ext = ext.lower()
+                
+                # Determine category
+                category = "others"
+                for cat, exts in self.categories.items():
+                    if ext in exts:
+                        category = cat
+                        break
+                
+                # Create category folder
+                category_dir = os.path.join(target_dir, category)
+                os.makedirs(category_dir, exist_ok=True)
+                
+                # Generate new filename (avoid duplicates)
+                base_name = os.path.splitext(item)[0]
+                counter = 1
+                new_filename = item
+                while os.path.exists(os.path.join(category_dir, new_filename)):
+                    new_filename = f"{base_name}_{counter}{ext}"
+                    counter += 1
+                
+                # Move file
+                new_path = os.path.join(category_dir, new_filename)
+                shutil.move(item_path, new_path)
+                
+                # Calculate file hash
+                file_hash = self.calculate_file_hash(new_path)
+                
+                # Record in database
+                self.record_file_operation(
+                    filename=item,
+                    original_path=item_path,
+                    new_path=new_path,
+                    file_type=ext,
+                    size=os.path.getsize(new_path),
+                    category=category,
+                    file_hash=file_hash
+                )
+                
+                organized_count += 1
+                files_processed.append({
+                    "original": item,
+                    "new_location": new_path,
+                    "category": category
+                })
         
-        if not source.exists():
-            raise FileNotFoundError(f"Source directory not found: {source_dir}")
+        # Log operation
+        self.log_operation("organize", f"Organized {organized_count} files", organized_count)
         
-        results = {"total_files": 0, "organized": 0, "errors": [], "moved_files": []}
-        
-        for file_path in source.rglob("*"):
-            if file_path.is_file():
-                results["total_files"] += 1
-                try:
-                    file_info = self._get_file_info(file_path)
-                    category = self._categorize_file(file_info)
-                    
-                    category_dir = target / category
-                    category_dir.mkdir(exist_ok=True)
-                    
-                    new_path = category_dir / file_path.name
-                    if new_path.exists():
-                        new_path = self._get_unique_path(new_path)
-                    
-                    shutil.move(str(file_path), str(new_path))
-                    results["organized"] += 1
-                    results["moved_files"].append({
-                        "original": str(file_path),
-                        "new": str(new_path),
-                        "category": category
-                    })
-                except Exception as e:
-                    results["errors"].append({"file": str(file_path), "error": str(e)})
-        
-        return results
+        return {
+            "success": True,
+            "organized_count": organized_count,
+            "files_processed": files_processed,
+            "target_directory": os.path.abspath(target_dir)
+        }
     
-    def find_duplicates(self, directory: str, method: str = "hash") -> List[List[str]]:
-        """Find duplicate files"""
-        directory = Path(directory)
-        file_groups = {}
+    def find_duplicates(self, search_dir="."):
+        """Find duplicate files by content hash"""
+        if not os.path.exists(search_dir):
+            return {"success": False, "error": "Directory not found"}
+        
+        hash_dict = {}
         duplicates = []
         
-        for file_path in directory.rglob("*"):
-            if file_path.is_file():
+        for root, _, files in os.walk(search_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
                 try:
-                    if method == "hash":
-                        key = self._get_file_hash(file_path)
-                    elif method == "size":
-                        key = file_path.stat().st_size
-                    elif method == "name":
-                        key = file_path.name.lower()
-                    else:
-                        key = self._get_file_hash(file_path)
+                    file_hash = self.calculate_file_hash(file_path)
                     
-                    if key not in file_groups:
-                        file_groups[key] = []
-                    file_groups[key].append(str(file_path))
-                except Exception:
-                    continue
+                    if file_hash in hash_dict:
+                        duplicates.append({
+                            "original": hash_dict[file_hash],
+                            "duplicate": file_path,
+                            "hash": file_hash,
+                            "size": os.path.getsize(file_path)
+                        })
+                    else:
+                        hash_dict[file_hash] = file_path
+                except Exception as e:
+                    print(f"Error processing {file_path}: {e}")
         
-        for key, files in file_groups.items():
-            if len(files) > 1:
-                duplicates.append(files)
+        self.log_operation("find_duplicates", f"Found {len(duplicates)} duplicates", len(duplicates))
         
-        return duplicates
-    
-    def bulk_rename(self, directory: str, pattern: str, start_num: int = 1) -> Dict:
-        """Bulk rename files"""
-        directory = Path(directory)
-        results = {"renamed": [], "errors": [], "total": 0}
-        
-        files = sorted([f for f in directory.iterdir() if f.is_file()])
-        results["total"] = len(files)
-        
-        for idx, file_path in enumerate(files, start=start_num):
-            try:
-                file_info = self._get_file_info(file_path)
-                
-                new_name = pattern
-                new_name = new_name.replace("{num}", str(idx).zfill(3))
-                new_name = new_name.replace("{ext}", file_info.extension[1:])
-                new_name = new_name.replace("{date}", datetime.now().strftime("%Y%m%d"))
-                new_name = new_name.replace("{name}", file_info.name)
-                
-                if not new_name.endswith(file_info.extension):
-                    new_name += file_info.extension
-                
-                new_path = directory / new_name
-                new_path = self._get_unique_path(new_path)
-                
-                file_path.rename(new_path)
-                results["renamed"].append({"old": str(file_path), "new": str(new_path)})
-                
-            except Exception as e:
-                results["errors"].append({"file": str(file_path), "error": str(e)})
-        
-        return results
-    
-    def analyze_storage(self, directory: str) -> Dict:
-        """Analyze storage usage"""
-        directory = Path(directory)
-        analysis = {
-            "total_size": 0, "file_count": 0, "by_type": {},
-            "by_size_range": {"small": 0, "medium": 0, "large": 0},
-            "oldest_file": None, "newest_file": None
+        return {
+            "success": True,
+            "duplicates_found": len(duplicates),
+            "duplicates": duplicates,
+            "total_files_scanned": len(hash_dict) + len(duplicates)
         }
-        
-        oldest_time = float('inf')
-        newest_time = 0
-        
-        for file_path in directory.rglob("*"):
-            if file_path.is_file():
-                try:
-                    file_info = self._get_file_info(file_path)
-                    analysis["file_count"] += 1
-                    analysis["total_size"] += file_info.size
-                    
-                    file_type = file_info.type
-                    if file_type not in analysis["by_type"]:
-                        analysis["by_type"][file_type] = {"count": 0, "size": 0}
-                    analysis["by_type"][file_type]["count"] += 1
-                    analysis["by_type"][file_type]["size"] += file_info.size
-                    
-                    if file_info.size < 1024 * 1024:
-                        analysis["by_size_range"]["small"] += 1
-                    elif file_info.size < 100 * 1024 * 1024:
-                        analysis["by_size_range"]["medium"] += 1
-                    else:
-                        analysis["by_size_range"]["large"] += 1
-                    
-                    created_time = file_info.created.timestamp()
-                    if created_time < oldest_time:
-                        oldest_time = created_time
-                        analysis["oldest_file"] = asdict(file_info)
-                    if created_time > newest_time:
-                        newest_time = created_time
-                        analysis["newest_file"] = asdict(file_info)
-                        
-                except Exception:
-                    continue
-        
-        return analysis
     
-    def _get_file_info(self, file_path: Path) -> FileInfo:
-        """Get detailed file information"""
-        stat = file_path.stat()
+    def bulk_rename(self, directory=".", pattern="file_{counter}{extension}"):
+        """Bulk rename files in a directory"""
+        if not os.path.exists(directory):
+            return {"success": False, "error": "Directory not found"}
         
-        mime_type, _ = mimetypes.guess_type(file_path)
-        file_type = mime_type.split('/')[0] if mime_type else "unknown"
-        extension = file_path.suffix.lower()
-        
-        return FileInfo(
-            path=str(file_path),
-            name=file_path.name,
-            size=stat.st_size,
-            type=file_type,
-            extension=extension,
-            created=datetime.fromtimestamp(stat.st_ctime),
-            modified=datetime.fromtimestamp(stat.st_mtime),
-            hash=self._get_file_hash(file_path),
-            tags=[]
-        )
-    
-    def _get_file_hash(self, file_path: Path, algorithm: str = "md5") -> str:
-        """Calculate file hash"""
-        hash_func = hashlib.new(algorithm)
-        with open(file_path, 'rb') as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_func.update(chunk)
-        return hash_func.hexdigest()
-    
-    def _categorize_file(self, file_info: FileInfo) -> str:
-        """Categorize file based on extension"""
-        for category, extensions in self.rules.items():
-            if file_info.extension in extensions:
-                return category
-        return "other"
-    
-    def _get_unique_path(self, path: Path) -> Path:
-        """Get unique path if file exists"""
-        if not path.exists():
-            return path
+        renamed_files = []
         counter = 1
-        while True:
-            new_path = path.parent / f"{path.stem}_{counter}{path.suffix}"
-            if not new_path.exists():
-                return new_path
+        
+        files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+        files.sort()  # Sort alphabetically
+        
+        for filename in files:
+            name, ext = os.path.splitext(filename)
+            new_name = pattern.replace("{counter}", str(counter)).replace("{extension}", ext)
+            new_name = new_name.replace("{original}", name)
+            
+            old_path = os.path.join(directory, filename)
+            new_path = os.path.join(directory, new_name)
+            
+            # Ensure unique filename
+            while os.path.exists(new_path):
+                counter += 1
+                new_name = pattern.replace("{counter}", str(counter)).replace("{extension}", ext)
+                new_path = os.path.join(directory, new_name)
+            
+            os.rename(old_path, new_path)
+            renamed_files.append({
+                "old_name": filename,
+                "new_name": new_name
+            })
             counter += 1
+        
+        self.log_operation("bulk_rename", f"Renamed {len(renamed_files)} files", len(renamed_files))
+        
+        return {
+            "success": True,
+            "renamed_count": len(renamed_files),
+            "renamed_files": renamed_files,
+            "pattern_used": pattern
+        }
+    
+    def calculate_file_hash(self, filepath):
+        """Calculate MD5 hash of a file"""
+        hash_md5 = hashlib.md5()
+        try:
+            with open(filepath, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_md5.update(chunk)
+            return hash_md5.hexdigest()
+        except Exception as e:
+            return f"error_{os.path.basename(filepath)}"
+    
+    def record_file_operation(self, filename, original_path, new_path, file_type, size, category, file_hash):
+        """Record file operation in database"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT OR REPLACE INTO files 
+            (filename, original_path, new_path, file_type, size_bytes, created_date, organized_date, category, hash)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            filename,
+            original_path,
+            new_path,
+            file_type,
+            size,
+            datetime.fromtimestamp(os.path.getctime(original_path)).isoformat(),
+            datetime.now().isoformat(),
+            category,
+            file_hash
+        ))
+        
+        conn.commit()
+        conn.close()
+    
+    def log_operation(self, op_type, details, files_affected):
+        """Log an operation"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO operations (operation_type, details, timestamp, files_affected)
+            VALUES (?, ?, ?, ?)
+        ''', (
+            op_type,
+            details,
+            datetime.now().isoformat(),
+            files_affected
+        ))
+        
+        conn.commit()
+        conn.close()
+    
+    def get_stats(self):
+        """Get file organizer statistics"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT COUNT(*) FROM files")
+        total_files = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(DISTINCT category) FROM files")
+        categories_used = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM operations")
+        operations_count = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT SUM(size_bytes) FROM files")
+        total_size = cursor.fetchone()[0] or 0
+        
+        conn.close()
+        
+        return {
+            "total_files": total_files,
+            "categories_used": categories_used,
+            "operations_count": operations_count,
+            "total_size_bytes": total_size,
+            "total_size_mb": round(total_size / (1024*1024), 2),
+            "last_updated": datetime.now().isoformat()
+        }
+    
+    def clean_temp_files(self, directory=".", days_old=30):
+        """Clean temporary files older than specified days"""
+        import time
+        
+        if not os.path.exists(directory):
+            return {"success": False, "error": "Directory not found"}
+        
+        temp_extensions = ['.tmp', '.temp', '.log', '.cache']
+        deleted_files = []
+        current_time = time.time()
+        threshold = days_old * 24 * 60 * 60  # Convert days to seconds
+        
+        for root, _, files in os.walk(directory):
+            for file in files:
+                if any(file.endswith(ext) for ext in temp_extensions):
+                    file_path = os.path.join(root, file)
+                    file_age = current_time - os.path.getctime(file_path)
+                    
+                    if file_age > threshold:
+                        try:
+                            os.remove(file_path)
+                            deleted_files.append({
+                                "filename": file,
+                                "path": file_path,
+                                "age_days": round(file_age / (24*60*60), 1)
+                            })
+                        except Exception as e:
+                            print(f"Error deleting {file_path}: {e}")
+        
+        self.log_operation("clean_temp", f"Cleaned {len(deleted_files)} temp files", len(deleted_files))
+        
+        return {
+            "success": True,
+            "deleted_count": len(deleted_files),
+            "deleted_files": deleted_files,
+            "days_threshold": days_old
+        }
 
-# Alias for backward compatibility
-SmartFileOrganizer = FileOrganizerEngine
+# Create singleton instance
+file_organizer = FileOrganizer()
 
-# Quick utility functions
-def organize_files(source: str, target: str = None, method: str = "type") -> Dict:
-    """Quick file organization"""
-    organizer = FileOrganizerEngine()
-    if method == "type":
-        return organizer.organize_by_type(source, target)
-    elif method == "date":
-        # Add date-based organization if needed
-        pass
-    else:
-        raise ValueError(f"Unknown method: {method}")
+if __name__ == "__main__":
+    print("🧪 Testing File Organizer...")
+    stats = file_organizer.get_stats()
+    print(f"📊 File Organizer Stats: {stats}")
+    print("✅ File Organizer is ready!")
