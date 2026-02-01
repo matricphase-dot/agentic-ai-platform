@@ -1,0 +1,29 @@
+# Agentic SDK - Universal Agent Development Kit 
+__version__ = "1.0.0" 
+__author__ = "Agentic AI" 
+ 
+import sys 
+import os 
+import json 
+import asyncio 
+from typing import Dict, List, Optional, Any, Callable 
+import logging 
+ 
+# Initialize colorama for Windows CMD colors 
+try: 
+    import colorama 
+    colorama.init() 
+except ImportError: 
+    pass 
+ 
+# Core classes 
+try: 
+    from .agent_base import AgentBase 
+    from .registry import AgentRegistry 
+    from .decorators import register_action 
+except ImportError: 
+    pass 
+ 
+# Setup logging 
+logging.basicConfig(level=logging.INFO) 
+logger = logging.getLogger(__name__) 

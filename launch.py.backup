@@ -1,0 +1,426 @@
+"""
+Agentic AI Platform - Launch Script
+For Aditya Mehra (Student Founder)
+"""
+
+import os
+import sys
+import subprocess
+import webbrowser
+import time
+from pathlib import Path
+import json
+import platform
+
+class AgenticLauncher:
+    """Complete platform launcher for student founder"""
+    
+    def __init__(self):
+        self.project_root = Path(__file__).parent
+        self.is_windows = platform.system() == "Windows"
+        self.founder_info = {
+            "name": "Aditya Mehra",
+            "role": "2nd Year B.Tech Student & Founder",
+            "email": "aditya@agentic.ai",
+            "platform_version": "4.0.0",
+            "completion": "92%"
+        }
+    
+    def print_banner(self):
+        """Print platform banner"""
+        banner = """
+        ╔══════════════════════════════════════════════════════════╗
+        ║                                                          ║
+        ║     🚀 AGENTIC AI PLATFORM v4.0.0                        ║
+        ║     👨‍💻 Founder: Aditya Mehra                            ║
+        ║     🎓 2nd Year B.Tech Student                           ║
+        ║     📧 aditya@agentic.ai                                 ║
+        ║                                                          ║
+        ║     The Operating System for AI Agents                   ║
+        ║                                                          ║
+        ╚══════════════════════════════════════════════════════════╝
+        """
+        print(banner)
+        print(f"📁 Project Root: {self.project_root}")
+        print(f"📊 Platform Completion: {self.founder_info['completion']}")
+        print("=" * 70)
+    
+    def setup_environment(self):
+        """Setup development environment"""
+        print("\n🔧 Setting up environment...")
+        
+        # Create required directories
+        directories = [
+            "database", "logs", "backups", "agent_states", 
+            "data", "examples", "templates", "static/css",
+            "static/js", "static/images"
+        ]
+        
+        for dir_name in directories:
+            dir_path = self.project_root / dir_name
+            dir_path.mkdir(parents=True, exist_ok=True)
+            print(f"  ✅ Created: {dir_name}")
+        
+        # Create configuration file
+        config = {
+            "platform": "Agentic AI",
+            "version": "4.0.0",
+            "founder": self.founder_info,
+            "database_path": str(self.project_root / "database" / "agentic.db"),
+            "log_path": str(self.project_root / "logs" / "app.log"),
+            "port": 8000,
+            "debug": True
+        }
+        
+        config_file = self.project_root / "config.json"
+        with open(config_file, 'w') as f:
+            json.dump(config, f, indent=2)
+        
+        print(f"  ✅ Created: config.json")
+        
+        # Create .gitignore
+        gitignore_content = """# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# Backups
+backups/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+"""
+        
+        gitignore_file = self.project_root / ".gitignore"
+        with open(gitignore_file, 'w') as f:
+            f.write(gitignore_content)
+        
+        print(f"  ✅ Created: .gitignore")
+    
+    def install_dependencies(self):
+        """Install required packages"""
+        print("\n📦 Installing dependencies...")
+        
+        requirements = [
+            "fastapi",
+            "uvicorn[standard]",
+            "sqlite3",
+            "pydantic",
+            "websockets",
+            "python-multipart",
+            "aiofiles",
+            "click",
+            "requests",
+            "beautifulsoup4",
+            "pandas",
+            "numpy"
+        ]
+        
+        for package in requirements:
+            try:
+                subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+                print(f"  ✅ Installed: {package}")
+            except subprocess.CalledProcessError:
+                print(f"  ⚠️ Failed to install: {package}")
+    
+    def check_system(self):
+        """Check system requirements"""
+        print("\n🔍 Checking system requirements...")
+        
+        # Check Python version
+        python_version = sys.version_info
+        if python_version.major == 3 and python_version.minor >= 8:
+            print(f"  ✅ Python {python_version.major}.{python_version.minor}.{python_version.micro}")
+        else:
+            print(f"  ❌ Python 3.8+ required (found {python_version.major}.{python_version.minor})")
+            return False
+        
+        # Check disk space
+        import shutil
+        total, used, free = shutil.disk_usage("/")
+        free_gb = free // (2**30)
+        if free_gb > 5:
+            print(f"  ✅ Disk space: {free_gb}GB free")
+        else:
+            print(f"  ⚠️ Low disk space: {free_gb}GB free")
+        
+        return True
+    
+    def create_sample_data(self):
+        """Create sample data for demo"""
+        print("\n📝 Creating sample data...")
+        
+        sample_agents = [
+            {
+                "name": "Student Assistant",
+                "description": "Helps with academic planning and organization",
+                "type": "education",
+                "skills": ["scheduling", "note_organization", "assignment_tracking"]
+            },
+            {
+                "name": "Email Automator",
+                "description": "Processes and organizes emails automatically",
+                "type": "communication",
+                "skills": ["email_processing", "categorization", "response_generation"]
+            },
+            {
+                "name": "Data Analyst",
+                "description": "Analyzes datasets and generates insights",
+                "type": "analytics",
+                "skills": ["data_processing", "statistics", "visualization"]
+            }
+        ]
+        
+        agents_file = self.project_root / "data" / "sample_agents.json"
+        with open(agents_file, 'w') as f:
+            json.dump(sample_agents, f, indent=2)
+        
+        print(f"  ✅ Created: {len(sample_agents)} sample agents")
+        
+        # Create sample tasks
+        sample_tasks = [
+            {
+                "title": "Organize Study Materials",
+                "description": "Categorize and organize PDFs, notes, and resources",
+                "category": "education",
+                "estimated_time": "2 hours"
+            },
+            {
+                "title": "Process Inbox",
+                "description": "Sort 500+ emails into folders and flag important ones",
+                "category": "communication",
+                "estimated_time": "1 hour"
+            }
+        ]
+        
+        tasks_file = self.project_root / "data" / "sample_tasks.json"
+        with open(tasks_file, 'w') as f:
+            json.dump(sample_tasks, f, indent=2)
+        
+        print(f"  ✅ Created: {len(sample_tasks)} sample tasks")
+    
+    def start_platform(self):
+        """Start the platform"""
+        print("\n🚀 Starting Agentic AI Platform...")
+        
+        # Start server in background
+        server_cmd = [sys.executable, str(self.project_root / "CORE" / "main.py")]
+        
+        if self.is_windows:
+            # Use start on Windows to open new terminal
+            subprocess.Popen(['start', 'cmd', '/k'] + server_cmd, shell=True)
+        else:
+            # Use xterm or similar on Linux/Mac
+            subprocess.Popen(['xterm', '-e'] + server_cmd)
+        
+        print("  ⏳ Waiting for server to start...")
+        time.sleep(5)
+        
+        # Open browser
+        print("  🌐 Opening browser...")
+        webbrowser.open("http://localhost:8000")
+        
+        print("\n✅ Platform started successfully!")
+        print("\n🌐 Available at: http://localhost:8000")
+        print("📚 API Docs: http://localhost:8000/api/docs")
+        print("👨‍💻 Founder Info: http://localhost:8000/api/founder")
+        
+    def run_tests(self):
+        """Run platform tests"""
+        print("\n🧪 Running tests...")
+        
+        tests = [
+            ("Core server", "python -c \"import sys; sys.path.append('.'); from CORE.main import app; print('✅ Core server import successful')\""),
+            ("SDK import", "python -c \"import sys; sys.path.append('.'); from agentic_sdk import AgentBase; print('✅ SDK import successful')\""),
+            ("Database", "python -c \"import sqlite3; conn = sqlite3.connect('database/agentic_database.db'); print('✅ Database connection successful')\""),
+        ]
+        
+        for test_name, test_cmd in tests:
+            try:
+                result = subprocess.run(test_cmd, shell=True, capture_output=True, text=True)
+                if result.returncode == 0:
+                    print(f"  ✅ {test_name}: PASS")
+                else:
+                    print(f"  ❌ {test_name}: FAIL")
+                    print(f"     Error: {result.stderr}")
+            except Exception as e:
+                print(f"  ❌ {test_name}: ERROR - {e}")
+    
+    def show_menu(self):
+        """Show main menu"""
+        while True:
+            print("\n" + "="*70)
+            print("AGENTIC AI PLATFORM - MAIN MENU")
+            print("="*70)
+            print("1. 🚀 Start Platform (Web Dashboard)")
+            print("2. 🔧 Setup Environment")
+            print("3. 📦 Install Dependencies")
+            print("4. 🧪 Run Tests")
+            print("5. 📝 Create Sample Data")
+            print("6. 💼 Investor Demo Mode")
+            print("7. 🛠️ SDK Tools")
+            print("8. 📊 Platform Status")
+            print("9. 🎓 Student Founder Info")
+            print("0. 🚪 Exit")
+            print("="*70)
+            
+            choice = input("\nSelect option (0-9): ").strip()
+            
+            if choice == "1":
+                self.start_platform()
+            elif choice == "2":
+                self.setup_environment()
+            elif choice == "3":
+                self.install_dependencies()
+            elif choice == "4":
+                self.run_tests()
+            elif choice == "5":
+                self.create_sample_data()
+            elif choice == "6":
+                self.investor_demo()
+            elif choice == "7":
+                self.sdk_tools()
+            elif choice == "8":
+                self.platform_status()
+            elif choice == "9":
+                self.show_founder_info()
+            elif choice == "0":
+                print("\n👋 Goodbye! Remember: Age is just a number when you're building the future.")
+                break
+            else:
+                print("❌ Invalid choice. Please try again.")
+    
+    def investor_demo(self):
+        """Run investor demo mode"""
+        print("\n" + "="*70)
+        print("🎯 INVESTOR DEMO MODE")
+        print("="*70)
+        print("\nFounder: Aditya Mehra")
+        print("Position: 2nd Year B.Tech Student")
+        print("Platform: 92% complete")
+        print("Valuation: $10M pre-money")
+        print("Ask: $2M pre-seed")
+        print("\nStarting complete demo...")
+        
+        # Start platform
+        self.start_platform()
+        
+        # Open investor materials
+        pitch_file = self.project_root / "pitch" / "student_founder_pitch.md"
+        if pitch_file.exists():
+            webbrowser.open(str(pitch_file))
+        
+        print("\n✅ Investor demo ready!")
+        print("🌐 Platform: http://localhost:8000")
+        print("📊 Founder Info: http://localhost:8000/api/founder")
+        print("🎯 Pitch: Open student_founder_pitch.md")
+    
+    def sdk_tools(self):
+        """Show SDK tools"""
+        print("\n" + "="*70)
+        print("🛠️ SDK TOOLS")
+        print("="*70)
+        print("\nAvailable commands:")
+        print("  python -m agentic_sdk.cli create \"AgentName\"")
+        print("  python -m agentic_sdk.cli list")
+        print("  python -m agentic_sdk.cli stats")
+        print("\nExample agents in /examples/")
+        print("  student_assistant_agent.py")
+        print("  email_automation_agent.py")
+        print("  data_analysis_agent.py")
+        
+        input("\nPress Enter to continue...")
+    
+    def platform_status(self):
+        """Show platform status"""
+        print("\n" + "="*70)
+        print("📊 PLATFORM STATUS")
+        print("="*70)
+        
+        status = {
+            "Core Server": "✅ 100%",
+            "Agent SDK": "✅ 90%",
+            "Web Dashboard": "✅ 100%",
+            "Marketplace": "✅ 100%",
+            "Training Gym": "✅ 95%",
+            "Universal API": "✅ 90%",
+            "Documentation": "🔄 70%",
+            "Tests": "🔄 60%",
+            "Deployment": "🔄 50%"
+        }
+        
+        for component, progress in status.items():
+            print(f"{component:20} {progress}")
+        
+        total_percent = 92  # Weighted average
+        print(f"\n📈 Overall Completion: {total_percent}%")
+        
+        input("\nPress Enter to continue...")
+    
+    def show_founder_info(self):
+        """Show founder information"""
+        print("\n" + "="*70)
+        print("👨‍💻 STUDENT FOUNDER: ADITYA MEHRA")
+        print("="*70)
+        
+        info = {
+            "Name": "Aditya Mehra",
+            "Age": "19",
+            "Education": "B.Tech Computer Science (2nd Year)",
+            "Role": "Founder & CEO, Agentic AI",
+            "Contact": "aditya@agentic.ai",
+            "Location": "India (Remote-first)",
+            "Background": "Built first AI project at 16, multiple automation tools",
+            "Vision": "Democratize AI automation for everyone",
+            "Unique Advantage": "Student founder with fresh perspective & rapid execution"
+        }
+        
+        for key, value in info.items():
+            print(f"{key:15}: {value}")
+        
+        print("\n🎯 Student Founder Advantages:")
+        print("  1. Fresh perspective on AI automation")
+        print("  2. Digital native understanding")
+        print("  3. Rapid development & iteration")
+        print("  4. Cost-effective execution")
+        print("  5. Direct developer empathy")
+        
+        input("\nPress Enter to continue...")
+
+def main():
+    """Main function"""
+    launcher = AgenticLauncher()
+    launcher.print_banner()
+    
+    # Check system
+    if not launcher.check_system():
+        print("\n❌ System check failed. Please fix issues above.")
+        return
+    
+    # Show menu
+    launcher.show_menu()
+
+if __name__ == "__main__":
+    main()

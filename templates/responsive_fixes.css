@@ -1,0 +1,7 @@
+/* Mobile Optimization */ 
+@media (max-width: 768px) { 
+  .agent-card { width: 100%% !important; } 
+  .dashboard-stats { flex-direction: column; } 
+  .nav-menu { display: none; } 
+  .mobile-menu { display: block !important; } 
+} 
