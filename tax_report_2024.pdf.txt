@@ -1,0 +1,10 @@
+=== TAX REPORT 2024 ===
+Business: Demo Business LLC
+Total Expenses: $494.63
+Deductible: $494.63
+
+Category Breakdown:
+  Office Expenses: $45.50
+  Meals & Entertainment: $5.75
+  Travel: $23.40
+  Supplies: $419.98

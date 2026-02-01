@@ -206,3 +206,62 @@
 [parameters: ('b46a8275-d26f-4185-beb2-1060650b1670', None, 'Clean up email inbox', 'Organize 500+ emails into folders, archive old ones', 250, 'open', None, '2026-01-28 14:03:37.607310', None, '4c478915-4ce3-4d47-979b-e8757a67a4eb', None, 'Data entry from PDF invoices', 'Extract data from 20 PDF invoices into Excel format', 150, 'claimed', None, '2026-01-28 14:03:37.607310', None, 'cb43b5f9-69e1-44ae-af21-cac319b2d066', None, 'Web scraping product data', 'Scrape 100 product listings from e-commerce site', 300, 'open', None, '2026-01-28 14:03:37.607310', None)]
 (Background on this error at: https://sqlalche.me/e/20/gkpj)
 2026-01-28 20:13:24,591 - main - INFO - Shutting down Agentic AI Platform...
+2026-02-01 21:03:30,825 - root - INFO - Agentic AI Platform v5.2.0 - Starting up...
+2026-02-01 21:03:30,827 - root - INFO - [ROCKET] Starting Agentic AI Platform v5.2.0
+2026-02-01 21:03:30,828 - root - INFO - Initializing databases...
+2026-02-01 21:03:32,231 - root - INFO - [CHECK] Created users.db with admin user
+2026-02-01 21:03:32,255 - root - INFO - [CHECK] Created analytics.db
+2026-02-01 21:03:32,287 - root - INFO - [CHECK] Created files.db
+2026-02-01 21:03:32,317 - root - INFO - [CHECK] Created ai_chat.db
+2026-02-01 21:03:32,341 - root - INFO - [CHECK] Created recordings.db
+2026-02-01 21:03:32,386 - root - INFO - [CHECK] Created marketplace.db with 5 templates
+2026-02-01 21:03:32,388 - root - INFO - [CHECK] All databases initialized successfully
+2026-02-01 21:03:32,395 - root - INFO - Startup complete. Server is ready.
+2026-02-01 21:03:54,071 - root - INFO - Agentic AI Platform v5.2.0 - Starting up...
+2026-02-01 21:03:54,072 - root - INFO - [ROCKET] Starting Agentic AI Platform v5.2.0
+2026-02-01 21:03:54,075 - root - INFO - Initializing databases...
+2026-02-01 21:03:55,977 - root - INFO - [CHECK] Created users.db with admin user
+2026-02-01 21:03:56,009 - root - INFO - [CHECK] Created analytics.db
+2026-02-01 21:03:56,078 - root - INFO - [CHECK] Created files.db
+2026-02-01 21:03:56,195 - root - INFO - [CHECK] Created ai_chat.db
+2026-02-01 21:03:56,248 - root - INFO - [CHECK] Created recordings.db
+2026-02-01 21:03:56,308 - root - INFO - [CHECK] Created marketplace.db with 5 templates
+2026-02-01 21:03:56,310 - root - INFO - [CHECK] All databases initialized successfully
+2026-02-01 21:03:56,311 - root - INFO - Startup complete. Server is ready.
+2026-02-01 21:04:38,289 - root - INFO - Shutting down Agentic AI Platform
+2026-02-01 21:04:41,183 - root - INFO - Agentic AI Platform v5.2.0 - Starting up...
+2026-02-01 21:04:41,183 - root - INFO - [ROCKET] Starting Agentic AI Platform v5.2.0
+2026-02-01 21:04:41,185 - root - INFO - Initializing databases...
+2026-02-01 21:04:42,549 - root - INFO - [CHECK] Created users.db with admin user
+2026-02-01 21:04:42,581 - root - INFO - [CHECK] Created analytics.db
+2026-02-01 21:04:42,620 - root - INFO - [CHECK] Created files.db
+2026-02-01 21:04:42,662 - root - INFO - [CHECK] Created ai_chat.db
+2026-02-01 21:04:42,699 - root - INFO - [CHECK] Created recordings.db
+2026-02-01 21:04:42,757 - root - INFO - [CHECK] Created marketplace.db with 5 templates
+2026-02-01 21:04:42,757 - root - INFO - [CHECK] All databases initialized successfully
+2026-02-01 21:04:42,760 - root - INFO - Startup complete. Server is ready.
+2026-02-01 21:04:49,723 - root - INFO - Shutting down Agentic AI Platform
+2026-02-01 21:04:52,252 - root - INFO - Agentic AI Platform v5.2.0 - Starting up...
+2026-02-01 21:04:52,252 - root - INFO - [ROCKET] Starting Agentic AI Platform v5.2.0
+2026-02-01 21:04:52,252 - root - INFO - Initializing databases...
+2026-02-01 21:04:53,478 - root - INFO - [CHECK] Created users.db with admin user
+2026-02-01 21:04:53,526 - root - INFO - [CHECK] Created analytics.db
+2026-02-01 21:04:53,602 - root - INFO - [CHECK] Created files.db
+2026-02-01 21:04:53,664 - root - INFO - [CHECK] Created ai_chat.db
+2026-02-01 21:04:53,702 - root - INFO - [CHECK] Created recordings.db
+2026-02-01 21:04:53,791 - root - INFO - [CHECK] Created marketplace.db with 5 templates
+2026-02-01 21:04:53,791 - root - INFO - [CHECK] All databases initialized successfully
+2026-02-01 21:04:53,796 - root - INFO - Startup complete. Server is ready.
+2026-02-01 21:51:07,084 - root - INFO - Shutting down Agentic AI Platform
+2026-02-01 21:51:12,106 - root - INFO - Agentic AI Platform v5.2.0 - Starting up...
+2026-02-01 21:51:12,107 - root - INFO - [ROCKET] Starting Agentic AI Platform v5.2.0
+2026-02-01 21:51:12,107 - root - INFO - Initializing databases...
+2026-02-01 21:51:13,493 - root - INFO - [CHECK] Created users.db with admin user
+2026-02-01 21:51:13,538 - root - INFO - [CHECK] Created analytics.db
+2026-02-01 21:51:13,579 - root - INFO - [CHECK] Created files.db
+2026-02-01 21:51:13,621 - root - INFO - [CHECK] Created ai_chat.db
+2026-02-01 21:51:13,663 - root - INFO - [CHECK] Created recordings.db
+2026-02-01 21:51:13,715 - root - INFO - [CHECK] Created marketplace.db with 5 templates
+2026-02-01 21:51:13,716 - root - INFO - [CHECK] All databases initialized successfully
+2026-02-01 21:51:13,722 - root - INFO - Startup complete. Server is ready.
+2026-02-01 21:51:15,291 - root - INFO - Shutting down Agentic AI Platform
