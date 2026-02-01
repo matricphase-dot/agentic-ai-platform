@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Companion - Agentic AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .qr-container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .mobile-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .mobile-btn {
+            padding: 20px;
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .mobile-btn:hover {
+            transform: translateY(-5px);
+            border-color: #6366f1;
+        }
+        .connection-status {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .status-connected {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .status-disconnected {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .device-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+        .device-item {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-mobile-alt"></i>
+                <span>Mobile Companion</span>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link"><i class="fas fa-arrow-left"></i> Dashboard</a>
+                <a href="/analytics" class="nav-link"><i class="fas fa-chart-line"></i> Analytics</a>
+                <a href="/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-mobile-alt"></i> Mobile Remote Control</h1>
+            <p class="subtitle">Control your Agentic AI platform from your phone • Real-time sync • Remote commands</p>
+        </div>
+
+        <!-- Connection Status -->
+        <div id="connectionStatus" class="connection-status status-disconnected">
+            <div class="status-dot" id="statusDot" style="background: #ef4444;"></div>
+            <div style="flex: 1;">
+                <h3 style="margin: 0;">Disconnected</h3>
+                <p style="margin: 5px 0 0 0; color: #94a3b8;">Scan QR code to connect your mobile device</p>
+            </div>
+            <button class="btn" onclick="generateQR()">
+                <i class="fas fa-qrcode"></i> Generate QR Code
+            </button>
+        </div>
+
+        <!-- QR Code -->
+        <div class="qr-container" id="qrContainer" style="display: none;">
+            <h2><i class="fas fa-qrcode"></i> Scan to Connect</h2>
+            <p>Open your phone's camera and scan this QR code to connect</p>
+            <div class="qr-code" id="qrCode">
+                <!-- QR code will be generated here -->
+                <div style="width: 100%; height: 100%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #333; font-family: monospace;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">🤖</div>
+                        <div>Agentic AI</div>
+                        <div>Mobile Connect</div>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 20px;">
+                <div style="color: #94a3b8; font-size: 0.9rem;">Connection Code: <strong id="connectionCode">ABCD-1234</strong></div>
+                <div style="color: #94a3b8; font-size: 0.9rem; margin-top: 5px;">Expires in: <span id="expiryTimer">05:00</span></div>
+            </div>
+            <button class="btn" onclick="hideQR()" style="margin-top: 20px;">
+                <i class="fas fa-times"></i> Hide QR Code
+            </button>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div class="card">
+            <h2><i class="fas fa-gamepad"></i> Remote Controls</h2>
+            <p style="color: #94a3b8; margin-bottom: 20px;">Control your desktop remotely from your mobile device</p>
+            
+            <div class="mobile-controls">
+                <div class="mobile-btn" onclick="remoteControl('record')">
+                    <i class="fas fa-circle" style="font-size: 2rem; color: #ef4444; margin-bottom: 10px;"></i>
+                    <div>Start Recording</div>
+                    <small>Remote F10</small>
+                </div>
+                
+                <div class="mobile-btn" onclick="remoteControl('screenshot')">
+                    <i class="fas fa-camera" style="font-size: 2rem; color: #10b981; margin-bottom: 10px;"></i>
+                    <div>Take Screenshot</div>
+                    <small>Remote F9</small>
+                </div>
+                
+                <div class="mobile-btn" onclick="remoteControl('organize')">
+                    <i class="fas fa-folder-tree" style="font-size: 2rem; color: #6366f1; margin-bottom: 10px;"></i>
+                    <div>Organize Files</div>
+                    <small>AI Sorting</small>
+                </div>
+                
+                <div class="mobile-btn" onclick="remoteControl('ai')">
+                    <i class="fas fa-brain" style="font-size: 2rem; color: #8b5cf6; margin-bottom: 10px;"></i>
+                    <div>AI Assistant</div>
+                    <small>Voice Command</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connected Devices -->
+        <div class="card">
+            <h2><i class="fas fa-mobile-alt"></i> Connected Devices</h2>
+            <div class="device-list" id="deviceList">
+                <div class="device-item">
+                    <i class="fas fa-mobile-alt" style="font-size: 1.5rem; color: #94a3b8;"></i>
+                    <div style="flex: 1;">
+                        <strong>No devices connected</strong>
+                        <div style="color: #94a3b8; font-size: 0.9rem;">Connect your phone to get started</div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" onclick="refreshDevices()" style="margin-top: 15px;">
+                <i class="fas fa-sync"></i> Refresh Devices
+            </button>
+        </div>
+
+        <!-- Mobile Features -->
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 30px 0;">
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
+                    <i class="fas fa-broadcast-tower"></i>
+                </div>
+                <h3>Real-time Sync</h3>
+                <p>Instant synchronization between mobile and desktop</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                    <i class="fas fa-voice"></i>
+                </div>
+                <h3>Voice Commands</h3>
+                <p>Control with voice commands via mobile</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h3>Notifications</h3>
+                <p>Get alerts on your phone for automation events</p>
+            </div>
+        </div>
+
+        <!-- Mobile App Links -->
+        <div class="card">
+            <h2><i class="fas fa-download"></i> Download Mobile App</h2>
+            <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+                <button class="btn" onclick="downloadApp('ios')" style="background: #000;">
+                    <i class="fab fa-apple"></i> iOS App Store
+                </button>
+                <button class="btn" onclick="downloadApp('android')" style="background: #10b981;">
+                    <i class="fab fa-android"></i> Google Play Store
+                </button>
+                <button class="btn" onclick="downloadApp('web')">
+                    <i class="fas fa-globe"></i> Web Version
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let connected = false;
+        let connectionInterval = null;
+        let expiryTimer = 300; // 5 minutes in seconds
+        
+        function generateQR() {
+            const qrContainer = document.getElementById('qrContainer');
+            qrContainer.style.display = 'block';
+            
+            // Generate random connection code
+            const code = Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + 
+                        Math.random().toString(36).substring(2, 6).toUpperCase();
+            document.getElementById('connectionCode').textContent = code;
+            
+            // Start expiry timer
+            expiryTimer = 300;
+            startExpiryTimer();
+            
+            // Show status as waiting
+            document.getElementById('connectionStatus').className = 'connection-status status-disconnected';
+            document.getElementById('statusDot').style.background = '#f59e0b';
+            document.querySelector('#connectionStatus h3').textContent = 'Waiting for connection...';
+            document.querySelector('#connectionStatus p').textContent = 'Scan QR code with your phone';
+            
+            // Simulate connection after 3 seconds
+            setTimeout(() => {
+                simulateConnection();
+            }, 3000);
+        }
+        
+        function hideQR() {
+            document.getElementById('qrContainer').style.display = 'none';
+        }
+        
+        function startExpiryTimer() {
+            clearInterval(connectionInterval);
+            
+            connectionInterval = setInterval(() => {
+                expiryTimer--;
+                
+                const minutes = Math.floor(expiryTimer / 60);
+                const seconds = expiryTimer % 60;
+                document.getElementById('expiryTimer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (expiryTimer <= 0) {
+                    clearInterval(connectionInterval);
+                    if (!connected) {
+                        hideQR();
+                        alert('QR code expired. Generate a new one.');
+                    }
+                }
+            }, 1000);
+        }
+        
+        function simulateConnection() {
+            connected = true;
+            
+            // Update status
+            const statusDiv = document.getElementById('connectionStatus');
+            statusDiv.className = 'connection-status status-connected';
+            document.getElementById('statusDot').style.background = '#10b981';
+            document.querySelector('#connectionStatus h3').textContent = 'Connected ✓';
+            document.querySelector('#connectionStatus p').textContent = 'Mobile device connected successfully';
+            
+            // Update devices list
+            const deviceList = document.getElementById('deviceList');
+            deviceList.innerHTML = `
+                <div class="device-item">
+                    <i class="fas fa-mobile-alt" style="font-size: 1.5rem; color: #10b981;"></i>
+                    <div style="flex: 1;">
+                        <strong>iPhone 14 Pro</strong>
+                        <div style="color: #94a3b8; font-size: 0.9rem;">Connected • iOS 17.2</div>
+                    </div>
+                    <span class="status-badge status-complete">Active</span>
+                </div>
+                <div class="device-item">
+                    <i class="fas fa-tablet-alt" style="font-size: 1.5rem; color: #6366f1;"></i>
+                    <div style="flex: 1;">
+                        <strong>Samsung Galaxy Tab</strong>
+                        <div style="color: #94a3b8; font-size: 0.9rem;">Connected • Android 14</div>
+                    </div>
+                    <span class="status-badge status-complete">Active</span>
+                </div>
+            `;
+            
+            // Hide QR code
+            hideQR();
+            
+            // Clear expiry timer
+            clearInterval(connectionInterval);
+            
+            // Show success message
+            alert('✅ Mobile device connected successfully!');
+        }
+        
+        function remoteControl(action) {
+            if (!connected) {
+                alert('Please connect a mobile device first!');
+                generateQR();
+                return;
+            }
+            
+            let endpoint, message;
+            
+            switch(action) {
+                case 'record':
+                    endpoint = '/api/mobile/control/record';
+                    message = 'Recording started via mobile control';
+                    break;
+                case 'screenshot':
+                    endpoint = '/api/mobile/control/screenshot';
+                    message = 'Screenshot taken via mobile';
+                    break;
+                case 'organize':
+                    endpoint = '/api/mobile/control/organize';
+                    message = 'File organization started via mobile';
+                    break;
+                case 'ai':
+                    endpoint = '/api/mobile/control/ai';
+                    message = 'AI assistant activated via mobile';
+                    break;
+            }
+            
+            fetch(endpoint, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    alert(`📱 ${message}`);
+                });
+        }
+        
+        function refreshDevices() {
+            fetch('/api/mobile/devices')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.devices && data.devices.length > 0) {
+                        const deviceList = document.getElementById('deviceList');
+                        let html = '';
+                        data.devices.forEach(device => {
+                            html += `
+                                <div class="device-item">
+                                    <i class="fas fa-${device.type === 'ios' ? 'apple' : 'android'}" 
+                                       style="font-size: 1.5rem; color: ${device.connected ? '#10b981' : '#94a3b8'};"></i>
+                                    <div style="flex: 1;">
+                                        <strong>${device.name}</strong>
+                                        <div style="color: #94a3b8; font-size: 0.9rem;">
+                                            ${device.os} • ${device.connected ? 'Connected' : 'Disconnected'}
+                                        </div>
+                                    </div>
+                                    <span class="status-badge ${device.connected ? 'status-complete' : 'status-pending'}">
+                                        ${device.connected ? 'Active' : 'Offline'}
+                                    </span>
+                                </div>
+                            `;
+                        });
+                        deviceList.innerHTML = html;
+                    }
+                });
+        }
+        
+        function downloadApp(platform) {
+            let url;
+            switch(platform) {
+                case 'ios':
+                    url = 'https://apps.apple.com/app/agentic-ai/id1234567890';
+                    break;
+                case 'android':
+                    url = 'https://play.google.com/store/apps/details?id=com.agenticai';
+                    break;
+                case 'web':
+                    url = 'https://mobile.agentic-ai.com';
+                    break;
+            }
+            window.open(url, '_blank');
+        }
+        
+        // Check connection status on load
+        window.onload = function() {
+            fetch('/api/mobile/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.connected) {
+                        connected = true;
+                        document.getElementById('connectionStatus').className = 'connection-status status-connected';
+                        document.getElementById('statusDot').style.background = '#10b981';
+                        document.querySelector('#connectionStatus h3').textContent = 'Connected ✓';
+                        document.querySelector('#connectionStatus p').textContent = data.message || 'Mobile device connected';
+                    }
+                    refreshDevices();
+                });
+        };
+    </script>
+</body>
+</html>

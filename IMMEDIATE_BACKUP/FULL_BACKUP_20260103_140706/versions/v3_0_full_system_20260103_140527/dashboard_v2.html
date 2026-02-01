@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic AI Platform</title>
+    <style>
+        /* Complete dashboard styles with auth system */
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #764ba2;
+            --success: #48bb78;
+            --warning: #ed8936;
+            --danger: #f56565;
+            --dark: #2d3748;
+            --light: #f7fafc;
+            --sidebar-width: 250px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            min-height: 100vh;
+            display: flex;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+        }
+        
+        .logo h1 {
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+        
+        .logo i {
+            font-size: 2em;
+        }
+        
+        .nav-menu {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .nav-item i {
+            font-size: 1.2em;
+            width: 25px;
+            text-align: center;
+        }
+        
+        .user-info {
+            margin-top: auto;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: white;
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .user-details h3 {
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+        
+        .user-details p {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            min-height: 100vh;
+        }
+        
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .page-title h2 {
+            font-size: 1.8em;
+            color: var(--dark);
+        }
+        
+        .page-title p {
+            color: #718096;
+            margin-top: 5px;
+        }
+        
+        .top-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title i {
+            color: var(--primary);
+        }
+        
+        .card-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .badge-success { background: #c6f6d5; color: #22543d; }
+        .badge-warning { background: #feebc8; color: #744210; }
+        .badge-danger { background: #fed7d7; color: #742a2a; }
+        .badge-info { background: #bee3f8; color: #2a4365; }
+        
+        /* Stats Cards */
+        .stat-card {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 15px 0;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-size: 0.9em;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        /* Tables */
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+        
+        .table-header {
+            padding: 20px;
+            background: #f7fafc;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            padding: 15px 20px;
+            text-align: left;
+            background: #f7fafc;
+            color: #4a5568;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        td {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        tr:hover {
+            background: #f7fafc;
+        }
+        
+        /* Status indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        
+        .status-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .status-warning {
+            background: #feebc8;
+            color: #744210;
+        }
+        
+        .status-danger {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        .status-running {
+            background: #bee3f8;
+            color: #2a4365;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        /* Auth Pages */
+        .auth-container {
+            display: flex;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+        
+        .auth-box {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .auth-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--dark);
+        }
+        
+        .auth-title h2 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+        
+        .auth-title p {
+            color: #718096;
+        }
+        
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: #718096;
+        }
+        
+        .auth-switch a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #718096;
+        }
+        
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e2e8f0;
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 70px;
+                padding: 15px 10px;
+            }
+            
+            .logo h1, .nav-item span, .user-details {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+            
+            .logo {
+                justify-content: center;
+                padding: 10px;
+            }
+            
+            .nav-item {
+                justify-content: center;
+                padding: 15px 10px;
+            }
+            
+            .user-info {
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .top-bar {
+                flex-direction: column;
+                gap: 20px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Auth Pages (Initially shown) -->
+    <div id="authContainer" class="auth-container">
+        <div class="auth-box" id="loginForm">
+            <div class="auth-title">
+                <h2><i class="fas fa-robot"></i> Agentic AI</h2>
+                <p>Sign in to your account</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" id="loginUsername" class="form-control" placeholder="Enter username">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="loginPassword" class="form-control" placeholder="Enter password">
+            </div>
+            
+            <button class="btn btn-primary" onclick="login()" style="width: 100%;">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+            
+            <div class="auth-switch">
+                Don't have an account? <a href="#" onclick="showRegister()">Sign up</a>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center; color: #718096; font-size: 0.9em;">
+                <p>Demo Credentials:</p>
+                <p><strong>admin</strong> / admin123</p>
+            </div>
+        </div>
+        
+        <div class="auth-box" id="registerForm" style="display: none;">
+            <div class="auth-title">
+                <h2><i class="fas fa-user-plus"></i> Create Account</h2>
+                <p>Join Agentic AI Platform</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" id="regUsername" class="form-control" placeholder="Choose username">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="regEmail" class="form-control" placeholder="your@email.com">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" id="regFullName" class="form-control" placeholder="Your full name">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="regPassword" class="form-control" placeholder="Create password">
+            </div>
+            
+            <button class="btn btn-primary" onclick="register()" style="width: 100%;">
+                <i class="fas fa-user-plus"></i> Create Account
+            </button>
+            
+            <div class="auth-switch">
+                Already have an account? <a href="#" onclick="showLogin()">Sign in</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Dashboard (Initially hidden) -->
+    <div id="dashboard" style="display: none;">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <h1>Agentic AI</h1>
+            </div>
+            
+            <div class="nav-menu">
+                <a href="#" class="nav-item active" onclick="showSection('dashboard')">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('workflows')">
+                    <i class="fas fa-project-diagram"></i>
+                    <span>Workflows</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('files')">
+                    <i class="fas fa-folder-open"></i>
+                    <span>File Organizer</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('agents')">
+                    <i class="fas fa-robot"></i>
+                    <span>Agents</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('logs')">
+                    <i class="fas fa-history"></i>
+                    <span>Execution Logs</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('api')">
+                    <i class="fas fa-key"></i>
+                    <span>API Keys</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('settings')">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+            
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-details">
+                    <h3 id="userName">Admin User</h3>
+                    <p id="userEmail">admin@agentic.ai</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboardSection" class="dashboard-section">
+                <div class="top-bar">
+                    <div class="page-title">
+                        <h2>Dashboard Overview</h2>
+                        <p>Welcome back, <span id="welcomeName">Admin</span>!</p>
+                    </div>
+                    <div class="top-actions">
+                        <button class="btn btn-outline" onclick="refreshStats()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                        <button class="btn btn-primary" onclick="quickOrganize()">
+                            <i class="fas fa-bolt"></i> Quick Organize
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="cards-grid" id="statsCards">
+                    <!-- Stats will be loaded here -->
+                </div>
+                
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Recent Activity</span>
+                            </div>
+                            <div class="card-badge badge-info">Live</div>
+                        </div>
+                        <div id="recentActivity">
+                            <!-- Recent activity will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-tasks"></i>
+                                <span>Quick Actions</span>
+                            </div>
+                        </div>
+                        <div style="display: grid; gap: 10px;">
+                            <button class="btn btn-outline" onclick="showSection('workflows')">
+                                <i class="fas fa-plus"></i> Create Workflow
+                            </button>
+                            <button class="btn btn-outline" onclick="showSection('files')">
+                                <i class="fas fa-folder-plus"></i> Add File Rule
+                            </button>
+                            <button class="btn btn-outline" onclick="showSection('api')">
+                                <i class="fas fa-key"></i> Generate API Key
+                            </button>
+                            <button class="btn btn-outline" onclick="executeTestAgent()">
+                                <i class="fas fa-bolt"></i> Test Agent
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-clock"></i>
+                            <span>Scheduled Workflows</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="showSection('workflows')">
+                            <i class="fas fa-eye"></i> View All
+                        </button>
+                    </div>
+                    <div id="scheduledWorkflows">
+                        <!-- Scheduled workflows will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Other sections will be loaded dynamically -->
+            <div id="contentSections">
+                <!-- Sections will be loaded here via JavaScript -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div id="organizeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Organize Files</h3>
+                <button class="modal-close" onclick="hideModal('organizeModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Source Directory</label>
+                <input type="text" id="sourcePath" class="form-control" value="C:\Users\user\Desktop" placeholder="Enter source path">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Organization Type</label>
+                <select id="organizationType" class="form-control">
+                    <option value="by_type">By File Type</option>
+                    <option value="by_date">By Date</option>
+                    <option value="by_rules">Using My Rules</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="startOrganization()" style="width: 100%;">
+                <i class="fas fa-play"></i> Start Organization
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // API Configuration
+        const API_BASE = 'http://localhost:8000';
+        let currentUser = null;
+        let authToken = null;
+        
+        // Show/Hide Auth Forms
+        function showLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+        }
+        
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        }
+        
+        // Login function
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                alert('Please enter username and password');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Login failed');
+                }
+                
+                const data = await response.json();
+                authToken = data.access_token;
+                currentUser = data.user;
+                
+                // Store token and user
+                localStorage.setItem('agentic_token', authToken);
+                localStorage.setItem('agentic_user', JSON.stringify(currentUser));
+                
+                // Show dashboard
+                showDashboard();
+                
+            } catch (error) {
+                alert('Login failed. Please check your credentials.');
+                console.error('Login error:', error);
+            }
+        }
+        
+        // Register function
+        async function register() {
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const fullName = document.getElementById('regFullName').value;
+            const password = document.getElementById('regPassword').value;
+            
+            if (!username || !email || !password) {
+                alert('Please fill all required fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        email: email,
+                        full_name: fullName,
+                        password: password
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Registration failed');
+                }
+                
+                alert('Registration successful! Please login.');
+                showLogin();
+                
+            } catch (error) {
+                alert('Registration failed: ' + error.message);
+                console.error('Registration error:', error);
+            }
+        }
+        
+        // Show dashboard
+        function showDashboard() {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'flex';
+            
+            // Update user info
+            document.getElementById('userName').textContent = currentUser.full_name || currentUser.username;
+            document.getElementById('userEmail').textContent = currentUser.email;
+            document.getElementById('welcomeName').textContent = currentUser.username;
+            document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
+            
+            // Load dashboard data
+            loadDashboard();
+        }
+        
+        // Load dashboard data
+        async function loadDashboard() {
+            await loadStats();
+            await loadRecentActivity();
+            await loadScheduledWorkflows();
+        }
+        
+        // Load statistics
+        async function loadStats() {
+            try {
+                const [stats, userStats] = await Promise.all([
+                    fetchWithAuth(`${API_BASE}/api/stats`),
+                    fetchWithAuth(`${API_BASE}/api/users/stats`)
+                ]);
+                
+                const statsCards = document.getElementById('statsCards');
+                statsCards.innerHTML = `
+                    <div class="card stat-card">
+                        <div class="card-title">
+                            <i class="fas fa-users"></i>
+                            <span>Active Users</span>
+                        </div>
+                        <div class="stat-number">${stats.users}</div>
+                        <div class="stat-label">Total registered users</div>
+                    </div>
+                    
+                    <div class="card stat-card">
+                        <div class="card-title">
+                            <i class="fas fa-project-diagram"></i>
+                            <span>My Workflows</span>
+                        </div>
+                        <div class="stat-number">${userStats.workflows}</div>
+                        <div class="stat-label">${userStats.active_workflows} active</div>
+                    </div>
+                    
+                    <div class="card stat-card">
+                        <div class="card-title">
+                            <i class="fas fa-play-circle"></i>
+                            <span>Executions</span>
+                        </div>
+                        <div class="stat-number">${userStats.total_executions}</div>
+                        <div class="stat-label">Total runs</div>
+                    </div>
+                    
+                    <div class="card stat-card">
+                        <div class="card-title">
+                            <i class="fas fa-key"></i>
+                            <span>API Keys</span>
+                        </div>
+                        <div class="stat-number">${userStats.api_keys}</div>
+                        <div class="stat-label">Active keys</div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+        
+        // Load recent activity
+        async function loadRecentActivity() {
+            try {
+                const logs = await fetchWithAuth(`${API_BASE}/api/logs?limit=5`);
+                
+                const activityDiv = document.getElementById('recentActivity');
+                activityDiv.innerHTML = '';
+                
+                logs.forEach(log => {
+                    const time = new Date(log.created_at).toLocaleTimeString();
+                    const statusClass = log.status === 'success' ? 'status-success' :
+                                      log.status === 'failed' ? 'status-danger' : 'status-running';
+                    
+                    activityDiv.innerHTML += `
+                        <div style="padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <strong>${log.task_type}</strong>
+                                <span class="status-indicator ${statusClass}">
+                                    <i class="fas fa-circle" style="font-size: 8px;"></i>
+                                    ${log.status}
+                                </span>
+                            </div>
+                            <div style="color: #718096; font-size: 0.9em; margin-top: 5px;">
+                                ${log.details}
+                            </div>
+                            <div style="color: #a0aec0; font-size: 0.8em; margin-top: 5px;">
+                                ${time}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+            } catch (error) {
+                console.error('Failed to load activity:', error);
+            }
+        }
+        
+        // Load scheduled workflows
+        async function loadScheduledWorkflows() {
+            try {
+                const workflows = await fetchWithAuth(`${API_BASE}/api/workflows?limit=3`);
+                
+                const workflowsDiv = document.getElementById('scheduledWorkflows');
+                workflowsDiv.innerHTML = '';
+                
+                if (workflows.length === 0) {
+                    workflowsDiv.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No workflows yet. Create one to get started!</p>';
+                    return;
+                }
+                
+                workflows.forEach(workflow => {
+                    const status = workflow.is_active ? 'Active' : 'Inactive';
+                    const statusClass = workflow.is_active ? 'badge-success' : 'badge-warning';
+                    
+                    workflowsDiv.innerHTML += `
+                        <div style="padding: 15px; background: #f7fafc; border-radius: 10px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>${workflow.name}</strong>
+                                    <div style="color: #718096; font-size: 0.9em; margin-top: 5px;">
+                                        ${workflow.description || 'No description'}
+                                    </div>
+                                </div>
+                                <span class="card-badge ${statusClass}">${status}</span>
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <button class="btn btn-outline" onclick="executeWorkflow(${workflow.id})" style="padding: 5px 10px; font-size: 0.9em;">
+                                    <i class="fas fa-play"></i> Run Now
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+            } catch (error) {
+                console.error('Failed to load workflows:', error);
+            }
+        }
+        
+        // Show different sections
+        function showSection(section) {
+            // Hide all sections
+            document.getElementById('dashboardSection').style.display = 'none';
+            document.getElementById('contentSections').innerHTML = '';
+            
+            // Update active nav
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.nav-item').classList.add('active');
+            
+            // Load section content
+            switch(section) {
+                case 'dashboard':
+                    document.getElementById('dashboardSection').style.display = 'block';
+                    loadDashboard();
+                    break;
+                case 'workflows':
+                    loadWorkflowsSection();
+                    break;
+                case 'files':
+                    loadFilesSection();
+                    break;
+                case 'agents':
+                    loadAgentsSection();
+                    break;
+                case 'logs':
+                    loadLogsSection();
+                    break;
+                case 'api':
+                    loadApiSection();
+                    break;
+                case 'settings':
+                    loadSettingsSection();
+                    break;
+            }
+        }
+        
+        // Load workflows section
+        async function loadWorkflowsSection() {
+            try {
+                const workflows = await fetchWithAuth(`${API_BASE}/api/workflows`);
+                
+                const section = document.getElementById('contentSections');
+                section.innerHTML = `
+                    <div class="top-bar">
+                        <div class="page-title">
+                            <h2>Workflow Management</h2>
+                            <p>Create and manage automated workflows</p>
+                        </div>
+                        <div class="top-actions">
+                            <button class="btn btn-primary" onclick="showCreateWorkflowModal()">
+                                <i class="fas fa-plus"></i> New Workflow
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>My Workflows (${workflows.length})</h3>
+                            <input type="text" class="form-control" placeholder="Search workflows..." style="width: 200px;">
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Schedule</th>
+                                    <th>Status</th>
+                                    <th>Last Run</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="workflowsTableBody">
+                                <!-- Workflows will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                const tableBody = document.getElementById('workflowsTableBody');
+                workflows.forEach(workflow => {
+                    const lastRun = workflow.last_executed ? 
+                        new Date(workflow.last_executed).toLocaleDateString() : 'Never';
+                    
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td><strong>${workflow.name}</strong></td>
+                            <td>${workflow.description || '-'}</td>
+                            <td>${workflow.schedule || 'Manual'}</td>
+                            <td>
+                                <span class="status-indicator ${workflow.is_active ? 'status-success' : 'status-warning'}">
+                                    ${workflow.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                            </td>
+                            <td>${lastRun}</td>
+                            <td>
+                                <button class="btn btn-outline" onclick="executeWorkflow(${workflow.id})" style="padding: 5px 10px;">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button class="btn btn-outline" onclick="editWorkflow(${workflow.id})" style="padding: 5px 10px;">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+            } catch (error) {
+                console.error('Failed to load workflows:', error);
+            }
+        }
+        
+        // Execute workflow
+        async function executeWorkflow(workflowId) {
+            try {
+                await fetchWithAuth(`${API_BASE}/api/workflows/${workflowId}/execute`, {
+                    method: 'POST'
+                });
+                
+                alert('Workflow execution started! Check the logs for progress.');
+                loadDashboard(); // Refresh dashboard
+                
+            } catch (error) {
+                alert('Failed to execute workflow: ' + error.message);
+            }
+        }
+        
+        // Quick organize
+        function quickOrganize() {
+            document.getElementById('organizeModal').classList.add('active');
+        }
+        
+        // Start organization
+        async function startOrganization() {
+            const sourcePath = document.getElementById('sourcePath').value;
+            const orgType = document.getElementById('organizationType').value;
+            
+            if (!sourcePath) {
+                alert('Please enter a source directory');
+                return;
+            }
+            
+            try {
+                await fetchWithAuth(`${API_BASE}/api/files/organize?source_path=${encodeURIComponent(sourcePath)}&organization_type=${orgType}`, {
+                    method: 'POST'
+                });
+                
+                hideModal('organizeModal');
+                alert('File organization started! Check the logs for progress.');
+                loadDashboard(); // Refresh dashboard
+                
+            } catch (error) {
+                alert('Failed to start organization: ' + error.message);
+            }
+        }
+        
+        // Execute test agent
+        async function executeTestAgent() {
+            try {
+                const agents = await fetchWithAuth(`${API_BASE}/api/agents`);
+                if (agents.length > 0) {
+                    await fetchWithAuth(`${API_BASE}/api/agents/${agents[0].id}/execute`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            parameters: { test: true, timestamp: new Date().toISOString() }
+                        })
+                    });
+                    
+                    alert('Test agent executed! Check the logs for results.');
+                    loadDashboard(); // Refresh dashboard
+                } else {
+                    alert('No agents available');
+                }
+            } catch (error) {
+                alert('Failed to execute agent: ' + error.message);
+            }
+        }
+        
+        // Helper: Fetch with auth
+        async function fetchWithAuth(url, options = {}) {
+            const defaultOptions = {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+            
+            const mergedOptions = { ...defaultOptions, ...options };
+            const response = await fetch(url, mergedOptions);
+            
+            if (!response.ok) {
+                if (response.status === 401) {
+                    // Token expired, logout
+                    logout();
+                }
+                throw new Error(`API error: ${response.status}`);
+            }
+            
+            return await response.json();
+        }
+        
+        // Logout
+        function logout() {
+            localStorage.removeItem('agentic_token');
+            localStorage.removeItem('agentic_user');
+            location.reload();
+        }
+        
+        // Hide modal
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        // Refresh stats
+        function refreshStats() {
+            loadDashboard();
+        }
+        
+        // Check if user is already logged in
+        function checkExistingSession() {
+            const token = localStorage.getItem('agentic_token');
+            const user = localStorage.getItem('agentic_user');
+            
+            if (token && user) {
+                authToken = token;
+                currentUser = JSON.parse(user);
+                showDashboard();
+            }
+        }
+        
+        // Initialize
+        checkExistingSession();
+        
+        // The other section loaders (files, agents, logs, api, settings) would be implemented similarly
+        // For brevity, I've shown the workflows section as an example
+    </script>
+</body>
+</html>
