@@ -1,0 +1,37 @@
+{
+  "Company": "Demo Business",
+  "Date": "2026-02-01",
+  "Total": 494.63,
+  "Entries": [
+    {
+      "vendor": "Amazon",
+      "amount": 129.99,
+      "category": "Electronics",
+      "date": "2024-01-15"
+    },
+    {
+      "vendor": "Starbucks",
+      "amount": 5.75,
+      "category": "Food",
+      "date": "2024-01-15"
+    },
+    {
+      "vendor": "Office Depot",
+      "amount": 45.5,
+      "category": "Office Supplies",
+      "date": "2024-03-10"
+    },
+    {
+      "vendor": "Uber",
+      "amount": 23.4,
+      "category": "Transportation",
+      "date": "2024-02-28"
+    },
+    {
+      "vendor": "Home Depot",
+      "amount": 289.99,
+      "category": "Home Improvement",
+      "date": "2024-03-05"
+    }
+  ]
+}
