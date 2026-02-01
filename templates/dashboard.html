@@ -1,149 +1,72 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agentic AI Platform Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 20px; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .agents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .agent-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .agent-card h3 { color: #667eea; margin-top: 0; }
-        .btn { background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-        .btn:hover { background: #764ba2; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🚀 Agentic AI Platform</h1>
-            <p>Version 5.2.0 - Complete AI Agent Platform with 6 Agents & Marketplace</p>
-            <div>
-                <a href="/api/docs" style="color: white; margin-right: 15px;">API Docs</a>
-                <a href="/api/agents" style="color: white; margin-right: 15px;">Agents</a>
-                <a href="/api/marketplace" style="color: white; margin-right: 15px;">Marketplace</a>
-                <a href="/api/analytics" style="color: white;">Analytics</a>
-            </div>
-        </div>
-        
-        <div class="stats">
-            <div class="stat-card">
-                <h3>Total Agents</h3>
-                <p id="agent-count">Loading...</p>
-            </div>
-            <div class="stat-card">
-                <h3>Tasks Completed</h3>
-                <p id="task-count">Loading...</p>
-            </div>
-            <div class="stat-card">
-                <h3>Marketplace Tasks</h3>
-                <p id="marketplace-count">Loading...</p>
-            </div>
-            <div class="stat-card">
-                <h3>WebSocket</h3>
-                <p id="websocket-status">Connecting...</p>
-            </div>
-        </div>
-        
-        <h2>🤖 AI Agents</h2>
-        <div class="agents-grid" id="agents-list">
-            <!-- Agents will be loaded here -->
-        </div>
-        
-        <h2>📊 Quick Actions</h2>
-        <div>
-            <button class="btn" onclick="testAgent('file_organizer')">Test File Organizer</button>
-            <button class="btn" onclick="testAgent('email_automation')">Test Email Agent</button>
-            <button class="btn" onclick="window.open('/api/health', '_blank')">Health Check</button>
-            <button class="btn" onclick="loadData()">Refresh Data</button>
-        </div>
-    </div>
-    
-    <script>
-        let ws = null;
-        
-        function connectWebSocket() {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/ws`;
-            ws = new WebSocket(wsUrl);
-            
-            ws.onopen = () => {
-                document.getElementById('websocket-status').textContent = 'Connected';
-                ws.send(JSON.stringify({ type: 'dashboard_connect' }));
-            };
-            
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                console.log('WebSocket message:', data);
-            };
-            
-            ws.onclose = () => {
-                document.getElementById('websocket-status').textContent = 'Disconnected';
-                setTimeout(connectWebSocket, 3000);
-            };
-        }
-        
-        async function loadData() {
-            try {
-                // Load agents
-                const agentsRes = await fetch('/api/agents');
-                const agentsData = await agentsRes.json();
-                if (agentsData.status === 'success') {
-                    document.getElementById('agent-count').textContent = agentsData.count;
-                    
-                    const agentsList = document.getElementById('agents-list');
-                    agentsList.innerHTML = agentsData.agents.map(agent => `
-                        <div class="agent-card">
-                            <h3>${agent.name}</h3>
-                            <p>${agent.description}</p>
-                            <p><strong>Type:</strong> ${agent.agent_type}</p>
-                            <p><strong>Status:</strong> <span style="color: green">${agent.status}</span></p>
-                            <button class="btn" onclick="testAgent('${agent.agent_type}')">Test Agent</button>
-                        </div>
-                    `).join('');
-                }
-                
-                // Load analytics
-                const analyticsRes = await fetch('/api/analytics');
-                const analyticsData = await analyticsRes.json();
-                if (analyticsData.status === 'success') {
-                    document.getElementById('task-count').textContent = 
-                        `${analyticsData.analytics.completed_tasks} / ${analyticsData.analytics.total_tasks}`;
-                    document.getElementById('marketplace-count').textContent = 
-                        analyticsData.analytics.marketplace_tasks;
-                }
-                
-            } catch (error) {
-                console.error('Error loading data:', error);
-            }
-        }
-        
-        async function testAgent(agentType) {
-            const task = prompt(`Enter task for ${agentType}:`, `Test ${agentType} task`);
-            if (task) {
-                try {
-                    const res = await fetch(`/api/agents/${agentType}/execute`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ task })
-                    });
-                    const result = await res.json();
-                    alert(`Result: ${result.result || result.message}`);
-                    loadData();
-                } catch (error) {
-                    alert('Error executing agent: ' + error.message);
-                }
-            }
-        }
-        
-        // Initialize
-        connectWebSocket();
-        loadData();
-        setInterval(loadData, 30000); // Refresh every 30 seconds
-    </script>
-</body>
-</html>
+<!DOCTYPE html> 
+<html> 
+<head> 
+  <title>Agentic AI Platform</title> 
+  <style> 
+    body { font-family: Arial, sans-serif; margin: 20px; } 
+    .container { max-width: 1200px; margin: 0 auto; } 
+    .header { background: #667eea; color: white; padding: 20px; border-radius: 10px; } 
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0; } 
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); } 
+  </style> 
+</head> 
+<body> 
+  <div class="container"> 
+    <div class="header"> 
+      <h1>?? Agentic AI Platform</h1> 
+      <p>Version 5.2.0 - All Components Connected</p> 
+    </div> 
+ 
+    <div class="grid"> 
+      <div class="card"> 
+        <h3>?? API Endpoints</h3> 
+        <ul> 
+          <li><a href="/api/health">Health Check</a></li> 
+          <li><a href="/api/agents">AI Agents</a></li> 
+          <li><a href="/api/tasks">Tasks</a></li> 
+          <li><a href="/api/marketplace">Marketplace</a></li> 
+          <li><a href="/api/docs">API Documentation</a></li> 
+        </ul> 
+      </div> 
+ 
+      <div class="card"> 
+        <h3>?? System Status</h3> 
+        <div id="status">Loading...</div> 
+      </div> 
+ 
+      <div class="card"> 
+        <h3>?? AI Agents</h3> 
+        <div id="agents">Loading...</div> 
+      </div> 
+    </div> 
+  </div> 
+ 
+  <script> 
+    async function loadStatus() { 
+      const res = await fetch('/api/status'); 
+      const data = await res.json(); 
+      document.getElementById('status').innerHTML = ` 
+        <p>?? Last check: ${new Date().toLocaleTimeString()}</p> 
+      `; 
+    } 
+ 
+    async function loadAgents() { 
+      const res = await fetch('/api/agents'); 
+      const data = await res.json(); 
+      const agentsHtml = data.agents.map(agent =
+        <div style="margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 5px;"> 
+        </div> 
+      `).join(''); 
+      document.getElementById('agents').innerHTML = agentsHtml; 
+    } 
+ 
+    // Load data on page load 
+    loadStatus(); 
+    loadAgents(); 
+ 
+    // Auto-refresh every 30 seconds 
+    setInterval(loadStatus, 30000); 
+    setInterval(loadAgents, 30000); 
+  </script> 
+</body> 
+</html> 
