@@ -1,0 +1,14 @@
+fastapi==0.104.1
+uvicorn==0.24.0
+websockets==12.0
+pyautogui==0.9.53  # Slightly older, more stable version
+pyscreeze==0.1.29  # Required for pyautogui screenshots
+opencv-python-headless==4.8.1.78  # Lighter version
+pillow==10.1.0
+numpy==1.24.3
+pytesseract==0.3.10
+python-multipart==0.0.6
+jinja2==3.1.2
+aiofiles==23.2.1
+pygetwindow==0.0.9
+pyrect==0.2.0

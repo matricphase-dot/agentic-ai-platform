@@ -1,0 +1,208 @@
+2026-01-26 13:04:12,189 - __main__ - INFO - Created database: main
+2026-01-26 13:04:12,191 - __main__ - INFO - Created database: marketplace
+2026-01-26 13:04:12,193 - __main__ - INFO - Created database: demonstrations
+2026-01-26 13:04:12,195 - __main__ - INFO - Created database: agent_states
+2026-01-26 13:04:14,431 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:04:14,843 - watchfiles.main - INFO - 6 changes detected
+2026-01-26 13:04:15,810 - watchfiles.main - INFO - 3 changes detected
+2026-01-26 13:04:16,218 - watchfiles.main - INFO - 3 changes detected
+2026-01-26 13:06:05,211 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 13:06:07,267 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:06:07,267 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:06:07,628 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:06:07,630 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:40,741 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:40,757 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:41,571 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:41,571 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:44,114 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:44,114 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:44,477 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:44,478 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:52,214 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:52,214 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:52,950 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:52,958 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:55,571 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:55,572 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:55,938 - watchfiles.main - INFO - 1 change detected
+2026-01-26 13:07:55,939 - watchfiles.main - INFO - 1 change detected
+2026-01-26 14:09:16,754 - watchfiles.main - INFO - 1 change detected
+2026-01-26 14:09:16,754 - watchfiles.main - INFO - 1 change detected
+2026-01-26 14:09:18,003 - watchfiles.main - INFO - 1 change detected
+2026-01-26 14:09:21,172 - watchfiles.main - INFO - 1 change detected
+2026-01-26 14:09:21,594 - watchfiles.main - INFO - 1 change detected
+2026-01-26 14:09:21,594 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:22:58,036 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:22:58,040 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:22:58,867 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:22:58,867 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:22:59,587 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:22:59,587 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:12,384 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:12,384 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:12,742 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:13,144 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:13,160 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:29,320 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:23:29,447 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:23:29,706 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:29,835 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:30,288 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:30,417 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:30,799 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:30,907 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:39,707 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:23:39,709 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:23:40,075 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:40,434 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:41,249 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:52,452 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:23:53,116 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:24:14,994 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:24:15,376 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:24:15,376 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:24:15,756 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:24:16,428 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:24:37,887 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:24:37,887 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:24:38,268 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:24:38,268 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:24:38,786 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:24:38,825 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:24:39,258 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:24:39,688 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:24:41,371 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:24:52,666 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:24:52,686 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:24:53,046 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:24:53,059 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:24:53,509 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:25:08,258 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:25:08,259 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:25:16,639 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:25:16,639 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:25:17,609 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:25:29,559 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:25:29,562 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:25:29,932 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:25:30,302 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:25:36,567 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:25:37,058 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:25:51,689 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:25:52,249 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:29:16,666 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:29:16,668 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:29:17,046 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:29:17,426 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:29:17,797 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:29:34,045 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:29:34,415 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:29:34,897 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:29:47,592 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:29:47,954 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:29:47,954 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:29:48,324 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:47:25,835 - watchfiles.main - INFO - 3 changes detected
+2026-01-26 15:47:26,223 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:47:26,223 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:47:26,702 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:47:27,134 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:47:27,449 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:47:27,776 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:47:30,331 - watchfiles.main - INFO - 6 changes detected
+2026-01-26 15:47:30,332 - watchfiles.main - INFO - 6 changes detected
+2026-01-26 15:47:30,693 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:47:30,693 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:47:45,606 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:47:45,607 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:02,385 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:02,385 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:02,835 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:51:03,166 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:51:03,276 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:05,416 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:05,416 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:16,442 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:51:16,442 - watchfiles.main - INFO - 2 changes detected
+2026-01-26 15:51:16,832 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:17,283 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:17,343 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:29,454 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:29,458 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:47,055 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:47,055 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:47,437 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:47,816 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:48,186 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:48,186 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:48,566 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:48,566 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:48,946 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:51:49,327 - watchfiles.main - INFO - 1 change detected
+2026-01-26 15:54:55,760 - watchfiles.main - INFO - 1 change detected
+2026-01-26 16:59:55,523 - __main__ - INFO - Databases initialized successfully
+2026-01-26 16:59:55,683 - main - INFO - Databases initialized successfully
+2026-01-26 16:59:55,703 - main - INFO - Starting Agentic AI Platform...
+2026-01-26 17:16:58,939 - __main__ - INFO - Created database: analytics
+2026-01-26 17:16:58,999 - __main__ - INFO - Databases initialized successfully
+2026-01-26 17:16:59,219 - main - INFO - Databases initialized successfully
+2026-01-26 17:16:59,239 - main - INFO - Starting Agentic AI Platform...
+2026-01-26 17:16:59,259 - main - INFO - Initialized platform metrics
+2026-01-26 17:16:59,259 - main - INFO - Registered 3 built-in agents
+2026-01-26 17:16:59,309 - main - INFO - Shutting down Agentic AI Platform...
+2026-01-26 17:17:43,096 - main - INFO - New WebSocket connection. Total: 1
+2026-01-26 17:18:43,007 - main - INFO - WebSocket disconnected. Total: 0
+2026-01-26 17:18:43,110 - main - INFO - Shutting down Agentic AI Platform...
+2026-01-26 17:19:35,328 - __main__ - INFO - Databases initialized successfully
+2026-01-26 17:19:35,508 - main - INFO - Databases initialized successfully
+2026-01-26 17:19:35,535 - main - INFO - Starting Agentic AI Platform...
+2026-01-26 17:19:35,545 - main - INFO - Registered 3 built-in agents
+2026-01-26 17:19:36,912 - main - INFO - New WebSocket connection. Total: 1
+2026-01-26 17:20:06,037 - __main__ - INFO - Databases initialized successfully
+2026-01-26 17:20:06,183 - main - INFO - Databases initialized successfully
+2026-01-26 17:20:06,203 - main - INFO - Starting Agentic AI Platform...
+2026-01-26 17:20:06,213 - main - INFO - Registered 3 built-in agents
+2026-01-26 17:20:06,233 - main - INFO - Shutting down Agentic AI Platform...
+2026-01-26 17:21:26,658 - __main__ - INFO - Databases initialized successfully
+2026-01-26 17:21:26,798 - main - INFO - Databases initialized successfully
+2026-01-26 17:21:26,828 - main - INFO - Starting Agentic AI Platform...
+2026-01-26 17:21:26,828 - main - INFO - Registered 3 built-in agents
+2026-01-26 17:21:26,858 - main - INFO - Shutting down Agentic AI Platform...
+2026-01-26 17:25:40,268 - __main__ - INFO - Databases initialized successfully
+2026-01-26 17:25:40,408 - main - INFO - Databases initialized successfully
+2026-01-26 17:25:40,428 - main - INFO - Starting Agentic AI Platform...
+2026-01-26 17:25:40,438 - main - INFO - Registered 3 built-in agents
+2026-01-26 17:26:54,342 - main - ERROR - Dashboard error: name 'cursor_main' is not defined
+2026-01-26 17:26:54,731 - main - INFO - New WebSocket connection. Total: 1
+2026-01-26 17:26:58,988 - __main__ - INFO - Databases initialized successfully
+2026-01-26 17:26:59,164 - main - INFO - Databases initialized successfully
+2026-01-26 17:26:59,188 - main - INFO - Starting Agentic AI Platform...
+2026-01-26 17:26:59,191 - main - INFO - Registered 3 built-in agents
+2026-01-26 17:26:59,212 - main - INFO - Shutting down Agentic AI Platform...
+2026-01-26 17:34:20,875 - main - ERROR - Dashboard error: name 'cursor_main' is not defined
+2026-01-26 17:34:21,255 - main - INFO - New WebSocket connection. Total: 2
+2026-01-26 17:56:04,948 - main - INFO - WebSocket disconnected. Total: 1
+2026-01-26 17:56:04,958 - main - INFO - WebSocket disconnected. Total: 0
+2026-01-26 20:33:18,012 - main - INFO - Shutting down Agentic AI Platform...
+2026-01-26 20:35:11,713 - __main__ - INFO - Databases initialized successfully
+2026-01-26 20:35:12,104 - main - INFO - Databases initialized successfully
+2026-01-26 20:35:12,134 - main - INFO - Starting Agentic AI Platform...
+2026-01-26 20:35:12,134 - main - INFO - Registered 3 built-in agents
+2026-01-26 20:35:23,729 - main - ERROR - Dashboard error: name 'cursor_main' is not defined
+2026-01-26 20:35:24,344 - main - INFO - New WebSocket connection. Total: 1
+2026-01-26 20:48:19,937 - main - INFO - New WebSocket connection. Total: 2
+2026-01-26 20:48:20,012 - main - INFO - WebSocket disconnected. Total: 1
+2026-01-26 20:52:41,173 - main - INFO - WebSocket disconnected. Total: 0
+2026-01-26 21:39:58,679 - main - INFO - Shutting down Agentic AI Platform...
+2026-01-26 21:42:59,196 - __main__ - INFO - Databases initialized successfully
+2026-01-26 21:42:59,366 - main - INFO - Databases initialized successfully
+2026-01-26 21:42:59,386 - main - INFO - Starting Agentic AI Platform...
+2026-01-26 21:42:59,396 - main - INFO - Registered 3 built-in agents
+2026-01-26 21:44:33,230 - main - ERROR - Dashboard error: name 'cursor_main' is not defined
+2026-01-28 19:33:37,123 - main - INFO - Starting Agentic AI Platform v5.0.0...
+2026-01-28 19:33:37,612 - main - ERROR - Error loading sample data: (sqlite3.IntegrityError) NOT NULL constraint failed: marketplace_tasks.user_id
+[SQL: INSERT INTO marketplace_tasks (id, user_id, title, description, bounty, status, assigned_to, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('b46a8275-d26f-4185-beb2-1060650b1670', None, 'Clean up email inbox', 'Organize 500+ emails into folders, archive old ones', 250, 'open', None, '2026-01-28 14:03:37.607310', None, '4c478915-4ce3-4d47-979b-e8757a67a4eb', None, 'Data entry from PDF invoices', 'Extract data from 20 PDF invoices into Excel format', 150, 'claimed', None, '2026-01-28 14:03:37.607310', None, 'cb43b5f9-69e1-44ae-af21-cac319b2d066', None, 'Web scraping product data', 'Scrape 100 product listings from e-commerce site', 300, 'open', None, '2026-01-28 14:03:37.607310', None)]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-01-28 20:13:24,591 - main - INFO - Shutting down Agentic AI Platform...

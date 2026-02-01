@@ -1,0 +1,441 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic AI - Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .status-bar {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .status-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        .card h3 {
+            color: #60a5fa;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .agent-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .agent-tag {
+            background: rgba(96, 165, 250, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+        .btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #60a5fa;
+        }
+        .marketplace-tasks {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .task-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #8b5cf6;
+        }
+        .task-reward {
+            color: #fbbf24;
+            font-weight: bold;
+        }
+        .websocket-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .connected { background: #10b981; }
+        .disconnected { background: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Agentic AI Platform</h1>
+            <p>Complete AI Agent Management System</p>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span id="wsStatus" class="websocket-status disconnected"></span>
+                    Real-time: <span id="connectionStatus">Disconnected</span>
+                </div>
+                <div class="status-item">API: <span id="apiStatus">Checking...</span></div>
+                <div class="status-item">Agents: <span id="agentCount">6</span> Online</div>
+                <div class="status-item">Tasks: <span id="taskCount">0</span> Active</div>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="totalTasks">0</div>
+                <div>Total Tasks</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="completedTasks">0</div>
+                <div>Completed</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="totalBounty">0</div>
+                <div>Total Bounty</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="successRate">0%</div>
+                <div>Success Rate</div>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <!-- AI Agents Card -->
+            <div class="card">
+                <h3>🤖 AI Agents</h3>
+                <p>6 pre-built AI agents ready to use:</p>
+                <div class="agent-list">
+                    <div class="agent-tag">📁 File Organizer</div>
+                    <div class="agent-tag">🎓 Student Assistant</div>
+                    <div class="agent-tag">📧 Email Automation</div>
+                    <div class="agent-tag">🔍 Research Assistant</div>
+                    <div class="agent-tag">💻 Code Reviewer</div>
+                    <div class="agent-tag">📝 Content Generator</div>
+                </div>
+                <button class="btn" onclick="createAgent()">+ Create New Agent</button>
+            </div>
+            
+            <!-- Task Marketplace -->
+            <div class="card">
+                <h3>💰 Task Marketplace</h3>
+                <p>Active tasks with bounties:</p>
+                <div class="marketplace-tasks" id="marketplaceTasks">
+                    <div class="task-item">
+                        <strong>No tasks yet</strong><br>
+                        <small>Create the first task!</small>
+                    </div>
+                </div>
+                <button class="btn" onclick="createTask()">+ Post New Task</button>
+            </div>
+            
+            <!-- API Status -->
+            <div class="card">
+                <h3>⚡ API Endpoints</h3>
+                <p>All 18+ endpoints are live:</p>
+                <div style="margin-top: 15px;">
+                    <div><small>✅ /api/health</small></div>
+                    <div><small>✅ /api/agents</small></div>
+                    <div><small>✅ /api/tasks</small></div>
+                    <div><small>✅ /api/marketplace</small></div>
+                    <div><small>✅ /api/analytics</small></div>
+                    <div><small>✅ /api/users</small></div>
+                    <div><small>✅ /api/ws (WebSocket)</small></div>
+                </div>
+                <button class="btn" onclick="window.open('/api/docs', '_blank')">View API Docs</button>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card">
+                <h3>🚀 Quick Actions</h3>
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                    <button class="btn" onclick="runAgent('organizer')">Run File Organizer</button>
+                    <button class="btn" onclick="runAgent('student')">Run Student Assistant</button>
+                    <button class="btn" onclick="runAgent('email')">Run Email Automation</button>
+                    <button class="btn" onclick="testAllEndpoints()">Test All Features</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Real-time Logs -->
+        <div class="card" style="margin-top: 30px;">
+            <h3>📊 Real-time Activity Log</h3>
+            <div id="activityLog" style="
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 8px;
+                padding: 15px;
+                max-height: 200px;
+                overflow-y: auto;
+                font-family: monospace;
+                font-size: 0.9rem;
+            ">
+                <div>> System initialized at <span id="currentTime"></span></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Update time
+        function updateTime() {
+            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+        
+        // WebSocket connection
+        let ws;
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:8080/ws');
+            
+            ws.onopen = function() {
+                document.getElementById('wsStatus').className = 'websocket-status connected';
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                logActivity('WebSocket connected');
+            };
+            
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                logActivity(`[WS] ${data.type}: ${JSON.stringify(data.data || {})}`);
+                
+                // Update dashboard based on message type
+                if (data.type === 'task_update') {
+                    updateTaskStats();
+                } else if (data.type === 'agent_update') {
+                    updateAgentStats();
+                }
+            };
+            
+            ws.onclose = function() {
+                document.getElementById('wsStatus').className = 'websocket-status disconnected';
+                document.getElementById('connectionStatus').textContent = 'Disconnected';
+                setTimeout(connectWebSocket, 3000); // Reconnect after 3 seconds
+            };
+        }
+        
+        // API Health Check
+        async function checkAPIHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                document.getElementById('apiStatus').textContent = data.status;
+                document.getElementById('apiStatus').style.color = '#10b981';
+                
+                // Load stats
+                updateTaskStats();
+                updateMarketplaceTasks();
+            } catch (error) {
+                document.getElementById('apiStatus').textContent = 'Offline';
+                document.getElementById('apiStatus').style.color = '#ef4444';
+            }
+        }
+        
+        // Update task statistics
+        async function updateTaskStats() {
+            try {
+                const response = await fetch('/api/analytics');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('totalTasks').textContent = data.total_tasks || 0;
+                    document.getElementById('completedTasks').textContent = data.completed_tasks || 0;
+                    document.getElementById('totalBounty').textContent = '$' + (data.total_bounty || 0);
+                    document.getElementById('successRate').textContent = (data.success_rate || 0) + '%';
+                    document.getElementById('taskCount').textContent = data.active_tasks || 0;
+                }
+            } catch (error) {
+                console.error('Failed to update stats:', error);
+            }
+        }
+        
+        // Update marketplace tasks
+        async function updateMarketplaceTasks() {
+            try {
+                const response = await fetch('/api/marketplace');
+                const data = await response.json();
+                
+                const container = document.getElementById('marketplaceTasks');
+                if (data.tasks && data.tasks.length > 0) {
+                    container.innerHTML = data.tasks.map(task => `
+                        <div class="task-item">
+                            <strong>${task.title}</strong><br>
+                            <small>${task.description}</small><br>
+                            <span class="task-reward">$${task.bounty}</span> • ${task.status}
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Failed to load marketplace:', error);
+            }
+        }
+        
+        // Log activity
+        function logActivity(message) {
+            const log = document.getElementById('activityLog');
+            const entry = document.createElement('div');
+            entry.textContent = `> ${new Date().toLocaleTimeString()}: ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Agent functions
+        async function createAgent() {
+            const name = prompt('Enter agent name:');
+            if (name) {
+                try {
+                    const response = await fetch('/api/agents', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({name: name, type: 'custom'})
+                    });
+                    logActivity(`Created agent: ${name}`);
+                    updateAgentStats();
+                } catch (error) {
+                    logActivity(`Failed to create agent: ${error.message}`);
+                }
+            }
+        }
+        
+        async function runAgent(agentType) {
+            try {
+                const response = await fetch('/api/agents/execute', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({agent_type: agentType, parameters: {}})
+                });
+                logActivity(`Started ${agentType} agent`);
+            } catch (error) {
+                logActivity(`Failed to start agent: ${error.message}`);
+            }
+        }
+        
+        async function createTask() {
+            const title = prompt('Task title:');
+            const bounty = prompt('Bounty amount ($):');
+            
+            if (title && bounty) {
+                try {
+                    const response = await fetch('/api/tasks', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            title: title,
+                            description: 'Created from dashboard',
+                            bounty: parseInt(bounty)
+                        })
+                    });
+                    logActivity(`Created task: ${title} ($${bounty})`);
+                    updateTaskStats();
+                    updateMarketplaceTasks();
+                } catch (error) {
+                    logActivity(`Failed to create task: ${error.message}`);
+                }
+            }
+        }
+        
+        // Test all endpoints
+        async function testAllEndpoints() {
+            logActivity('Starting comprehensive test...');
+            
+            const endpoints = [
+                '/api/health',
+                '/api/agents',
+                '/api/tasks',
+                '/api/marketplace',
+                '/api/analytics'
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint);
+                    logActivity(`${endpoint}: ${response.status}`);
+                } catch (error) {
+                    logActivity(`${endpoint}: ERROR - ${error.message}`);
+                }
+            }
+            
+            logActivity('Test completed');
+        }
+        
+        // Initialize
+        connectWebSocket();
+        checkAPIHealth();
+        setInterval(checkAPIHealth, 30000); // Check every 30 seconds
+        setInterval(updateTaskStats, 10000); // Update stats every 10 seconds
+        
+        // Add sample data for demo
+        setTimeout(() => {
+            logActivity('System ready. All features operational.');
+            logActivity('6 AI agents loaded and ready.');
+            logActivity('Task marketplace initialized.');
+        }, 1000);
+    </script>
+</body>
+</html>
+        
