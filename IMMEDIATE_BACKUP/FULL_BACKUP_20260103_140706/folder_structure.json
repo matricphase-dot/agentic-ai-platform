@@ -1,0 +1,70 @@
+{
+  "Documents": {
+    "Work": [
+      "Projects",
+      "Reports",
+      "Meetings"
+    ],
+    "Personal": [
+      "Finance",
+      "Health",
+      "Education"
+    ],
+    "Archives": [
+      "2023",
+      "2024",
+      "2025"
+    ]
+  },
+  "Media": {
+    "Images": [
+      "Screenshots",
+      "Photos",
+      "Wallpapers"
+    ],
+    "Videos": [
+      "Recordings",
+      "Tutorials",
+      "Movies"
+    ],
+    "Audio": [
+      "Music",
+      "Recordings",
+      "Podcasts"
+    ]
+  },
+  "Development": {
+    "Python": [
+      "Projects",
+      "Scripts",
+      "Libraries"
+    ],
+    "Web": [
+      "HTML_CSS",
+      "JavaScript",
+      "React"
+    ],
+    "Data": [
+      "Datasets",
+      "Analysis",
+      "Visualizations"
+    ]
+  },
+  "System": {
+    "Backups": [
+      "Daily",
+      "Weekly",
+      "Monthly"
+    ],
+    "Config": [
+      "Settings",
+      "Profiles",
+      "Templates"
+    ],
+    "Logs": [
+      "App_Logs",
+      "System_Logs",
+      "Error_Logs"
+    ]
+  }
+}

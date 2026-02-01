@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Agentic AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .profile-header {
+            text-align: center;
+            padding: 40px 0;
+        }
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .tab-container {
+            margin: 30px 0;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 15px 25px;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            color: #6366f1;
+            border-bottom-color: #6366f1;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .achievement-card {
+            background: rgba(30, 41, 59, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .achievement-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .edit-profile-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link"><i class="fas fa-arrow-left"></i> Dashboard</a>
+                <a href="/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+                <a href="/help" class="nav-link"><i class="fas fa-question-circle"></i> Help</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="avatar" id="userAvatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h1 id="userName">Agentic AI User</h1>
+            <p class="subtitle" id="userEmail">user@agentic-ai.com</p>
+            <div style="margin-top: 20px;">
+                <span class="status-badge status-complete">Pro Member</span>
+                <span class="status-badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;">AI Power User</span>
+                <span class="status-badge" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6;">Beta Tester</span>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+            <div style="text-align: center; padding: 20px; background: rgba(99, 102, 241, 0.1); border-radius: 10px;">
+                <div style="font-size: 2rem; font-weight: bold; color: #6366f1;" id="totalHours">148</div>
+                <div style="color: #94a3b8;">Hours Saved</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: rgba(16, 185, 129, 0.1); border-radius: 10px;">
+                <div style="font-size: 2rem; font-weight: bold; color: #10b981;" id="filesCount">1,847</div>
+                <div style="color: #94a3b8;">Files Processed</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: rgba(245, 158, 11, 0.1); border-radius: 10px;">
+                <div style="font-size: 2rem; font-weight: bold; color: #f59e0b;" id="automationCount">56</div>
+                <div style="color: #94a3b8;">Automations</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: rgba(236, 72, 153, 0.1); border-radius: 10px;">
+                <div style="font-size: 2rem; font-weight: bold; color: #ec4899;" id="daysActive">42</div>
+                <div style="color: #94a3b8;">Days Active</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-container">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('overview')">Overview</button>
+                <button class="tab" onclick="switchTab('activity')">Activity</button>
+                <button class="tab" onclick="switchTab('achievements')">Achievements</button>
+                <button class="tab" onclick="switchTab('edit')">Edit Profile</button>
+                <button class="tab" onclick="switchTab('subscription')">Subscription</button>
+            </div>
+
+            <!-- Overview Tab -->
+            <div id="overviewTab" class="tab-content active">
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <!-- Recent Activity -->
+                    <div class="card">
+                        <h3><i class="fas fa-history"></i> Recent Activity</h3>
+                        <div id="recentActivity">
+                            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <i class="fas fa-video" style="color: #ef4444;"></i>
+                                    <div>
+                                        <strong>Screen recording completed</strong>
+                                        <div style="color: #94a3b8; font-size: 0.9rem;">2 minutes ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <i class="fas fa-folder-tree" style="color: #10b981;"></i>
+                                    <div>
+                                        <strong>Files organized automatically</strong>
+                                        <div style="color: #94a3b8; font-size: 0.9rem;">15 minutes ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="padding: 10px 0;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <i class="fas fa-brain" style="color: #8b5cf6;"></i>
+                                    <div>
+                                        <strong>AI automation created</strong>
+                                        <div style="color: #94a3b8; font-size: 0.9rem;">1 hour ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Usage Statistics -->
+                    <div class="card">
+                        <h3><i class="fas fa-chart-pie"></i> Usage Statistics</h3>
+                        <div style="margin: 20px 0;">
+                            <div style="margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>Desktop Recorder</span>
+                                    <span>35%</span>
+                                </div>
+                                <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                                    <div style="width: 35%; height: 100%; background: #ef4444;"></div>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>File Organizer</span>
+                                    <span>28%</span>
+                                </div>
+                                <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                                    <div style="width: 28%; height: 100%; background: #10b981;"></div>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>AI Automation</span>
+                                    <span>22%</span>
+                                </div>
+                                <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                                    <div style="width: 22%; height: 100%; background: #8b5cf6;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>Other Features</span>
+                                    <span>15%</span>
+                                </div>
+                                <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                                    <div style="width: 15%; height: 100%; background: #f59e0b;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Insights -->
+                <div class="card" style="margin-top: 20px;">
+                    <h3><i class="fas fa-lightbulb"></i> AI Insights</h3>
+                    <div style="padding: 20px; background: rgba(99, 102, 241, 0.1); border-radius: 10px; margin-top: 15px;">
+                        <div style="display: flex; align-items: start; gap: 15px;">
+                            <i class="fas fa-robot" style="font-size: 24px; color: #6366f1;"></i>
+                            <div>
+                                <strong>🤖 AI Assistant Suggestion:</strong>
+                                <p style="margin: 10px 0 0 0; color: #94a3b8;">
+                                    Based on your usage patterns, I recommend creating an automation to backup your work files every Friday at 5 PM. This would save you approximately 2 hours per month.
+                                </p>
+                                <button class="btn btn-small" onclick="createSuggestedAutomation()" style="margin-top: 10px;">
+                                    <i class="fas fa-plus"></i> Create This Automation
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Tab -->
+            <div id="activityTab" class="tab-content">
+                <div class="card">
+                    <h3><i class="fas fa-list-alt"></i> Detailed Activity Log</h3>
+                    <div id="detailedActivity" style="margin-top: 20px;">
+                        <!-- Activity log will be loaded here -->
+                    </div>
+                    <button class="btn" onclick="loadMoreActivity()" style="margin-top: 15px;">
+                        <i class="fas fa-sync"></i> Load More Activity
+                    </button>
+                </div>
+            </div>
+
+            <!-- Achievements Tab -->
+            <div id="achievementsTab" class="tab-content">
+                <div class="achievement-grid">
+                    <div class="achievement-card">
+                        <div class="achievement-icon" style="color: #f59e0b;">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h4>First Automation</h4>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">Created your first automation</p>
+                        <span class="status-badge status-complete">Earned</span>
+                    </div>
+                    
+                    <div class="achievement-card">
+                        <div class="achievement-icon" style="color: #6366f1;">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <h4>Screen Master</h4>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">Recorded 10+ hours of footage</p>
+                        <span class="status-badge status-complete">Earned</span>
+                    </div>
+                    
+                    <div class="achievement-card">
+                        <div class="achievement-icon" style="color: #10b981;">
+                            <i class="fas fa-folder-tree"></i>
+                        </div>
+                        <h4>Organizer Pro</h4>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">Organized 1000+ files</p>
+                        <span class="status-badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;">In Progress</span>
+                    </div>
+                    
+                    <div class="achievement-card">
+                        <div class="achievement-icon" style="color: #8b5cf6;">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h4>AI Expert</h4>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">Used AI features 50+ times</p>
+                        <span class="status-badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;">In Progress</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Profile Tab -->
+            <div id="editTab" class="tab-content">
+                <div class="edit-profile-form">
+                    <div class="form-group">
+                        <label class="form-label">Display Name</label>
+                        <input type="text" class="form-input" id="editName" value="Agentic AI User">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" class="form-input" id="editEmail" value="user@agentic-ai.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Avatar</label>
+                        <div style="display: flex; gap: 15px; align-items: center;">
+                            <div class="avatar" id="editAvatar" style="width: 80px; height: 80px; font-size: 32px;">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div>
+                                <button class="btn btn-small" onclick="changeAvatar()">
+                                    <i class="fas fa-image"></i> Change Avatar
+                                </button>
+                                <button class="btn btn-small" onclick="useGravatar()">
+                                    <i class="fas fa-user-circle"></i> Use Gravatar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Bio</label>
+                        <textarea class="form-input" id="editBio" rows="4" placeholder="Tell us about yourself...">AI enthusiast and automation expert. Love building intelligent workflows that save time.</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Timezone</label>
+                        <select class="form-select" id="editTimezone">
+                            <option value="UTC-5" selected>Eastern Time (UTC-5)</option>
+                            <option value="UTC-8">Pacific Time (UTC-8)</option>
+                            <option value="UTC+0">GMT (UTC+0)</option>
+                            <option value="UTC+1">Central European Time (UTC+1)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-item" style="margin: 20px 0;">
+                        <div>
+                            <strong>Email Notifications</strong>
+                            <div style="color: #94a3b8; font-size: 0.9rem;">Receive email updates about your account</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="emailNotifications" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item" style="margin: 20px 0;">
+                        <div>
+                            <strong>Newsletter</strong>
+                            <div style="color: #94a3b8; font-size: 0.9rem;">Receive platform updates and tips</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="newsletter" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <button class="btn" onclick="saveProfile()" style="width: 100%;">
+                        <i class="fas fa-save"></i> Save Profile Changes
+                    </button>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <h3>Account Security</h3>
+                        <button class="btn" onclick="changePassword()" style="margin-top: 10px;">
+                            <i class="fas fa-key"></i> Change Password
+                        </button>
+                        <button class="btn" onclick="enable2FA()" style="margin-top: 10px; margin-left: 10px;">
+                            <i class="fas fa-shield-alt"></i> Enable 2FA
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscription Tab -->
+            <div id="subscriptionTab" class="tab-content">
+                <div class="card">
+                    <h3><i class="fas fa-crown"></i> Your Subscription</h3>
+                    <div style="padding: 30px; text-align: center;">
+                        <div style="font-size: 3rem; color: #f59e0b; margin-bottom: 20px;">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <h2>Pro Plan</h2>
+                        <p style="color: #94a3b8; margin: 15px 0;">All features unlocked • Priority support • Advanced AI models</p>
+                        
+                        <div style="background: rgba(245, 158, 11, 0.1); padding: 20px; border-radius: 10px; margin: 25px 0;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #f59e0b;">$29<span style="font-size: 1rem; color: #94a3b8;">/month</span></div>
+                            <div style="color: #94a3b8; margin-top: 10px;">Next billing date: Jan 15, 2024</div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                            <button class="btn" style="background: #f59e0b;">
+                                <i class="fas fa-sync"></i> Update Payment
+                            </button>
+                            <button class="btn" onclick="cancelSubscription()" style="background: rgba(255,255,255,0.1);">
+                                <i class="fas fa-times"></i> Cancel Subscription
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px;">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h4>Unlimited Automations</h4>
+                        <p>Create as many automations as you need</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h4>Advanced AI Models</h4>
+                        <p>Access to premium AI models</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h4>Priority Support</h4>
+                        <p>24/7 priority customer support</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show active content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            // Load data if needed
+            if (tabName === 'activity') {
+                loadActivity();
+            }
+        }
+        
+        function loadActivity() {
+            fetch('/api/profile/activity')
+                .then(response => response.json())
+                .then(data => {
+                    const activityDiv = document.getElementById('detailedActivity');
+                    if (data.activities && data.activities.length > 0) {
+                        let html = '';
+                        data.activities.forEach(activity => {
+                            html += `
+                                <div style="padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <strong>${activity.action}</strong>
+                                            <div style="color: #94a3b8; font-size: 0.9rem;">${activity.details}</div>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div style="color: #94a3b8; font-size: 0.9rem;">${activity.time}</div>
+                                            <div style="color: #6366f1; font-size: 0.8rem;">${activity.duration}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        activityDiv.innerHTML = html;
+                    }
+                });
+        }
+        
+        function loadMoreActivity() {
+            // Simulate loading more activities
+            const activityDiv = document.getElementById('detailedActivity');
+            const moreActivity = `
+                <div style="padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>File backup completed</strong>
+                            <div style="color: #94a3b8; font-size: 0.9rem;">Yesterday • 245 files backed up</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="color: #94a3b8; font-size: 0.9rem;">2 days ago</div>
+                            <div style="color: #6366f1; font-size: 0.8rem;">15 min</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            activityDiv.innerHTML += moreActivity;
+        }
+        
+        function createSuggestedAutomation() {
+            fetch('/api/ai/create-automation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'backup',
+                    name: 'Weekly Work Backup',
+                    description: 'Backup work files every Friday at 5 PM'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('✅ Weekly backup automation created!');
+                switchTab('overview');
+            });
+        }
+        
+        function changeAvatar() {
+            const avatar = prompt('Enter avatar URL or emoji:');
+            if (avatar) {
+                const avatarDiv = document.getElementById('editAvatar');
+                if (avatar.startsWith('http')) {
+                    avatarDiv.innerHTML = `<img src="${avatar}" style="width: 100%; height: 100%; border-radius: 50%;">`;
+                } else {
+                    avatarDiv.innerHTML = avatar;
+                }
+            }
+        }
+        
+        function useGravatar() {
+            const email = document.getElementById('editEmail').value;
+            const hash = md5(email.trim().toLowerCase());
+            const avatarDiv = document.getElementById('editAvatar');
+            avatarDiv.innerHTML = `<img src="https://www.gravatar.com/avatar/${hash}?s=80&d=retro" style="width: 100%; height: 100%; border-radius: 50%;">`;
+        }
+        
+        function saveProfile() {
+            const profileData = {
+                name: document.getElementById('editName').value,
+                email: document.getElementById('editEmail').value,
+                bio: document.getElementById('editBio').value,
+                timezone: document.getElementById('editTimezone').value,
+                emailNotifications: document.getElementById('emailNotifications').checked,
+                newsletter: document.getElementById('newsletter').checked
+            };
+            
+            fetch('/api/profile/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(profileData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('✅ Profile updated successfully!');
+                
+                // Update display
+                document.getElementById('userName').textContent = profileData.name;
+                document.getElementById('userEmail').textContent = profileData.email;
+            });
+        }
+        
+        function changePassword() {
+            const current = prompt('Enter current password:');
+            if (current) {
+                const newPass = prompt('Enter new password:');
+                const confirmPass = prompt('Confirm new password:');
+                
+                if (newPass && newPass === confirmPass) {
+                    fetch('/api/profile/change-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            current: current,
+                            new: newPass
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert('✅ Password changed successfully!');
+                    });
+                } else {
+                    alert('Passwords do not match!');
+                }
+            }
+        }
+        
+        function enable2FA() {
+            alert('Two-factor authentication setup would open here.
+You would scan a QR code with your authenticator app.');
+        }
+        
+        function cancelSubscription() {
+            if (confirm('Are you sure you want to cancel your subscription?')) {
+                alert('Subscription cancellation process would start here.
+You would be downgraded to the free plan at the end of your billing period.');
+            }
+        }
+        
+        // Load profile data on page load
+        window.onload = function() {
+            fetch('/api/profile')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.name) {
+                        document.getElementById('userName').textContent = data.name;
+                        document.getElementById('editName').value = data.name;
+                    }
+                    if (data.email) {
+                        document.getElementById('userEmail').textContent = data.email;
+                        document.getElementById('editEmail').value = data.email;
+                    }
+                    if (data.bio) {
+                        document.getElementById('editBio').value = data.bio;
+                    }
+                    if (data.totalHours) {
+                        document.getElementById('totalHours').textContent = data.totalHours;
+                    }
+                    if (data.filesCount) {
+                        document.getElementById('filesCount').textContent = data.filesCount;
+                    }
+                    if (data.automationCount) {
+                        document.getElementById('automationCount').textContent = data.automationCount;
+                    }
+                    if (data.daysActive) {
+                        document.getElementById('daysActive').textContent = data.daysActive;
+                    }
+                });
+        };
+    </script>
+</body>
+</html>

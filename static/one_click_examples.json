@@ -1,0 +1,84 @@
+{
+  "examples": [
+    {
+      "name": "Organize Downloads Folder",
+      "description": "Sort files by type, date, and size automatically",
+      "icon": "📁",
+      "category": "file_management",
+      "difficulty": "Beginner",
+      "time_saved": "2 hours/week",
+      "code": "python organize_downloads.py",
+      "tags": ["file", "organize", "automatic"]
+    },
+    {
+      "name": "Auto Screenshot & Archive",
+      "description": "Take screenshots every hour and organize them",
+      "icon": "📸",
+      "category": "productivity",
+      "difficulty": "Intermediate",
+      "time_saved": "1 hour/week",
+      "code": "python screenshot_automation.py",
+      "tags": ["screenshot", "automation", "archive"]
+    },
+    {
+      "name": "Browser Automation Starter",
+      "description": "Auto-login, form filling, data extraction",
+      "icon": "🌐",
+      "category": "web_automation",
+      "difficulty": "Advanced",
+      "time_saved": "5 hours/week",
+      "code": "python browser_automation.py",
+      "tags": ["browser", "automation", "web"]
+    },
+    {
+      "name": "Daily File Backup",
+      "description": "Backup important files to cloud automatically",
+      "icon": "💾",
+      "category": "backup",
+      "difficulty": "Beginner",
+      "time_saved": "Prevents data loss",
+      "code": "python backup_automation.py",
+      "tags": ["backup", "cloud", "safety"]
+    },
+    {
+      "name": "Email Auto-Responder",
+      "description": "Automatically respond to common emails",
+      "icon": "📧",
+      "category": "email",
+      "difficulty": "Intermediate",
+      "time_saved": "3 hours/week",
+      "code": "python email_responder.py",
+      "tags": ["email", "automation", "response"]
+    },
+    {
+      "name": "Social Media Poster",
+      "description": "Schedule and post to multiple platforms",
+      "icon": "📱",
+      "category": "social_media",
+      "difficulty": "Advanced",
+      "time_saved": "4 hours/week",
+      "code": "python social_media.py",
+      "tags": ["social media", "scheduling", "marketing"]
+    },
+    {
+      "name": "Data Scraper",
+      "description": "Collect data from websites automatically",
+      "icon": "🔍",
+      "category": "data",
+      "difficulty": "Intermediate",
+      "time_saved": "6 hours/week",
+      "code": "python data_scraper.py",
+      "tags": ["data", "scraping", "research"]
+    },
+    {
+      "name": "Report Generator",
+      "description": "Generate and email reports on schedule",
+      "icon": "📊",
+      "category": "reporting",
+      "difficulty": "Advanced",
+      "time_saved": "8 hours/week",
+      "code": "python report_generator.py",
+      "tags": ["report", "automation", "email"]
+    }
+  ]
+}

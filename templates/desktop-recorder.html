@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desktop Recorder - Agentic AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .recorder-controls {
+            display: flex;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .control-btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
+            background: rgba(30, 41, 59, 0.9);
+            border: 2px solid;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .control-btn:hover {
+            transform: translateY(-5px);
+        }
+        .record-btn { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .record-btn:hover { background: rgba(239, 68, 68, 0.2); }
+        .screenshot-btn { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .screenshot-btn:hover { background: rgba(16, 185, 129, 0.2); }
+        .settings-btn { border-color: #6366f1; background: rgba(99, 102, 241, 0.1); }
+        .settings-btn:hover { background: rgba(99, 102, 241, 0.2); }
+        .recording-status {
+            padding: 20px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 12px;
+            margin: 20px 0;
+            display: none;
+        }
+        .recording-active {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .hotkey-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .hotkey-item {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #6366f1;
+        }
+        .preview-area {
+            background: #1e293b;
+            border: 2px dashed #6366f1;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin: 30px 0;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-desktop"></i>
+                <span>Desktop Recorder</span>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+                <a href="/file-organizer" class="nav-link"><i class="fas fa-folder-tree"></i> File Organizer</a>
+                <a href="/ai-automation" class="nav-link"><i class="fas fa-brain"></i> AI Automation</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-video"></i> Screen Recorder & Capture</h1>
+            <p class="subtitle">Record your screen with AI-powered features • Hotkey: F10</p>
+        </div>
+
+        <!-- Recording Status -->
+        <div id="recordingStatus" class="recording-status">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 50%; animation: pulse 1s infinite;"></div>
+                <div>
+                    <h3 style="margin: 0;">🎥 Recording Active</h3>
+                    <p style="margin: 5px 0 0 0; color: #94a3b8;">Press F10 to stop recording • Duration: <span id="recordingTime">00:00</span></p>
+                </div>
+                <button class="btn" onclick="stopRecording()" style="margin-left: auto; background: #ef4444;">
+                    <i class="fas fa-stop"></i> Stop Recording
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Controls -->
+        <div class="recorder-controls">
+            <button class="control-btn record-btn" onclick="toggleRecording()">
+                <i class="fas fa-circle" style="font-size: 2rem;"></i>
+                <span>Start Recording</span>
+                <small>Hotkey: F10</small>
+            </button>
+            
+            <button class="control-btn screenshot-btn" onclick="takeScreenshot()">
+                <i class="fas fa-camera" style="font-size: 2rem;"></i>
+                <span>Take Screenshot</span>
+                <small>Hotkey: F9</small>
+            </button>
+            
+            <button class="control-btn settings-btn" onclick="openSettings()">
+                <i class="fas fa-cog" style="font-size: 2rem;"></i>
+                <span>Recording Settings</span>
+                <small>Quality & Format</small>
+            </button>
+        </div>
+
+        <!-- Preview Area -->
+        <div class="preview-area" id="previewArea">
+            <div>
+                <i class="fas fa-video" style="font-size: 48px; color: #6366f1; margin-bottom: 20px;"></i>
+                <h3>Recording Preview</h3>
+                <p>Start recording to see preview here</p>
+            </div>
+        </div>
+
+        <!-- Recording Settings -->
+        <div class="card">
+            <h2><i class="fas fa-sliders-h"></i> Recording Settings</h2>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                <div>
+                    <label>Quality</label>
+                    <select id="qualitySelect" class="form-select">
+                        <option value="high">High (1080p)</option>
+                        <option value="medium" selected>Medium (720p)</option>
+                        <option value="low">Low (480p)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Frame Rate</label>
+                    <select id="fpsSelect" class="form-select">
+                        <option value="60">60 FPS</option>
+                        <option value="30" selected>30 FPS</option>
+                        <option value="24">24 FPS</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Audio</label>
+                    <div>
+                        <input type="checkbox" id="systemAudio" checked> System Audio
+                        <input type="checkbox" id="microphoneAudio"> Microphone
+                    </div>
+                </div>
+                <div>
+                    <label>Format</label>
+                    <select id="formatSelect" class="form-select">
+                        <option value="mp4" selected>MP4</option>
+                        <option value="webm">WebM</option>
+                        <option value="avi">AVI</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn" onclick="saveSettings()" style="margin-top: 20px;">
+                <i class="fas fa-save"></i> Save Settings
+            </button>
+        </div>
+
+        <!-- Hotkeys -->
+        <div class="card">
+            <h2><i class="fas fa-keyboard"></i> Available Hotkeys</h2>
+            <div class="hotkey-list">
+                <div class="hotkey-item">
+                    <strong>F10</strong>
+                    <p>Start/Stop recording</p>
+                </div>
+                <div class="hotkey-item">
+                    <strong>F9</strong>
+                    <p>Take screenshot</p>
+                </div>
+                <div class="hotkey-item">
+                    <strong>Ctrl+Shift+R</strong>
+                    <p>Toggle recording</p>
+                </div>
+                <div class="hotkey-item">
+                    <strong>Ctrl+Shift+S</strong>
+                    <p>Quick screenshot</p>
+                </div>
+                <div class="hotkey-item">
+                    <strong>Ctrl+Shift+P</strong>
+                    <p>Pause/resume recording</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Recordings -->
+        <div class="card">
+            <h2><i class="fas fa-history"></i> Recent Recordings</h2>
+            <div id="recordingsList">
+                <p>No recordings yet. Start your first recording!</p>
+            </div>
+            <button class="btn" onclick="loadRecordings()" style="margin-top: 15px;">
+                <i class="fas fa-sync"></i> Refresh List
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let recording = false;
+        let recordingStart = null;
+        let timerInterval = null;
+        
+        function toggleRecording() {
+            if (recording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+        
+        function startRecording() {
+            fetch('/api/desktop/start-recording', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    recording = true;
+                    recordingStart = new Date();
+                    document.getElementById('recordingStatus').classList.add('recording-active');
+                    document.querySelector('.record-btn i').className = 'fas fa-stop';
+                    document.querySelector('.record-btn span').textContent = 'Stop Recording';
+                    
+                    // Start timer
+                    timerInterval = setInterval(updateRecordingTime, 1000);
+                    
+                    // Update preview
+                    document.getElementById('previewArea').innerHTML = `
+                        <div style="text-align: center;">
+                            <div style="width: 100px; height: 100px; background: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                <i class="fas fa-video" style="font-size: 40px; color: white;"></i>
+                            </div>
+                            <h3>🎥 Recording Live</h3>
+                            <p>Screen recording is active</p>
+                            <p><strong>Duration:</strong> <span id="liveTimer">00:00</span></p>
+                        </div>
+                    `;
+                });
+        }
+        
+        function stopRecording() {
+            fetch('/api/desktop/stop-recording', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    recording = false;
+                    document.getElementById('recordingStatus').classList.remove('recording-active');
+                    document.querySelector('.record-btn i').className = 'fas fa-circle';
+                    document.querySelector('.record-btn span').textContent = 'Start Recording';
+                    
+                    clearInterval(timerInterval);
+                    loadRecordings();
+                    
+                    // Reset preview
+                    document.getElementById('previewArea').innerHTML = `
+                        <div>
+                            <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981; margin-bottom: 20px;"></i>
+                            <h3>Recording Saved!</h3>
+                            <p>Recording has been saved to your recordings folder</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        function takeScreenshot() {
+            fetch('/api/desktop/screenshot', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    alert('📸 Screenshot saved successfully!');
+                    
+                    // Show preview
+                    document.getElementById('previewArea').innerHTML = `
+                        <div style="text-align: center;">
+                            <i class="fas fa-camera" style="font-size: 48px; color: #10b981; margin-bottom: 20px;"></i>
+                            <h3>Screenshot Captured</h3>
+                            <p>Check your screenshots folder</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        function updateRecordingTime() {
+            if (!recordingStart) return;
+            
+            const now = new Date();
+            const diff = Math.floor((now - recordingStart) / 1000);
+            const minutes = Math.floor(diff / 60).toString().padStart(2, '0');
+            const seconds = (diff % 60).toString().padStart(2, '0');
+            
+            document.getElementById('recordingTime').textContent = `${minutes}:${seconds}`;
+            
+            const liveTimer = document.getElementById('liveTimer');
+            if (liveTimer) {
+                liveTimer.textContent = `${minutes}:${seconds}`;
+            }
+        }
+        
+        function loadRecordings() {
+            fetch('/api/desktop/recordings')
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById('recordingsList');
+                    if (data.recordings && data.recordings.length > 0) {
+                        let html = '<div style="display: grid; gap: 10px;">';
+                        data.recordings.forEach(rec => {
+                            html += `
+                                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <strong>${rec.name}</strong>
+                                            <div style="color: #94a3b8; font-size: 0.9rem;">
+                                                ${rec.date} • ${rec.duration} • ${rec.size}
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-small" onclick="playRecording('${rec.id}')">
+                                            <i class="fas fa-play"></i> Play
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                        list.innerHTML = html;
+                    } else {
+                        list.innerHTML = '<p>No recordings yet. Start your first recording!</p>';
+                    }
+                });
+        }
+        
+        function saveSettings() {
+            const settings = {
+                quality: document.getElementById('qualitySelect').value,
+                fps: document.getElementById('fpsSelect').value,
+                systemAudio: document.getElementById('systemAudio').checked,
+                microphoneAudio: document.getElementById('microphoneAudio').checked,
+                format: document.getElementById('formatSelect').value
+            };
+            
+            fetch('/api/desktop/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Settings saved successfully!');
+            });
+        }
+        
+        function openSettings() {
+            document.querySelector('.card h2').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Listen for F10 key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F10' || e.code === 'F10') {
+                e.preventDefault();
+                toggleRecording();
+            }
+            if (e.key === 'F9' || e.code === 'F9') {
+                e.preventDefault();
+                takeScreenshot();
+            }
+        });
+        
+        // Load recordings on page load
+        window.onload = loadRecordings;
+    </script>
+</body>
+</html>

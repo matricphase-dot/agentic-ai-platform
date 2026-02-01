@@ -1,0 +1,59 @@
+# launch_desktop.py - One-click desktop recorder launcher
+import subprocess
+import sys
+import os
+from pathlib import Path
+
+def launch_desktop_recorder():
+    """Launch the desktop recorder from D:\agentic-core\"""
+    print("🚀 Agentic AI Desktop Launcher")
+    print("="*50)
+    
+    # Check if desktop recorder exists
+    recorder_path = Path("D:/agentic-core/desktop_recorder.py")
+    
+    if not recorder_path.exists():
+        print(f"❌ Desktop recorder not found at: {recorder_path}")
+        print("\n💡 Please ensure:")
+        print("1. Your desktop recorder is at D:\\agentic-core\\")
+        print("2. The file is named 'desktop_recorder.py'")
+        return False
+    
+    print(f"✅ Found desktop recorder: {recorder_path}")
+    
+    # Check dependencies
+    try:
+        import pynput
+        import PIL
+        print("✅ Dependencies are installed")
+    except ImportError as e:
+        print(f"❌ Missing dependency: {e}")
+        print("\nInstalling dependencies...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pynput", "pillow"])
+    
+    # Launch the recorder
+    print("\n🎬 Launching Desktop Recorder...")
+    print("Press F10 to stop recording")
+    print("="*50)
+    
+    try:
+        # Run the desktop recorder
+        process = subprocess.Popen(
+            [sys.executable, str(recorder_path)],
+            cwd=str(recorder_path.parent),
+            creationflags=subprocess.CREATE_NEW_CONSOLE
+        )
+        
+        print(f"✅ Desktop recorder launched (PID: {process.pid})")
+        print("\n📝 The recorder will open in a new window.")
+        print("   Perform your tasks there, then return to the web dashboard.")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Failed to launch: {e}")
+        return False
+
+if __name__ == "__main__":
+    launch_desktop_recorder()
+    input("\nPress Enter to exit...")

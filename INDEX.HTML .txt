@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic AI Platform - Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --accent-color: #4fc3a1;
+            --dark-bg: #1a1d29;
+            --card-bg: #2d3343;
+            --text-color: #e4e6eb;
+            --sidebar-width: 260px;
+        }
+        
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1e2332 0%, #151824 100%);
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            z-index: 1000;
+        }
+        
+        .logo {
+            padding: 0 20px 30px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .logo i {
+            font-size: 28px;
+            color: var(--accent-color);
+        }
+        
+        .logo h2 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 24px;
+            background: linear-gradient(90deg, #4fc3a1, #4a6fa5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .nav-links {
+            list-style: none;
+            padding: 0 15px;
+        }
+        
+        .nav-links li {
+            margin-bottom: 8px;
+        }
+        
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: #b0b3b8;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-links a:hover {
+            background: rgba(79, 195, 161, 0.1);
+            color: var(--text-color);
+            transform: translateX(5px);
+        }
+        
+        .nav-links a.active {
+            background: linear-gradient(90deg, rgba(79, 195, 161, 0.2), rgba(74, 111, 165, 0.2));
+            color: var(--accent-color);
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .nav-links i {
+            width: 24px;
+            font-size: 18px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            background: var(--dark-bg);
+        }
+        
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        .top-bar h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .top-bar h1 i {
+            color: var(--accent-color);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(79, 195, 161, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(79, 195, 161, 0.3);
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4CAF50;
+        }
+        
+        .status-dot.active {
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        /* Cards */
+        .content-area {
+            padding: 20px 0;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .card-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+        
+        .card-header i {
+            color: var(--accent-color);
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 195, 161, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-color);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(90deg, #4CAF50, #2E7D32);
+            color: white;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--card-bg), #252a38);
+            border-radius: 15px;
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-left: 5px solid var(--accent-color);
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(79, 195, 161, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stat-icon i {
+            font-size: 28px;
+            color: var(--accent-color);
+        }
+        
+        .stat-info h3 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        
+        .stat-info p {
+            margin: 5px 0 0 0;
+            color: #b0b3b8;
+            font-size: 14px;
+        }
+        
+        /* Feature Cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, var(--card-bg), #252a38);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .feature-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-5px);
+        }
+        
+        .feature-card i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .feature-card h4 {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+        }
+        
+        .feature-card p {
+            color: #b0b3b8;
+            margin-bottom: 20px;
+        }
+        
+        /* Loading Animation */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        
+        .loading i {
+            font-size: 48px;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+            
+            .logo h2, .nav-links span {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 80px;
+            }
+            
+            .nav-links a {
+                justify-content: center;
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .top-bar {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <h2>Agentic AI</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+                <li><a href="/desktop-recorder"><i class="fas fa-desktop"></i> <span>Desktop Recorder</span></a></li>
+                <li><a href="/file-organizer"><i class="fas fa-folder"></i> <span>File Organizer</span></a></li>
+                <li><a href="/ai-automation"><i class="fas fa-magic"></i> <span>AI Automation</span></a></li>
+                <li><a href="/marketplace"><i class="fas fa-store"></i> <span>Marketplace</span></a></li>
+                <li><a href="/analytics"><i class="fas fa-chart-bar"></i> <span>Analytics</span></a></li>
+                <li><a href="/mobile"><i class="fas fa-mobile-alt"></i> <span>Mobile</span></a></li>
+                <li><a href="/settings"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+                <li><a href="/profile"><i class="fas fa-user"></i> <span>Profile</span></a></li>
+                <li><a href="/help"><i class="fas fa-question-circle"></i> <span>Help</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="top-bar">
+                <h1><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h1>
+                <div class="user-info">
+                    <div class="status-indicator">
+                        <span class="status-dot active"></span>
+                        <span>System Active</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="quickStart()">
+                        <i class="fas fa-bolt"></i> Quick Start
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- Stats Row -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="aiRequests">0</h3>
+                            <p>AI Requests Today</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-file"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="filesOrganized">0</h3>
+                            <p>Files Organized</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="timeSaved">0</h3>
+                            <p>Minutes Saved</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="recordings">0</h3>
+                            <p>Screen Recordings</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-primary w-100" onclick="startRecording()">
+                                    <i class="fas fa-video"></i> Start Recording (F10)
+                                </button>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-success w-100" onclick="organizeFiles()">
+                                    <i class="fas fa-folder"></i> Organize Files
+                                </button>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-primary w-100" onclick="openAI()">
+                                    <i class="fas fa-robot"></i> Ask AI Assistant
+                                </button>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-secondary w-100" onclick="generateQR()">
+                                    <i class="fas fa-qrcode"></i> Pair Mobile
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features Grid -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-cubes"></i> Platform Features</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="feature-grid">
+                            <div class="feature-card" onclick="window.location.href='/desktop-recorder'">
+                                <i class="fas fa-desktop"></i>
+                                <h4>Desktop Recorder</h4>
+                                <p>Record your screen with F10 hotkey. Perfect for tutorials and demos.</p>
+                                <span class="badge bg-success">Ready</span>
+                            </div>
+                            <div class="feature-card" onclick="window.location.href='/file-organizer'">
+                                <i class="fas fa-folder-tree"></i>
+                                <h4>Smart File Organizer</h4>
+                                <p>Automatically organize files by type, date, and category.</p>
+                                <span class="badge bg-success">Ready</span>
+                            </div>
+                            <div class="feature-card" onclick="window.location.href='/ai-automation'">
+                                <i class="fas fa-brain"></i>
+                                <h4>AI Automation</h4>
+                                <p>Chat with Llama3.2 AI, generate code, summarize text, and more.</p>
+                                <span class="badge bg-success">Ready</span>
+                            </div>
+                            <div class="feature-card" onclick="window.location.href='/marketplace'">
+                                <i class="fas fa-store"></i>
+                                <h4>Marketplace</h4>
+                                <p>50+ automation templates for different tasks and workflows.</p>
+                                <span class="badge bg-success">Ready</span>
+                            </div>
+                            <div class="feature-card" onclick="window.location.href='/analytics'">
+                                <i class="fas fa-chart-line"></i>
+                                <h4>Analytics Dashboard</h4>
+                                <p>Track your productivity gains and automation usage.</p>
+                                <span class="badge bg-success">Ready</span>
+                            </div>
+                            <div class="feature-card" onclick="window.location.href='/mobile'">
+                                <i class="fas fa-mobile-alt"></i>
+                                <h4>Mobile Companion</h4>
+                                <p>Control your AI platform from your phone with QR pairing.</p>
+                                <span class="badge bg-success">Ready</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-history"></i> Recent Activity</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="activityList">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading recent activity...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Load dashboard data
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+            loadRecentActivity();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadDashboardData, 30000);
+        });
+        
+        async function loadDashboardData() {
+            try {
+                // Load system stats
+                const response = await fetch('/api/system-stats');
+                const data = await response.json();
+                
+                document.getElementById('aiRequests').textContent = data.ai_requests || '0';
+                document.getElementById('filesOrganized').textContent = data.files_organized || '0';
+                document.getElementById('timeSaved').textContent = data.time_saved_minutes || '0';
+                document.getElementById('recordings').textContent = data.recordings || '0';
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+        
+        async function loadRecentActivity() {
+            try {
+                const response = await fetch('/api/analytics/recent');
+                const data = await response.json();
+                
+                const activityList = document.getElementById('activityList');
+                
+                if (data.activities && data.activities.length > 0) {
+                    let html = '';
+                    data.activities.forEach(activity => {
+                        html += `
+                            <div class="activity-item mb-3 p-3 border rounded">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-${activity.icon} me-2"></i>
+                                        <strong>${activity.title}</strong>
+                                        <p class="mb-0 text-muted">${activity.description}</p>
+                                    </div>
+                                    <small class="text-muted">${activity.time}</small>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    activityList.innerHTML = html;
+                } else {
+                    activityList.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-history fa-2x mb-3 text-muted"></i>
+                            <p>No recent activity yet. Start using the platform!</p>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Error loading activity:', error);
+            }
+        }
+        
+        function quickStart() {
+            // Start a quick automation workflow
+            alert('Starting quick automation workflow... Check the console for progress.');
+            console.log('Quick start initiated');
+        }
+        
+        async function startRecording() {
+            try {
+                const response = await fetch('/api/desktop/start-recording', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        quality: 'medium',
+                        fps: 30,
+                        audio: 'system'
+                    })
+                });
+                
+                const data = await response.json();
+                alert(data.message || 'Recording started!');
+            } catch (error) {
+                console.error('Error starting recording:', error);
+            }
+        }
+        
+        function organizeFiles() {
+            window.location.href = '/file-organizer';
+        }
+        
+        function openAI() {
+            window.location.href = '/ai-automation';
+        }
+        
+        async function generateQR() {
+            try {
+                const response = await fetch('/api/mobile/qr');
+                const data = await response.json();
+                
+                if (data.qr_url) {
+                    // Show QR code in modal
+                    const modal = `
+                        <div class="modal fade" id="qrModal" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Scan QR to Pair Mobile</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body text-center">
+                                        <img src="${data.qr_url}" alt="QR Code" class="img-fluid mb-3">
+                                        <p>Scan with your mobile device to pair</p>
+                                        <p class="text-muted small">Pairing Code: ${data.pairing_code || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.insertAdjacentHTML('beforeend', modal);
+                    new bootstrap.Modal(document.getElementById('qrModal')).show();
+                }
+            } catch (error) {
+                console.error('Error generating QR:', error);
+            }
+        }
+        
+        // Add Bootstrap if not already loaded
+        if (!window.bootstrap) {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js';
+            document.head.appendChild(script);
+        }
+    </script>
+</body>
+</html>

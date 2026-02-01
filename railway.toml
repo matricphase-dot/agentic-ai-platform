@@ -1,0 +1,26 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "python main.py"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 60
+
+[variables]
+PORT = "8080"
+HOST = "0.0.0.0"
+ENVIRONMENT = "production"
+LOG_LEVEL = "INFO"
+
+[healthcheck]
+enabled = true
+path = "/api/health"
+initialDelay = 30
+timeout = 10
+interval = 60
+maxRetries = 3
+
+[[services]]
+name = "agentic-ai"
+port = 8080
+protocol = "http"

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help & Support - Agentic AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .help-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .help-card {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .help-card:hover {
+            border-color: #6366f1;
+            transform: translateY(-5px);
+        }
+        .faq-item {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .faq-answer {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 8px;
+        }
+        .search-box {
+            position: relative;
+            margin: 30px 0;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+        }
+        .search-box i {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+        .contact-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-question-circle"></i>
+                <span>Help & Support</span>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link"><i class="fas fa-arrow-left"></i> Dashboard</a>
+                <a href="/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+                <a href="/profile" class="nav-link"><i class="fas fa-user"></i> Profile</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-life-ring"></i> Help Center & Support</h1>
+            <p class="subtitle">Documentation • Guides • Troubleshooting • Contact Support</p>
+        </div>
+
+        <!-- Quick Help Cards -->
+        <div class="help-grid">
+            <div class="help-card" onclick="showGuide('getting-started')">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    <div style="width: 50px; height: 50px; background: rgba(99, 102, 241, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-rocket" style="color: #6366f1; font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0;">Getting Started</h3>
+                        <p style="margin: 5px 0 0 0; color: #94a3b8;">Quick start guide</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="help-card" onclick="showGuide('desktop-recorder')">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    <div style="width: 50px; height: 50px; background: rgba(239, 68, 68, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-desktop" style="color: #ef4444; font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0;">Desktop Recorder</h3>
+                        <p style="margin: 5px 0 0 0; color: #94a3b8;">Recording guides</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="help-card" onclick="showGuide('file-organizer')">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    <div style="width: 50px; height: 50px; background: rgba(16, 185, 129, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-folder-tree" style="color: #10b981; font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0;">File Organizer</h3>
+                        <p style="margin: 5px 0 0 0; color: #94a3b8;">Organization guides</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="help-card" onclick="showGuide('ai-automation')">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    <div style="width: 50px; height: 50px; background: rgba(139, 92, 246, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-brain" style="color: #8b5cf6; font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0;">AI Automation</h3>
+                        <p style="margin: 5px 0 0 0; color: #94a3b8;">Automation guides</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-box">
+            <input type="text" id="searchHelp" placeholder="Search help articles..." onkeypress="searchHelp(event)">
+            <i class="fas fa-search"></i>
+        </div>
+
+        <!-- FAQ -->
+        <div class="card">
+            <h2><i class="fas fa-question-circle"></i> Frequently Asked Questions</h2>
+            <div id="faqList">
+                <div class="faq-item" onclick="toggleFAQ(1)">
+                    <strong>Q: How do I start recording my screen?</strong>
+                    <div class="faq-answer" id="faq1">
+                        Press F10 or click the record button in the Desktop Recorder. You can also use the mobile app to start recording remotely.
+                    </div>
+                </div>
+                
+                <div class="faq-item" onclick="toggleFAQ(2)">
+                    <strong>Q: Can I use Agentic AI without Ollama?</strong>
+                    <div class="faq-answer" id="faq2">
+                        Yes! Basic features work without Ollama. For AI-powered features, you need Ollama installed locally or use our cloud AI service.
+                    </div>
+                </div>
+                
+                <div class="faq-item" onclick="toggleFAQ(3)">
+                    <strong>Q: How do I create my first automation?</strong>
+                    <div class="faq-answer" id="faq3">
+                        Go to AI Automation → Create New Automation. You can start with a template or build your own with our visual automation builder.
+                    </div>
+                </div>
+                
+                <div class="faq-item" onclick="toggleFAQ(4)">
+                    <strong>Q: Where are my recordings saved?</strong>
+                    <div class="faq-answer" id="faq4">
+                        Recordings are saved in the "Recordings" folder in your Agentic AI directory. You can change this in Settings → File Management.
+                    </div>
+                </div>
+                
+                <div class="faq-item" onclick="toggleFAQ(5)">
+                    <strong>Q: How do I connect my mobile device?</strong>
+                    <div class="faq-answer" id="faq5">
+                        Go to Mobile Companion → Generate QR Code → Scan with your phone's camera. The mobile app is available for iOS and Android.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Troubleshooting -->
+        <div class="card">
+            <h2><i class="fas fa-tools"></i> Quick Troubleshooting</h2>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+                <div>
+                    <h4><i class="fas fa-video" style="color: #ef4444;"></i> Recording Issues</h4>
+                    <ul style="color: #94a3b8; margin-top: 10px; padding-left: 20px;">
+                        <li>Check if F10 hotkey is enabled in Settings</li>
+                        <li>Ensure you have screen recording permissions</li>
+                        <li>Try restarting the application</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4><i class="fas fa-brain" style="color: #8b5cf6;"></i> AI Issues</h4>
+                    <ul style="color: #94a3b8; margin-top: 10px; padding-left: 20px;">
+                        <li>Check if Ollama is running (localhost:11434)</li>
+                        <li>Verify AI model is downloaded in Ollama</li>
+                        <li>Try restarting Ollama service</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4><i class="fas fa-folder" style="color: #10b981;"></i> File Issues</h4>
+                    <ul style="color: #94a3b8; margin-top: 10px; padding-left: 20px;">
+                        <li>Check file permissions</li>
+                        <li>Ensure enough disk space</li>
+                        <li>Verify file paths in settings</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Support -->
+        <div class="card">
+            <h2><i class="fas fa-headset"></i> Contact Support</h2>
+            <div class="contact-form">
+                <div class="form-group">
+                    <label class="form-label">Your Name</label>
+                    <input type="text" class="form-input" id="supportName" placeholder="Enter your name">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" id="supportEmail" placeholder="Enter your email">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Subject</label>
+                    <select class="form-select" id="supportSubject">
+                        <option value="">Select an issue type</option>
+                        <option value="bug">Bug Report</option>
+                        <option value="feature">Feature Request</option>
+                        <option value="billing">Billing Issue</option>
+                        <option value="technical">Technical Support</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-input" id="supportMessage" rows="5" placeholder="Describe your issue in detail..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Attachments (Optional)</label>
+                    <input type="file" class="form-input" id="supportAttachment" multiple>
+                </div>
+                
+                <button class="btn" onclick="submitSupportRequest()" style="width: 100%;">
+                    <i class="fas fa-paper-plane"></i> Send Support Request
+                </button>
+            </div>
+            
+            <div style="margin-top: 30px; text-align: center;">
+                <p style="color: #94a3b8;">Or contact us directly:</p>
+                <div style="display: flex; gap: 20px; justify-content: center; margin-top: 15px;">
+                    <a href="mailto:support@agentic-ai.com" class="btn btn-small">
+                        <i class="fas fa-envelope"></i> Email Support
+                    </a>
+                    <a href="https://discord.gg/agentic-ai" target="_blank" class="btn btn-small">
+                        <i class="fab fa-discord"></i> Discord Community
+                    </a>
+                    <a href="https://twitter.com/agentic_ai" target="_blank" class="btn btn-small">
+                        <i class="fab fa-twitter"></i> Twitter
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentation Links -->
+        <div class="card">
+            <h2><i class="fas fa-book"></i> Documentation & Resources</h2>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+                <a href="#" class="help-card" style="text-decoration: none; color: inherit;" onclick="showGuide('api-docs')">
+                    <h4><i class="fas fa-code"></i> API Documentation</h4>
+                    <p style="color: #94a3b8; margin-top: 10px;">Complete API reference and examples</p>
+                </a>
+                
+                <a href="#" class="help-card" style="text-decoration: none; color: inherit;" onclick="showGuide('tutorials')">
+                    <h4><i class="fas fa-graduation-cap"></i> Video Tutorials</h4>
+                    <p style="color: #94a3b8; margin-top: 10px;">Step-by-step video guides</p>
+                </a>
+                
+                <a href="#" class="help-card" style="text-decoration: none; color: inherit;" onclick="showGuide('community')">
+                    <h4><i class="fas fa-users"></i> Community Forum</h4>
+                    <p style="color: #94a3b8; margin-top: 10px;">Ask questions and share tips</p>
+                </a>
+                
+                <a href="#" class="help-card" style="text-decoration: none; color: inherit;" onclick="showGuide('changelog')">
+                    <h4><i class="fas fa-history"></i> Changelog</h4>
+                    <p style="color: #94a3b8; margin-top: 10px;">Latest updates and features</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleFAQ(id) {
+            const answer = document.getElementById('faq' + id);
+            if (answer.style.display === 'block') {
+                answer.style.display = 'none';
+            } else {
+                answer.style.display = 'block';
+            }
+        }
+        
+        function showGuide(guide) {
+            let title, content;
+            
+            switch(guide) {
+                case 'getting-started':
+                    title = 'Getting Started Guide';
+                    content = `
+                        <h3>Welcome to Agentic AI! 🚀</h3>
+                        <p>Here's how to get started:</p>
+                        <ol>
+                            <li><strong>Install Ollama</strong> (optional but recommended for AI features)</li>
+                            <li><strong>Start recording</strong> with F10 hotkey</li>
+                            <li><strong>Organize files</strong> with AI-powered sorting</li>
+                            <li><strong>Create automations</strong> to save time</li>
+                            <li><strong>Connect mobile</strong> for remote control</li>
+                        </ol>
+                        <p>Check out our video tutorials for detailed walkthroughs.</p>
+                    `;
+                    break;
+                    
+                case 'desktop-recorder':
+                    title = 'Desktop Recorder Guide';
+                    content = `
+                        <h3>🎥 Desktop Recorder Guide</h3>
+                        <p><strong>Hotkeys:</strong></p>
+                        <ul>
+                            <li><code>F10</code> - Start/Stop recording</li>
+                            <li><code>F9</code> - Take screenshot</li>
+                            <li><code>Ctrl+Shift+R</code> - Toggle recording</li>
+                            <li><code>Ctrl+Shift+S</code> - Quick screenshot</li>
+                        </ul>
+                        <p><strong>Features:</strong></p>
+                        <ul>
+                            <li>Screen recording with audio</li>
+                            <li>Screenshot capture</li>
+                            <li>Recording quality settings</li>
+                            <li>Auto-save to recordings folder</li>
+                        </ul>
+                    `;
+                    break;
+                    
+                case 'ai-automation':
+                    title = 'AI Automation Guide';
+                    content = `
+                        <h3>🤖 AI Automation Guide</h3>
+                        <p>Create intelligent workflows that run automatically:</p>
+                        <ol>
+                            <li><strong>Choose a trigger</strong> (time, file change, email, etc.)</li>
+                            <li><strong>Select actions</strong> (file operations, AI processing, etc.)</li>
+                            <li><strong>Configure details</strong> and save</li>
+                            <li><strong>Monitor</strong> automation performance</li>
+                        </ol>
+                        <p><strong>Example Automations:</strong></p>
+                        <ul>
+                            <li>Daily file backup at 6 PM</li>
+                            <li>Auto-organize downloaded files</li>
+                            <li>Email processing and categorization</li>
+                            <li>Social media posting scheduler</li>
+                        </ul>
+                    `;
+                    break;
+            }
+            
+            alert(title + '
+
+' + content);
+        }
+        
+        function searchHelp(e) {
+            if (e.key === 'Enter') {
+                const query = document.getElementById('searchHelp').value;
+                if (query) {
+                    // In a real app, this would search through help articles
+                    alert(`Searching for: ${query}
+
+Results would appear here.`);
+                }
+            }
+        }
+        
+        function submitSupportRequest() {
+            const name = document.getElementById('supportName').value;
+            const email = document.getElementById('supportEmail').value;
+            const subject = document.getElementById('supportSubject').value;
+            const message = document.getElementById('supportMessage').value;
+            
+            if (!name || !email || !subject || !message) {
+                alert('Please fill in all required fields!');
+                return;
+            }
+            
+            // In a real app, this would send to a backend
+            const supportData = {
+                name: name,
+                email: email,
+                subject: subject,
+                message: message,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Simulate sending
+            alert(`✅ Support request submitted!
+
+We'll contact you at ${email} within 24 hours.
+
+Ticket ID: ${Math.random().toString(36).substr(2, 9).toUpperCase()}`);
+            
+            // Clear form
+            document.getElementById('supportName').value = '';
+            document.getElementById('supportEmail').value = '';
+            document.getElementById('supportSubject').value = '';
+            document.getElementById('supportMessage').value = '';
+            document.getElementById('supportAttachment').value = '';
+        }
+        
+        // Initialize all FAQ answers as hidden
+        window.onload = function() {
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById('faq' + i).style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>

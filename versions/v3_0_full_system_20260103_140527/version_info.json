@@ -1,0 +1,15 @@
+{
+  "name": "v3_0_full_system",
+  "timestamp": "20260103_140527",
+  "description": "Complete system with all features: recorder, generator, workspace, organizer, dashboard",
+  "files_count": 56,
+  "features": [
+    "file_organizer",
+    "web_dashboard",
+    "desktop_recorder",
+    "automation_generator",
+    "workspace_creator",
+    "database",
+    "authentication"
+  ]
+}

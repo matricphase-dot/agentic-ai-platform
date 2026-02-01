@@ -1,0 +1,208 @@
+# setup_github.py - AUTO-SETUP GITHUB
+import os
+import subprocess
+from pathlib import Path
+
+def check_git_installed():
+    """Check if git is installed"""
+    try:
+        subprocess.run(["git", "--version"], capture_output=True, check=True)
+        return True
+    except:
+        return False
+
+def install_git():
+    """Install git if not installed"""
+    print("📦 Git not found. Installing...")
+    
+    # For Windows - download git
+    import webbrowser
+    webbrowser.open("https://git-scm.com/download/win")
+    
+    print("⬇️  Please download and install Git from the opened browser")
+    print("💡 Then restart this script")
+    return False
+
+def setup_git_repo(repo_url=None):
+    """Setup git repository"""
+    workspace = Path.cwd()
+    
+    print(f"📁 Workspace: {workspace}")
+    
+    # Initialize git
+    print("\n1. Initializing git repository...")
+    subprocess.run(["git", "init"], cwd=workspace)
+    
+    # Create .gitignore
+    print("\n2. Creating .gitignore...")
+    gitignore_content = """# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Large files
+recordings/*.json
+automations/*.py
+reports/*.json
+
+# But keep structure
+recordings/
+automations/
+reports/
+!recordings/.gitkeep
+!automations/.gitkeep
+!reports/.gitkeep
+"""
+    
+    gitignore_file = workspace / ".gitignore"
+    gitignore_file.write_text(gitignore_content, encoding='utf-8')
+    
+    # Create .gitkeep files for empty directories
+    empty_dirs = ["recordings", "automations", "reports", "templates", "static"]
+    for dir_name in empty_dirs:
+        dir_path = workspace / dir_name
+        dir_path.mkdir(exist_ok=True)
+        keep_file = dir_path / ".gitkeep"
+        keep_file.write_text("")
+    
+    # Add all files
+    print("\n3. Adding files to git...")
+    subprocess.run(["git", "add", "."], cwd=workspace)
+    
+    # Initial commit
+    print("\n4. Creating initial commit...")
+    subprocess.run(["git", "commit", "-m", "Initial commit: Complete Agentic AI Platform"], cwd=workspace)
+    
+    # If repo URL provided, add remote
+    if repo_url:
+        print(f"\n5. Adding remote: {repo_url}")
+        subprocess.run(["git", "remote", "add", "origin", repo_url], cwd=workspace)
+        
+        print("\n6. Pushing to GitHub...")
+        result = subprocess.run(["git", "push", "-u", "origin", "main"], cwd=workspace, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            print("✅ Successfully pushed to GitHub!")
+            return True
+        else:
+            print("⚠️  Could not push automatically")
+            print("💡 Manual steps needed:")
+            print(f"   git remote add origin {repo_url}")
+            print("   git branch -M main")
+            print("   git push -u origin main")
+            return False
+    else:
+        print("\n⚠️  No GitHub URL provided")
+        print("💡 After creating repo on GitHub.com, run:")
+        print("   git remote add origin YOUR_GITHUB_URL")
+        print("   git branch -M main")
+        print("   git push -u origin main")
+        return False
+
+def create_readme_for_github():
+    """Create GitHub README.md"""
+    readme_content = """# 🤖 Agentic AI Platform
+
+A complete automation platform with desktop recording, AI-powered automation generation, workspace management, and file organization.
+
+![Agentic AI Platform](https://img.shields.io/badge/Agentic-AI-blue)
+![Python](https://img.shields.io/badge/Python-3.8+-green)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-brightgreen)
+![Status](https://img.shields.io/badge/Status-Production%20Ready-success)
+
+## 🎯 Features
+
+### ✅ Desktop Recorder
+- Record 458+ desktop events (mouse, keyboard, windows)
+- Real-time event capture using pynput
+- Export recordings as JSON for automation
+
+### ✅ AI-Powered Automation Generator
+- Convert recordings to executable Python scripts
+- Ollama AI integration (llama2, mistral models)
+- Smart automation logic generation
+
+### ✅ Workspace Creator
+- Organized folder structure generation
+- Project template system
+- Version control ready workspace
+
+### ✅ File Organizer
+- Automatic file categorization by type/date/size
+- Custom rule engine
+- Batch processing capabilities
+
+### ✅ Web Dashboard
+- Professional FastAPI web interface
+- Real-time monitoring
+- User authentication & management
+
+### ✅ Database System
+- SQLite with SQLAlchemy ORM
+- User management
+- Recording & automation tracking
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.8+
+- Git
+
+### Installation
+```bash
+# Clone repository
+git clone https://github.com/YOUR_USERNAME/agentic-ai-platform.git
+cd agentic-ai-platform
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the platform
+python main.py

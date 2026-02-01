@@ -1,0 +1,634 @@
+# file_organizer.py - Complete File Organization Engine
+import os
+import shutil
+import hashlib
+from datetime import datetime, timedelta
+import stat
+from pathlib import Path
+import json
+import mimetypes
+from collections import defaultdict
+import fnmatch
+
+class FileOrganizerEngine:
+    def __init__(self):
+        self.organized_dir = "organized_files"
+        self.backup_dir = "backups"
+        self.log_file = "file_operations.log"
+        
+        # Create directories
+        os.makedirs(self.organized_dir, exist_ok=True)
+        os.makedirs(self.backup_dir, exist_ok=True)
+        
+        # File type categories
+        self.file_categories = {
+            "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".svg", ".ico"],
+            "Documents": [".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".xls", ".xlsx", ".ppt", ".pptx"],
+            "Videos": [".mp4", ".avi", ".mov", ".mkv", ".flv", ".wmv", ".webm", ".m4v"],
+            "Music": [".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a", ".wma"],
+            "Archives": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz"],
+            "Code": [".py", ".js", ".html", ".css", ".java", ".cpp", ".c", ".php", ".rb", ".go"],
+            "Data": [".csv", ".json", ".xml", ".sql", ".db", ".sqlite"],
+            "Executables": [".exe", ".msi", ".bat", ".sh", ".app", ".apk"],
+            "Fonts": [".ttf", ".otf", ".woff", ".woff2"],
+            "3D_Models": [".stl", ".obj", ".fbx", ".blend"],
+            "Design": [".psd", ".ai", ".sketch", ".fig", ".xd"],
+            "Ebooks": [".epub", ".mobi", ".azw", ".azw3"]
+        }
+        
+        # Smart organization rules
+        self.organization_rules = {
+            "by_type": self.organize_by_type,
+            "by_date": self.organize_by_date,
+            "by_size": self.organize_by_size,
+            "by_project": self.organize_by_project,
+            "smart": self.organize_smart
+        }
+        
+        print("📁 File Organizer Engine initialized")
+    
+    def organize_files(self, source_dir, organization_type="smart", target_dir=None, delete_duplicates=False):
+        """Organize files from source directory"""
+        try:
+            if not os.path.exists(source_dir):
+                return {"success": False, "error": f"Source directory not found: {source_dir}"}
+            
+            # Use default target if not specified
+            if target_dir is None:
+                target_dir = os.path.join(self.organized_dir, os.path.basename(source_dir))
+            
+            # Create target directory
+            os.makedirs(target_dir, exist_ok=True)
+            
+            # Get organization function
+            organize_func = self.organization_rules.get(organization_type, self.organize_smart)
+            
+            # Analyze source directory first
+            analysis = self.analyze_directory(source_dir)
+            
+            # Find and handle duplicates if requested
+            duplicates_found = []
+            if delete_duplicates:
+                duplicates = self.find_duplicates(source_dir)
+                duplicates_found = len(duplicates)
+                
+                # Delete duplicates (keep first occurrence)
+                for dup_group in duplicates:
+                    for dup_file in dup_group[1:]:  # Skip first file (keep it)
+                        try:
+                            os.remove(dup_file)
+                            self._log_operation("DELETE", dup_file, "Duplicate file removed")
+                        except:
+                            pass
+            
+            # Organize files
+            result = organize_func(source_dir, target_dir)
+            
+            # Add analysis to result
+            result["analysis"] = analysis
+            result["duplicates_removed"] = duplicates_found
+            result["source"] = source_dir
+            result["target"] = target_dir
+            result["organization_type"] = organization_type
+            
+            # Log the operation
+            self._log_operation(
+                "ORGANIZE",
+                source_dir,
+                f"Organized {result.get('files_processed', 0)} files to {target_dir}"
+            )
+            
+            return result
+            
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    def organize_by_type(self, source_dir, target_dir):
+        """Organize files by their type/category"""
+        files_processed = 0
+        folders_created = 0
+        
+        for root, dirs, files in os.walk(source_dir):
+            for filename in files:
+                source_path = os.path.join(root, filename)
+                
+                # Skip if it's a directory
+                if os.path.isdir(source_path):
+                    continue
+                
+                # Get file extension
+                _, ext = os.path.splitext(filename)
+                ext = ext.lower()
+                
+                # Find category
+                category = "Other"
+                for cat, exts in self.file_categories.items():
+                    if ext in exts:
+                        category = cat
+                        break
+                
+                # Create category directory
+                category_dir = os.path.join(target_dir, category)
+                os.makedirs(category_dir, exist_ok=True)
+                if not os.path.exists(category_dir):
+                    folders_created += 1
+                
+                # Construct target path
+                target_path = os.path.join(category_dir, filename)
+                
+                # Handle filename conflicts
+                target_path = self._handle_filename_conflict(target_path)
+                
+                try:
+                    # Move file
+                    shutil.move(source_path, target_path)
+                    files_processed += 1
+                except Exception as e:
+                    print(f"Error moving {filename}: {e}")
+        
+        return {
+            "success": True,
+            "files_processed": files_processed,
+            "folders_created": folders_created,
+            "message": f"Organized {files_processed} files by type into {target_dir}"
+        }
+    
+    def organize_by_date(self, source_dir, target_dir):
+        """Organize files by creation/modification date"""
+        files_processed = 0
+        folders_created = 0
+        
+        for root, dirs, files in os.walk(source_dir):
+            for filename in files:
+                source_path = os.path.join(root, filename)
+                
+                if os.path.isdir(source_path):
+                    continue
+                
+                # Get file stats
+                try:
+                    stats = os.stat(source_path)
+                    # Use modification time
+                    mod_time = datetime.fromtimestamp(stats.st_mtime)
+                    
+                    # Create date-based directory structure
+                    date_dir = os.path.join(
+                        target_dir,
+                        str(mod_time.year),
+                        f"{mod_time.month:02d}",
+                        f"{mod_time.day:02d}"
+                    )
+                    
+                    os.makedirs(date_dir, exist_ok=True)
+                    if not os.path.exists(date_dir):
+                        folders_created += 1
+                    
+                    # Move file
+                    target_path = os.path.join(date_dir, filename)
+                    target_path = self._handle_filename_conflict(target_path)
+                    
+                    shutil.move(source_path, target_path)
+                    files_processed += 1
+                    
+                except Exception as e:
+                    print(f"Error processing {filename}: {e}")
+        
+        return {
+            "success": True,
+            "files_processed": files_processed,
+            "folders_created": folders_created,
+            "message": f"Organized {files_processed} files by date into {target_dir}"
+        }
+    
+    def organize_by_size(self, source_dir, target_dir):
+        """Organize files by size"""
+        files_processed = 0
+        folders_created = 0
+        
+        # Size categories in bytes
+        size_categories = {
+            "Tiny": (0, 1024),           # < 1KB
+            "Small": (1024, 1024*100),   # 1KB - 100KB
+            "Medium": (1024*100, 1024*1024),  # 100KB - 1MB
+            "Large": (1024*1024, 1024*1024*10),  # 1MB - 10MB
+            "Huge": (1024*1024*10, float('inf'))  # > 10MB
+        }
+        
+        for root, dirs, files in os.walk(source_dir):
+            for filename in files:
+                source_path = os.path.join(root, filename)
+                
+                if os.path.isdir(source_path):
+                    continue
+                
+                try:
+                    file_size = os.path.getsize(source_path)
+                    
+                    # Find size category
+                    size_category = "Unknown"
+                    for category, (min_size, max_size) in size_categories.items():
+                        if min_size <= file_size < max_size:
+                            size_category = category
+                            break
+                    
+                    # Create size category directory
+                    size_dir = os.path.join(target_dir, size_category)
+                    os.makedirs(size_dir, exist_ok=True)
+                    if not os.path.exists(size_dir):
+                        folders_created += 1
+                    
+                    # Move file
+                    target_path = os.path.join(size_dir, filename)
+                    target_path = self._handle_filename_conflict(target_path)
+                    
+                    shutil.move(source_path, target_path)
+                    files_processed += 1
+                    
+                except Exception as e:
+                    print(f"Error processing {filename}: {e}")
+        
+        return {
+            "success": True,
+            "files_processed": files_processed,
+            "folders_created": folders_created,
+            "message": f"Organized {files_processed} files by size into {target_dir}"
+        }
+    
+    def organize_by_project(self, source_dir, target_dir):
+        """Organize files by project (based on folder structure)"""
+        files_processed = 0
+        projects = defaultdict(list)
+        
+        for root, dirs, files in os.walk(source_dir):
+            # Skip if too deep
+            depth = root[len(source_dir):].count(os.sep)
+            if depth > 3:
+                continue
+                
+            for filename in files:
+                source_path = os.path.join(root, filename)
+                
+                if os.path.isdir(source_path):
+                    continue
+                
+                # Determine project based on directory structure
+                rel_path = os.path.relpath(root, source_dir)
+                project_name = "Other"
+                
+                if rel_path != ".":
+                    # Use first directory level as project name
+                    project_name = rel_path.split(os.sep)[0]
+                
+                projects[project_name].append(source_path)
+        
+        # Move files to project folders
+        folders_created = 0
+        for project_name, file_paths in projects.items():
+            project_dir = os.path.join(target_dir, project_name)
+            os.makedirs(project_dir, exist_ok=True)
+            if not os.path.exists(project_dir):
+                folders_created += 1
+            
+            for source_path in file_paths:
+                try:
+                    filename = os.path.basename(source_path)
+                    target_path = os.path.join(project_dir, filename)
+                    target_path = self._handle_filename_conflict(target_path)
+                    
+                    shutil.move(source_path, target_path)
+                    files_processed += 1
+                except Exception as e:
+                    print(f"Error moving file: {e}")
+        
+        return {
+            "success": True,
+            "files_processed": files_processed,
+            "folders_created": folders_created,
+            "projects_created": len(projects),
+            "message": f"Organized {files_processed} files into {len(projects)} projects"
+        }
+    
+    def organize_smart(self, source_dir, target_dir):
+        """Smart organization combining multiple strategies"""
+        # First, organize by type
+        type_result = self.organize_by_type(source_dir, target_dir)
+        
+        # Then, within each type, organize by date
+        if type_result.get("success"):
+            for category in self.file_categories.keys():
+                category_dir = os.path.join(target_dir, category)
+                if os.path.exists(category_dir):
+                    # Organize this category by date
+                    self.organize_by_date(category_dir, category_dir)
+        
+        return type_result
+    
+    def analyze_directory(self, directory):
+        """Analyze directory contents"""
+        try:
+            if not os.path.exists(directory):
+                return {"error": "Directory not found"}
+            
+            total_size = 0
+            file_count = 0
+            folder_count = 0
+            file_types = defaultdict(int)
+            size_by_type = defaultdict(int)
+            recent_files = []
+            largest_files = []
+            
+            for root, dirs, files in os.walk(directory):
+                folder_count += len(dirs)
+                
+                for filename in files:
+                    file_path = os.path.join(root, filename)
+                    
+                    try:
+                        # Get file stats
+                        stats = os.stat(file_path)
+                        file_size = stats.st_size
+                        
+                        # Update counters
+                        total_size += file_size
+                        file_count += 1
+                        
+                        # Get file extension
+                        _, ext = os.path.splitext(filename)
+                        ext = ext.lower() if ext else "No Extension"
+                        
+                        # Update type counters
+                        file_types[ext] += 1
+                        size_by_type[ext] += file_size
+                        
+                        # Track recent files (last 7 days)
+                        mod_time = datetime.fromtimestamp(stats.st_mtime)
+                        if datetime.now() - mod_time < timedelta(days=7):
+                            recent_files.append({
+                                "name": filename,
+                                "path": file_path,
+                                "size": file_size,
+                                "modified": mod_time.isoformat(),
+                                "type": ext
+                            })
+                        
+                        # Track largest files
+                        largest_files.append({
+                            "name": filename,
+                            "path": file_path,
+                            "size": file_size,
+                            "type": ext
+                        })
+                        
+                    except Exception as e:
+                        continue
+            
+            # Sort largest files
+            largest_files.sort(key=lambda x: x["size"], reverse=True)
+            
+            # Sort recent files
+            recent_files.sort(key=lambda x: x["modified"], reverse=True)
+            
+            # Get top file types by count
+            top_types_by_count = sorted(
+                [(ext, count) for ext, count in file_types.items()],
+                key=lambda x: x[1],
+                reverse=True
+            )[:10]
+            
+            # Get top file types by size
+            top_types_by_size = sorted(
+                [(ext, size) for ext, size in size_by_type.items()],
+                key=lambda x: x[1],
+                reverse=True
+            )[:10]
+            
+            return {
+                "success": True,
+                "directory": directory,
+                "total_size_bytes": total_size,
+                "total_size_mb": round(total_size / (1024*1024), 2),
+                "total_size_gb": round(total_size / (1024*1024*1024), 2),
+                "file_count": file_count,
+                "folder_count": folder_count,
+                "unique_file_types": len(file_types),
+                "top_types_by_count": top_types_by_count,
+                "top_types_by_size": top_types_by_size,
+                "recent_files": recent_files[:10],  # Last 10 recent files
+                "largest_files": largest_files[:10],  # Top 10 largest files
+                "analysis_date": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    def find_duplicates(self, directory):
+        """Find duplicate files in directory"""
+        duplicates = []
+        file_hashes = defaultdict(list)
+        
+        for root, dirs, files in os.walk(directory):
+            for filename in files:
+                file_path = os.path.join(root, filename)
+                
+                try:
+                    # Calculate file hash
+                    file_hash = self._calculate_file_hash(file_path)
+                    file_hashes[file_hash].append(file_path)
+                except Exception as e:
+                    continue
+        
+        # Find duplicates (same hash, multiple files)
+        for file_hash, file_paths in file_hashes.items():
+            if len(file_paths) > 1:
+                duplicates.append(file_paths)
+        
+        return duplicates
+    
+    def cleanup_old_files(self, directory, days_old=30):
+        """Clean up files older than specified days"""
+        try:
+            cutoff_date = datetime.now() - timedelta(days=days_old)
+            files_deleted = 0
+            space_freed = 0
+            deleted_files = []
+            
+            for root, dirs, files in os.walk(directory):
+                for filename in files:
+                    file_path = os.path.join(root, filename)
+                    
+                    try:
+                        stats = os.stat(file_path)
+                        mod_time = datetime.fromtimestamp(stats.st_mtime)
+                        
+                        if mod_time < cutoff_date:
+                            file_size = stats.st_size
+                            os.remove(file_path)
+                            
+                            files_deleted += 1
+                            space_freed += file_size
+                            deleted_files.append({
+                                "name": filename,
+                                "path": file_path,
+                                "size": file_size,
+                                "modified": mod_time.isoformat()
+                            })
+                            
+                            self._log_operation(
+                                "DELETE",
+                                file_path,
+                                f"Old file cleaned up (>{days_old} days)"
+                            )
+                    except Exception as e:
+                        continue
+            
+            return {
+                "success": True,
+                "files_deleted": files_deleted,
+                "space_freed_mb": round(space_freed / (1024*1024), 2),
+                "space_freed_gb": round(space_freed / (1024*1024*1024), 2),
+                "cutoff_date": cutoff_date.isoformat(),
+                "deleted_files": deleted_files,
+                "message": f"Cleaned up {files_deleted} files older than {days_old} days"
+            }
+            
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    def backup_directory(self, source_dir, backup_name=None):
+        """Create backup of directory"""
+        try:
+            if backup_name is None:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                backup_name = f"{os.path.basename(source_dir)}_{timestamp}"
+            
+            backup_path = os.path.join(self.backup_dir, backup_name)
+            
+            # Create backup
+            if os.path.isdir(source_dir):
+                shutil.copytree(source_dir, backup_path)
+                backup_type = "directory"
+            else:
+                shutil.copy2(source_dir, backup_path)
+                backup_type = "file"
+            
+            # Compress backup
+            zip_path = f"{backup_path}.zip"
+            shutil.make_archive(backup_path, 'zip', backup_path)
+            
+            # Remove uncompressed backup
+            if os.path.exists(backup_path):
+                if os.path.isdir(backup_path):
+                    shutil.rmtree(backup_path)
+                else:
+                    os.remove(backup_path)
+            
+            backup_size = os.path.getsize(zip_path)
+            
+            self._log_operation(
+                "BACKUP",
+                source_dir,
+                f"Backup created: {backup_name}.zip ({round(backup_size/(1024*1024), 2)} MB)"
+            )
+            
+            return {
+                "success": True,
+                "backup_path": zip_path,
+                "backup_name": backup_name,
+                "backup_size_mb": round(backup_size / (1024*1024), 2),
+                "source": source_dir,
+                "type": backup_type,
+                "message": f"Backup created successfully: {backup_name}.zip"
+            }
+            
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    def restore_backup(self, backup_file, target_dir=None):
+        """Restore from backup"""
+        try:
+            if not os.path.exists(backup_file):
+                return {"success": False, "error": "Backup file not found"}
+            
+            # Extract backup
+            if target_dir is None:
+                backup_name = os.path.splitext(os.path.basename(backup_file))[0]
+                target_dir = os.path.join(self.organized_dir, f"restored_{backup_name}")
+            
+            os.makedirs(target_dir, exist_ok=True)
+            
+            # Extract zip file
+            with zipfile.ZipFile(backup_file, 'r') as zip_ref:
+                zip_ref.extractall(target_dir)
+            
+            self._log_operation("RESTORE", backup_file, f"Restored to: {target_dir}")
+            
+            return {
+                "success": True,
+                "restored_to": target_dir,
+                "backup_file": backup_file,
+                "message": f"Backup restored to {target_dir}"
+            }
+            
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    def _calculate_file_hash(self, filepath, chunk_size=8192):
+        """Calculate MD5 hash of file"""
+        hash_md5 = hashlib.md5()
+        with open(filepath, "rb") as f:
+            for chunk in iter(lambda: f.read(chunk_size), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+    
+    def _handle_filename_conflict(self, target_path):
+        """Handle filename conflicts by appending numbers"""
+        if not os.path.exists(target_path):
+            return target_path
+        
+        base, ext = os.path.splitext(target_path)
+        counter = 1
+        
+        while os.path.exists(f"{base}_{counter}{ext}"):
+            counter += 1
+        
+        return f"{base}_{counter}{ext}"
+    
+    def _log_operation(self, operation, path, details):
+        """Log file operation"""
+        log_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "operation": operation,
+            "path": path,
+            "details": details
+        }
+        
+        try:
+            with open(self.log_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(log_entry) + "\n")
+        except:
+            pass
+
+# Test the file organizer
+if __name__ == "__main__":
+    organizer = FileOrganizerEngine()
+    print("🧪 Testing File Organizer...")
+    
+    # Test with current directory
+    test_dir = "."
+    analysis = organizer.analyze_directory(test_dir)
+    
+    if analysis.get("success"):
+        print(f"📊 Directory Analysis:")
+        print(f"  • Files: {analysis['file_count']}")
+        print(f"  • Folders: {analysis['folder_count']}")
+        print(f"  • Total Size: {analysis['total_size_mb']} MB")
+        print(f"  • Unique File Types: {analysis['unique_file_types']}")
+    
+    # Find duplicates
+    duplicates = organizer.find_duplicates(test_dir)
+    print(f"🔍 Found {len(duplicates)} sets of duplicate files")
+    
+    # Test backup
+    backup_result = organizer.backup_directory(test_dir, "test_backup")
+    if backup_result["success"]:
+        print(f"💾 Backup created: {backup_result['backup_path']}")

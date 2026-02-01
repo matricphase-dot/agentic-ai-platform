@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Organizer - Agentic AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .upload-area {
+            border: 3px dashed #6366f1;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            margin: 30px 0;
+            background: rgba(99, 102, 241, 0.05);
+            transition: all 0.3s ease;
+        }
+        .upload-area.drag-over {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: #10b981;
+        }
+        .upload-icon {
+            font-size: 48px;
+            color: #6366f1;
+            margin-bottom: 20px;
+        }
+        .file-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+        .organize-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        .option-card {
+            background: rgba(30, 41, 59, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .option-card:hover {
+            border-color: #6366f1;
+            transform: translateY(-3px);
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-folder-tree"></i>
+                <span>File Organizer</span>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link"><i class="fas fa-arrow-left"></i> Dashboard</a>
+                <a href="/desktop-recorder" class="nav-link"><i class="fas fa-desktop"></i> Recorder</a>
+                <a href="/ai-automation" class="nav-link"><i class="fas fa-brain"></i> AI Automation</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-folder-tree"></i> AI-Powered File Organizer</h1>
+            <p class="subtitle">Smart categorization • Duplicate detection • Bulk operations</p>
+        </div>
+
+        <!-- Upload Area -->
+        <div class="card">
+            <h2><i class="fas fa-cloud-upload-alt"></i> Upload Files</h2>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <h3>Drag & Drop Files Here</h3>
+                <p>Or click to browse files (Supports multiple files)</p>
+                <input type="file" id="fileInput" multiple style="display: none;">
+                <button class="btn" onclick="document.getElementById('fileInput').click()" style="margin-top: 20px;">
+                    <i class="fas fa-folder-open"></i> Select Files
+                </button>
+            </div>
+            
+            <div class="progress-bar" id="uploadProgress">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <div class="file-list" id="fileList">
+                <!-- Files will appear here -->
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" onclick="uploadFiles()" id="uploadBtn">
+                    <i class="fas fa-upload"></i> Upload Selected Files
+                </button>
+                <button class="btn" onclick="clearSelection()">
+                    <i class="fas fa-times"></i> Clear Selection
+                </button>
+            </div>
+        </div>
+
+        <!-- Organize Options -->
+        <div class="card">
+            <h2><i class="fas fa-magic"></i> AI Organization Options</h2>
+            <div class="organize-options">
+                <div class="option-card" onclick="organizeByType()">
+                    <div class="file-icon">
+                        <i class="fas fa-sort-alpha-down"></i>
+                    </div>
+                    <h4>Organize by Type</h4>
+                    <p>Group files by extension (Images, Documents, etc.)</p>
+                </div>
+                
+                <div class="option-card" onclick="findDuplicates()">
+                    <div class="file-icon">
+                        <i class="fas fa-copy"></i>
+                    </div>
+                    <h4>Find Duplicates</h4>
+                    <p>Scan and remove duplicate files</p>
+                </div>
+                
+                <div class="option-card" onclick="bulkRename()">
+                    <div class="file-icon">
+                        <i class="fas fa-font"></i>
+                    </div>
+                    <h4>Bulk Rename</h4>
+                    <p>Rename multiple files with patterns</p>
+                </div>
+                
+                <div class="option-card" onclick="smartCategorize()">
+                    <div class="file-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h4>AI Categorization</h4>
+                    <p>AI-powered smart organization</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="card">
+            <h2><i class="fas fa-chart-bar"></i> File Statistics</h2>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #6366f1;" id="totalFiles">0</div>
+                    <div style="color: #94a3b8;">Total Files</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #10b981;" id="organizedFiles">0</div>
+                    <div style="color: #94a3b8;">Organized</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #f59e0b;" id="duplicatesFound">0</div>
+                    <div style="color: #94a3b8;">Duplicates</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #8b5cf6;" id="spaceSaved">0 MB</div>
+                    <div style="color: #94a3b8;">Space Saved</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="card">
+            <h2><i class="fas fa-history"></i> Recent Organization Activities</h2>
+            <div id="activitiesList">
+                <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; margin: 10px 0;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-check-circle" style="color: #10b981;"></i>
+                        <div>
+                            <strong>System ready</strong>
+                            <div style="color: #94a3b8; font-size: 0.9rem;">Upload files to get started</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        
+        // Upload area drag & drop
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+        
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            updateFileList();
+        }
+        
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            if (selectedFiles.length === 0) {
+                fileList.innerHTML = '<p style="text-align: center; color: #94a3b8;">No files selected</p>';
+                return;
+            }
+            
+            let html = '';
+            selectedFiles.forEach((file, index) => {
+                const icon = getFileIcon(file.name);
+                html += `
+                    <div class="file-item">
+                        <div class="file-icon">${icon}</div>
+                        <div style="flex: 1;">
+                            <strong>${file.name}</strong>
+                            <div style="color: #94a3b8; font-size: 0.9rem;">
+                                ${formatFileSize(file.size)} • ${file.type || 'Unknown type'}
+                            </div>
+                        </div>
+                        <button class="btn btn-small" onclick="removeFile(${index})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            fileList.innerHTML = html;
+            
+            // Update stats
+            document.getElementById('totalFiles').textContent = selectedFiles.length;
+        }
+        
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext)) {
+                return '<i class="fas fa-image" style="color: #10b981;"></i>';
+            } else if (['pdf', 'doc', 'docx', 'txt'].includes(ext)) {
+                return '<i class="fas fa-file-alt" style="color: #3b82f6;"></i>';
+            } else if (['mp4', 'avi', 'mov', 'mkv'].includes(ext)) {
+                return '<i class="fas fa-video" style="color: #ef4444;"></i>';
+            } else if (['mp3', 'wav', 'ogg'].includes(ext)) {
+                return '<i class="fas fa-music" style="color: #8b5cf6;"></i>';
+            } else {
+                return '<i class="fas fa-file" style="color: #94a3b8;"></i>';
+            }
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+        
+        function clearSelection() {
+            selectedFiles = [];
+            updateFileList();
+            fileInput.value = '';
+        }
+        
+        function uploadFiles() {
+            if (selectedFiles.length === 0) {
+                alert('Please select files first!');
+                return;
+            }
+            
+            const progressBar = document.getElementById('uploadProgress');
+            const progressFill = document.getElementById('progressFill');
+            const uploadBtn = document.getElementById('uploadBtn');
+            
+            progressBar.style.display = 'block';
+            uploadBtn.disabled = true;
+            
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                progressFill.style.width = progress + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    
+                    // Actual upload
+                    fetch('/api/file-organizer/upload', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(`✅ ${selectedFiles.length} files uploaded successfully!`);
+                        progressBar.style.display = 'none';
+                        uploadBtn.disabled = false;
+                        clearSelection();
+                        addActivity('Files uploaded successfully');
+                        updateStats();
+                    });
+                }
+            }, 100);
+        }
+        
+        function organizeByType() {
+            showProgress('Organizing files by type...');
+            fetch('/api/file-organizer/organize-by-type', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    alert('✅ Files organized by type!');
+                    addActivity('Files organized by type');
+                    updateStats();
+                });
+        }
+        
+        function findDuplicates() {
+            showProgress('Scanning for duplicate files...');
+            fetch('/api/file-organizer/find-duplicates', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.duplicates && data.duplicates.length > 0) {
+                        alert(`Found ${data.duplicates.length} duplicate files!`);
+                        document.getElementById('duplicatesFound').textContent = data.duplicates.length;
+                        document.getElementById('spaceSaved').textContent = data.spaceSaved + ' MB';
+                    } else {
+                        alert('No duplicate files found!');
+                    }
+                    addActivity('Duplicate scan completed');
+                });
+        }
+        
+        function bulkRename() {
+            const pattern = prompt('Enter rename pattern (e.g., "File_{number}"):');
+            if (pattern) {
+                showProgress('Renaming files...');
+                fetch('/api/file-organizer/bulk-rename', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pattern: pattern })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(`✅ ${data.count} files renamed!`);
+                    addActivity('Bulk rename completed');
+                });
+            }
+        }
+        
+        function smartCategorize() {
+            showProgress('AI categorizing files...');
+            fetch('/api/file-organizer/ai-categorize', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    alert('✅ AI categorization complete!');
+                    addActivity('AI smart categorization');
+                    updateStats();
+                });
+        }
+        
+        function showProgress(message) {
+            addActivity(message);
+        }
+        
+        function addActivity(message) {
+            const activitiesList = document.getElementById('activitiesList');
+            const now = new Date().toLocaleTimeString();
+            const activity = `
+                <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; margin: 10px 0;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-check-circle" style="color: #6366f1;"></i>
+                        <div>
+                            <strong>${message}</strong>
+                            <div style="color: #94a3b8; font-size: 0.9rem;">${now}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            activitiesList.insertAdjacentHTML('afterbegin', activity);
+        }
+        
+        function updateStats() {
+            // Simulate updating stats
+            const organized = parseInt(document.getElementById('organizedFiles').textContent) || 0;
+            document.getElementById('organizedFiles').textContent = organized + selectedFiles.length;
+        }
+        
+        // Load initial stats
+        window.onload = function() {
+            fetch('/api/file-organizer/stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.totalFiles) {
+                        document.getElementById('totalFiles').textContent = data.totalFiles;
+                        document.getElementById('organizedFiles').textContent = data.organizedFiles || 0;
+                        document.getElementById('duplicatesFound').textContent = data.duplicatesFound || 0;
+                        document.getElementById('spaceSaved').textContent = data.spaceSaved || '0 MB';
+                    }
+                });
+        };
+    </script>
+</body>
+</html>
