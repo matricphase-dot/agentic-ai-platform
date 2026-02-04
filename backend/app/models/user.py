@@ -23,6 +23,7 @@ class User(Base):
     # Usage tracking
     total_executions = Column(Integer, default=0)
     total_agents = Column(Integer, default=0)
+    total_containers = Column(Integer, default=0)
     last_active = Column(DateTime, nullable=True)
     
     # Timestamps
@@ -31,9 +32,10 @@ class User(Base):
     
     # Relationships
     agents = relationship("Agent", back_populates="owner")
+    agent_containers = relationship("AgentContainer", back_populates="user")
     agent_executions = relationship("AgentExecution", back_populates="user")
     
-    # Team relationships (will be added when Team model is created)
+    # Team relationships (when Team model is created)
     # owned_teams = relationship("Team", back_populates="owner")
     # teams = relationship("Team", secondary="team_members", back_populates="members")
     
@@ -50,6 +52,7 @@ class User(Base):
             "is_admin": self.is_admin,
             "total_executions": self.total_executions,
             "total_agents": self.total_agents,
+            "total_containers": self.total_containers,
             "last_active": self.last_active.isoformat() if self.last_active else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
@@ -65,5 +68,6 @@ class User(Base):
             "avatar_url": self.avatar_url,
             "bio": self.bio,
             "total_agents": self.total_agents,
+            "total_containers": self.total_containers,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
