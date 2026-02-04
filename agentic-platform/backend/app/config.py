@@ -1,72 +1,67 @@
-import os
-import json
-from typing import List, Optional
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, field_validator
+"""
+Configuration management for Agentic AI Platform
+"""
 
+import os
+from typing import Optional
+from pydantic_settings import BaseSettings  # Changed from pydantic
+from pydantic import Field, field_validator  # Updated import
 
 class Settings(BaseSettings):
-    # App Configuration
-    APP_NAME: str = "Agentic AI Platform"
-    APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
-    API_V1_STR: str = "/api/v1"
+    # OpenAI Configuration
+    OPENAI_API_KEY: str = Field(default="", description="OpenAI API Key")
+    OPENAI_MODEL: str = Field(default="gpt-4-turbo-preview", description="OpenAI Model")
+    OPENAI_MAX_TOKENS: int = Field(default=1000, description="Max tokens for OpenAI")
+    OPENAI_TEMPERATURE: float = Field(default=0.7, description="Temperature for OpenAI")
     
-    # Security
-    SECRET_KEY: str = "your-secret-key-change-in-production"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    # Database Configuration
+    DATABASE_URL: str = Field(default="sqlite:///./agentic.db", description="Database URL")
     
-    # CORS - Can be string or list
-    BACKEND_CORS_ORIGINS: List[str] = Field(
-        default=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8000"]
-    )
+    # JWT Authentication
+    SECRET_KEY: str = Field(default="your-super-secret-key-change-this-in-production", description="JWT Secret Key")
+    ALGORITHM: str = Field(default="HS256", description="JWT Algorithm")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=1440, description="Access token expire minutes")
     
-    # Database
-    DATABASE_URL: str = "sqlite:///./agentic.db"
+    # CORS Configuration
+    ALLOWED_ORIGINS: str = Field(default="http://localhost:3000", description="Allowed origins for CORS")
     
-    # Redis (for production)
-    REDIS_URL: Optional[str] = None
+    # Admin User
+    ADMIN_EMAIL: str = Field(default="admin@agenticai.com", description="Admin email")
+    ADMIN_PASSWORD: str = Field(default="Admin123!", description="Admin password")
     
-    # OpenAI
-    OPENAI_API_KEY: Optional[str] = None
+    # Server Configuration
+    HOST: str = Field(default="0.0.0.0", description="Server host")
+    PORT: int = Field(default=8000, description="Server port")
+    DEBUG: bool = Field(default=False, description="Debug mode")
+    ENVIRONMENT: str = Field(default="development", description="Environment")
     
-    # Stripe (for payments)
-    STRIPE_SECRET_KEY: Optional[str] = None
-    STRIPE_WEBHOOK_SECRET: Optional[str] = None
+    # Rate Limiting
+    RATE_LIMIT_PER_MINUTE: int = Field(default=60, description="Rate limit per minute")
     
-    # Email
-    SMTP_HOST: Optional[str] = None
-    SMTP_PORT: int = 587
-    SMTP_USER: Optional[str] = None
-    SMTP_PASSWORD: Optional[str] = None
+    # Logging
+    LOG_LEVEL: str = Field(default="INFO", description="Log level")
+    LOG_FILE: Optional[str] = Field(default=None, description="Log file path")
     
-    # Uploads
-    UPLOAD_DIR: str = "uploads"
-    MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024  # 50MB
+    # Application URLs
+    FRONTEND_URL: str = Field(default="http://localhost:3000", description="Frontend URL")
+    BACKEND_URL: str = Field(default="http://localhost:8000", description="Backend URL")
     
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        case_sensitive=True,
-    )
+    # Feature Flags
+    ENABLE_PAYMENTS: bool = Field(default=False, description="Enable payments")
+    ENABLE_TEAM_FEATURES: bool = Field(default=False, description="Enable team features")
     
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @field_validator("DATABASE_URL")
     @classmethod
-    def assemble_cors_origins(cls, v):
-        """Parse CORS origins from various formats"""
-        if isinstance(v, str):
-            try:
-                # Try to parse as JSON first
-                return json.loads(v)
-            except json.JSONDecodeError:
-                # If not JSON, try comma-separated string
-                if v.strip() == "":
-                    return []
-                return [i.strip() for i in v.split(",")]
-        elif isinstance(v, list):
-            return v
+    def fix_postgres_url(cls, v: str) -> str:
+        """Fix postgres:// to postgresql:// for SQLAlchemy"""
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql://", 1)
         return v
+    
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        case_sensitive = True
 
-
+# Create settings instance
 settings = Settings()

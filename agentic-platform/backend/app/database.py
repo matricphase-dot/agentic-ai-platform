@@ -1,34 +1,23 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
 
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agentic_ai.db")
+# SQLite database URL for development
+SQLALCHEMY_DATABASE_URL = "sqlite:///./agentic.db"
 
-# Create SQLAlchemy engine
+# Create engine
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, 
-    connect_args={"check_same_thread": False}  # Only needed for SQLite
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False}
 )
 
-# Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Create Base class
 Base = declarative_base()
 
-# Dependency to get DB session
+# Dependency
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-
-# Initialize database
-def init_db():
-    # Import all models here to ensure they are registered with Base
-    from app.models.user import User
-    # from app.models.agent import Agent
-    # from app.models.agent_execution import AgentExecution
-    Base.metadata.create_all(bind=engine)
