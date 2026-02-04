@@ -1,22 +1,37 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import toast from 'react-hot-toast';
+import { api } from '@/services/api';
+
+interface Agent {
+  id: number;
+  name: string;
+  description: string;
+  category: string;
+  icon: string;
+  instructions: string;
+  input_template: string;
+}
 
 export default function AgentDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const agentId = params.id as string;
   
-  const [agent, setAgent] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [executing, setExecuting] = useState(false);
-  const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [executionHistory, setExecutionHistory] = useState<any[]>([]);
+  // FIXED: Handle null/undefined params
+  const agentId = params?.id ? String(params.id) : '';
+  
+  if (!agentId) {
+    router.push('/marketplace');
+    return null;
+  }
 
+  const [agent, setAgent] = useState<Agent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [executionResult, setExecutionResult] = useState('');
+  const [userInput, setUserInput] = useState('');
+  const [executing, setExecuting] = useState(false);
   useEffect(() => {
     fetchAgentDetails();
     fetchExecutionHistory();
