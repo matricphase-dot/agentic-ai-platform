@@ -1,0 +1,22 @@
+# Track binary files with Git LFS
+*.node filter=lfs diff=lfs merge=lfs -text
+*.bin filter=lfs diff=lfs merge=lfs -text
+*.exe filter=lfs diff=lfs merge=lfs -text
+*.dll filter=lfs diff=lfs merge=lfs -text
+*.so filter=lfs diff=lfs merge=lfs -text
+*.dylib filter=lfs diff=lfs merge=lfs -text
+*.pdb filter=lfs diff=lfs merge=lfs -text
+# Specific patterns
+frontend/node_modules/@next/swc-*/** filter=lfs diff=lfs merge=lfs -text
+**/*next-swc* filter=lfs diff=lfs merge=lfs -text
+# Text files that should remain as text
+*.py text
+*.js text
+*.ts text
+*.tsx text
+*.json text
+*.md text
+*.txt text
+*.yml text
+*.yaml text
+**/*.node filter=lfs diff=lfs merge=lfs -text
