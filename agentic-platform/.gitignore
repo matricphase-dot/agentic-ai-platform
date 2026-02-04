@@ -1,2 +1,6 @@
-"frontend/node_modules/@next/swc-*/next-swc.*.node" 
-"*.node" 
+backup.bundle 
+*.bundle 
+frontend/node_modules/ 
+*.node 
+.env 
+*.log 
