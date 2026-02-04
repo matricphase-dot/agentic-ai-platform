@@ -1,6 +1,11 @@
-backup.bundle 
+# Dependencies 
+node_modules/ 
+.next/ 
+ 
+# Build files and binaries 
 *.bundle 
-frontend/node_modules/ 
 *.node 
+ 
+# Environment and logs 
 .env 
 *.log 
