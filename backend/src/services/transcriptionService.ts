@@ -1,4 +1,4 @@
-﻿// Stub for transcription service
-export const transcribeAudio = async (audioPath: string): Promise<string> => {
+﻿// transcriptionService.ts
+export const transcribeRecording = async (audioPath: string): Promise<string> => {
     return "Transcription stub";
 };
