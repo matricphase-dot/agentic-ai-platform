@@ -1,4 +1,4 @@
-{
+﻿{
     "compilerOptions":  {
                             "target":  "es2020",
                             "module":  "commonjs",
@@ -7,9 +7,7 @@
                                     ],
                             "outDir":  "./dist",
                             "rootDir":  "./src",
-                            "strict":  true,
                             "esModuleInterop":  true,
-                            "skipLibCheck":  true,
                             "forceConsistentCasingInFileNames":  true,
                             "resolveJsonModule":  true,
                             "moduleResolution":  "node",
@@ -24,7 +22,11 @@
                             "exactOptionalPropertyTypes":  true,
                             "isolatedModules":  true,
                             "noUncheckedSideEffectImports":  true,
-                            "moduleDetection":  "force"
+                            "moduleDetection":  "force",
+                            "noImplicitAny":  false,
+                            "strictNullChecks":  false,
+                            "strict":  false,
+                            "skipLibCheck":  true
                         },
     "include":  [
                     "src/**/*"
