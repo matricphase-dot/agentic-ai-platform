@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Agentic AI Platform - TEST</title>
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        button { background: #0070f3; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>🤖 Agentic AI Platform - Backend Test</h1>
+    <p>Testing connection to FastAPI backend at <code>http://localhost:8000</code></p>
+    
+    <div class="card">
+        <h3>1. Test Backend Connection</h3>
+        <button onclick="testHealth()">Test /health Endpoint</button>
+        <div id="healthResult"></div>
+    </div>
+    
+    <div class="card">
+        <h3>2. Create an AI Agent</h3>
+        <input type="text" id="agentName" placeholder="Agent Name" value="Research Assistant">
+        <select id="agentType">
+            <option value="researcher">Researcher</option>
+            <option value="writer">Writer</option>
+            <option value="coder">Coder</option>
+        </select>
+        <button onclick="createAgent()">Create Agent</button>
+        <div id="agentResult"></div>
+    </div>
+    
+    <div class="card">
+        <h3>3. List All Agents</h3>
+        <button onclick="listAgents()">List Agents</button>
+        <div id="listResult"></div>
+    </div>
+    
+    <div class="card">
+        <h3>API Documentation</h3>
+        <p>Full API docs available at: <a href="http://localhost:8000/docs" target="_blank">http://localhost:8000/docs</a></p>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        async function testHealth() {
+            try {
+                const response = await fetch(API_BASE + '/health');
+                const data = await response.json();
+                document.getElementById('healthResult').innerHTML = 
+                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('healthResult').innerHTML = 
+                    `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function createAgent() {
+            const name = document.getElementById('agentName').value;
+            const type = document.getElementById('agentType').value;
+            
+            try {
+                const response = await fetch(API_BASE + '/agents', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, agent_type: type })
+                });
+                const data = await response.json();
+                document.getElementById('agentResult').innerHTML = 
+                    `<pre>✅ Agent Created!\n${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('agentResult').innerHTML = 
+                    `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function listAgents() {
+            try {
+                const response = await fetch(API_BASE + '/agents');
+                const data = await response.json();
+                document.getElementById('listResult').innerHTML = 
+                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('listResult').innerHTML = 
+                    `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

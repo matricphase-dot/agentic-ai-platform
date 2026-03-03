@@ -1,0 +1,904 @@
+generator client {
+
+
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+// ============================================================
+// USERS & AGENTS
+// ============================================================
+
+
+
+model users {
+id                  String   @id @default(cuid())
+name                String
+description         String?
+agent_type          String
+status              String   @default("active")
+configuration       Json?
+capabilities        Json?
+specialties         Json?
+hourly_rate         Float    @default(0)
+success_rate        Float    @default(0)
+total_value_created Float    @default(0)
+tasks_completed     Int      @default(0)
+reputation_score    Float    @default(0)
+owner_id            String
+created_at          DateTime @default(now())
+updated_at          DateTime @updatedAt
+
+owner users @relation(fields: [owner_id], references: [id])
+
+quantum_keys                 quantum_keys[]
+agent_messages_sent          agent_messages[]         @relation("sent")
+agent_messages_received      agent_messages[]         @relation("received")
+consensus_votes              consensus_votes[]
+agent_clones                 agent_clones[]
+agent_franchises             franchises[]
+stakes                       stakes[]
+contracts                    contracts[]
+business_agents              business_agents[]
+service_listings             service_listings[]
+agent_hire_agreements_hired  agent_hire_agreements[]  @relation("hired")
+agent_hire_agreements_hiring agent_hire_agreements[]  @relation("hiring")
+integration_logs             integration_logs[]
+agent_service_bindings       agent_service_bindings[]
+// node_tasks                   node_tasks[]           // Temporarily commented
+contributions                contributions[]
+derivative_contracts         derivative_contracts[]
+
+}
+
+model agents {
+  id             String   @id @default(cuid())
+  ownerId        String
+  name           String
+  description    String?
+  systemPrompt   String?
+  capabilities   String?
+  modelProvider  String?  @default("ollama-local")
+  status         String   @default("inactive")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  sentMessages     Message[]   @relation("SentMessages")
+  receivedMessages Message[]   @relation("ReceivedMessages")
+  teamAgents       TeamAgent[]
+  tasks            NodeTask[]
+}
+model agent_service_bindings {
+agent_id      String
+connection_id String
+permissions   Json?
+created_at    DateTime @default(now())
+updated_at    DateTime @updatedAt
+
+agents      agents           @relation(fields: [agent_id], references: [id])
+connection user_connections @relation(fields: [connection_id], references: [id])
+}
+
+model business_agents {
+id          String   @id @default(cuid())
+business_id String
+agent_id    String
+role        String?
+assigned_at DateTime @default(now())
+
+business businesses @relation(fields: [business_id], references: [id])
+agents    agents     @relation(fields: [agent_id], references: [id])
+
+@@unique([business_id, agent_id])
+}
+
+model businesses {
+id                        String   @id @default(cuid())
+name                      String
+description               String?
+business_type             String
+configuration             Json?
+owner_id                  String
+revenue                   Float    @default(0)
+profit                    Float    @default(0)
+status                    String   @default("active")
+owner           users             @relation(fields: [owner_id], references: [id])
+contracts       contracts[]
+
+model citizens {
+id        String   @id @default(cuid())
+nation_id String
+user_id   String
+role      String?
+joined_at DateTime @default(now())
+
+nation nations @relation(fields: [nation_id], references: [id])
+user   users   @relation(fields: [user_id], references: [id])
+
+proposed_proposals nation_proposals[] @relation("proposer")
+votes              nation_votes[]     @relation("voter")
+
+@@unique([user_id, nation_id])
+}
+
+model competitor_insights {
+id          String   @id @default(cuid())
+competitor  String
+feature     String
+description String
+created_at  DateTime @default(now())
+}
+
+model connectors {
+id          String   @id @default(cuid())
+name        String
+description String?
+logo_url    String?
+auth_type   String
+auth_config Json?
+base_url    String?
+endpoints   Json?
+created_at  DateTime @default(now())
+updated_at  DateTime @updatedAt
+
+user_connections user_connections[]
+}
+
+model consensus_rounds {
+id           String   @id @default(cuid())
+round_number Int      @unique
+status       String   @default("active")
+created_at   DateTime @default(now())
+updated_at   DateTime @updatedAt
+
+votes consensus_votes[]
+}
+
+model consensus_votes {
+id         String   @id @default(cuid())
+round_id   String
+agent_id   String
+vote       Boolean
+weight     Float
+created_at DateTime @default(now())
+updated_at DateTime @updatedAt
+
+round consensus_rounds @relation(fields: [round_id], references: [id])
+agents agents           @relation(fields: [agent_id], references: [id])
+}
+
+model contracts {
+id          String   @id @default(cuid())
+business_id String
+agent_id    String
+terms       Json?
+status      String   @default("ACTIVE")
+created_at  DateTime @default(now())
+updated_at  DateTime @updatedAt
+
+business businesses @relation(fields: [business_id], references: [id])
+agents    agents     @relation(fields: [agent_id], references: [id])
+}
+
+model contributions {
+id          String   @id @default(cuid())
+round_id    String
+agent_id    String
+model_delta Json?
+quality     Float?
+created_at  DateTime @default(now())
+updated_at  DateTime @updatedAt
+
+round learning_rounds @relation(fields: [round_id], references: [id])
+agents agents          @relation(fields: [agent_id], references: [id])
+}
+
+model deployment_logs {
+id            String   @id @default(cuid())
+deployment_id String
+message       String
+level         String   @default("info")
+created_at    DateTime @default(now())
+
+deployment deployments @relation(fields: [deployment_id], references: [id])
+}
+
+model deployments {
+id          String   @id @default(cuid())
+agent_id    String
+platform_id String
+external_id String?
+config      Json?
+status      String   @default("pending")
+created_at  DateTime @default(now())
+updated_at  DateTime @updatedAt
+
+agents        agents               @relation(fields: [agent_id], references: [id])
+platform     platform_connections @relation(fields: [platform_id], references: [id])
+logs         deployment_logs[]
+revenue_logs revenue_logs[]
+}
+
+model derivative_contracts {
+id                String   @id @default(cuid())
+contract_type     String
+agent_id          String
+seller_id         String
+buyer_id          String?
+strike_price      Float
+quantity          Int
+expiry_date       DateTime
+settlement_metric String
+premium           Float?
+status            String   @default("active")
+payout            Float?
+created_at        DateTime @default(now())
+updated_at        DateTime @updatedAt
+
+agents           agents            @relation(fields: [agent_id], references: [id])
+seller          users             @relation("seller", fields: [seller_id], references: [id])
+buyer           users?            @relation("buyer", fields: [buyer_id], references: [id])
+positions       positions[]
+settlement_logs settlement_logs[]
+}
+
+model due_diligence_reports {
+id             String   @id @default(cuid())
+proposal_id    String
+agent_id       String?
+score          Float
+summary        String
+details        Json?
+risks          Json?
+recommendation String
+created_at     DateTime @default(now())
+
+proposal investment_proposals @relation(fields: [proposal_id], references: [id])
+}
+
+model franchises {
+id                 String   @id @default(cuid())
+blueprint_id       String
+owner_id           String
+agent_id           String?
+status             String   @default("active")
+purchase_price     Float
+total_royalty_paid Float    @default(0)
+created_at         DateTime @default(now())
+updated_at         DateTime @updatedAt
+
+blueprint        agent_blueprints   @relation(fields: [blueprint_id], references: [id])
+owner            users              @relation("owner", fields: [owner_id], references: [id])
+agents            agents?            @relation(fields: [agent_id], references: [id])
+royalty_payments royalty_payments[]
+}
+
+model integration_logs {
+id            String   @id @default(cuid())
+agent_id      String
+connection_id String
+action        String
+request       Json?
+response      Json?
+status        String
+created_at    DateTime @default(now())
+updated_at    DateTime @updatedAt
+
+agents      agents           @relation(fields: [agent_id], references: [id])
+connection user_connections @relation(fields: [connection_id], references: [id])
+}
+
+model integration_templates {
+id             String   @id @default(cuid())
+api_name       String
+api_docs_url   String
+generated_code String
+created_at     DateTime @default(now())
+updated_at     DateTime @updatedAt
+}
+
+model investment_proposals {
+id          String    @id @default(cuid())
+startup_id  String
+proposer_id String
+title       String
+description String
+ask_amount  Float
+equity      Float?
+status      String    @default("pending")
+created_at  DateTime  @default(now())
+reviewed_at DateTime?
+funded_at   DateTime?
+
+startup     startups                @relation(fields: [startup_id], references: [id])
+proposer    users                   @relation("proposer", fields: [proposer_id], references: [id])
+reports     due_diligence_reports[]
+investments investments[]
+}
+
+model investments {
+id          String   @id @default(cuid())
+proposal_id String
+investor_id String
+amount      Float
+equity      Float?
+created_at  DateTime @default(now())
+
+proposal investment_proposals @relation(fields: [proposal_id], references: [id])
+investor users                @relation("investor", fields: [investor_id], references: [id])
+}
+
+model learning_rounds {
+id           String   @id @default(cuid())
+round_number Int      @unique
+global_model Json?
+status       String   @default("active")
+created_at   DateTime @default(now())
+updated_at   DateTime @updatedAt
+
+contributions contributions[]
+}
+
+model Message {
+id          String    @id @default(cuid())
+senderId    String
+sender      agents     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+receiverId  String
+receiver    agents     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+content     String // JSON string (can include type, payload)
+status      String    @default("sent") // sent, delivered, read
+createdAt   DateTime  @default(now())
+deliveredAt DateTime?
+}
+
+model nation_proposals {
+id          String    @id @default(cuid())
+nation_id   String
+proposer_id String
+title       String
+description String
+status      String    @default("active")
+voting_ends DateTime?
+created_at  DateTime  @default(now())
+updated_at  DateTime  @updatedAt
+
+nation   nations        @relation(fields: [nation_id], references: [id])
+proposer citizens       @relation("proposer", fields: [proposer_id], references: [id])
+votes    nation_votes[]
+}
+
+model nation_votes {
+id          String   @id @default(cuid())
+proposal_id String
+voter_id    String
+support     Boolean
+weight      Float
+created_at  DateTime @default(now())
+
+proposal nation_proposals @relation(fields: [proposal_id], references: [id])
+voter    citizens         @relation("voter", fields: [voter_id], references: [id])
+
+@@unique([proposal_id, voter_id])
+}
+
+model nations {
+id          String   @id @default(cuid())
+name        String   @unique
+description String?
+founder_id  String
+created_at  DateTime @default(now())
+updated_at  DateTime @updatedAt
+
+founder   users              @relation("nation_founder", fields: [founder_id], references: [id])
+citizens  citizens[]
+proposals nation_proposals[]
+}
+
+model Node {
+id          String   @id @default(cuid())
+ownerId     String
+owner       users    @relation(fields: [ownerId], references: [id])
+name        String
+description String?
+status      String   @default("offline") // offline, online, busy
+specs       Json     // CPU, RAM, GPU, storage, etc.
+location    String?  // Region or datacenter
+version     String   // Node software version
+lastPing    DateTime @default(now())
+createdAt   DateTime @default(now())
+updatedAt   DateTime @updatedAt
+tasks       NodeTask[]
+rewards     NodeReward[]
+}
+
+model node_rewards {
+id           String    @id @default(cuid())
+node_id      String
+amount       Float
+reason       String?
+period_start DateTime
+period_end   DateTime
+paid_at      DateTime?
+created_at   DateTime  @default(now())
+
+node nodes @relation(fields: [node_id], references: [id])
+}
+
+model node_tasks {
+id           String    @id @default(cuid())
+node_id      String
+agent_id     String?
+type         String
+payload      Json?
+status       String    @default("pending")
+reward       Float?
+started_at   DateTime?
+completed_at DateTime?
+created_at   DateTime  @default(now())
+updated_at   DateTime  @updatedAt
+
+node nodes @relation(fields: [node_id], references: [id])
+// Relation to agents would be needed if agents had node_tasks, but we commented it out.
+}
+
+model NodeReward {
+id          String   @id @default(cuid())
+nodeId      String
+node        Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+amount      Float
+reason      String?  // e.g., "task_completion", "uptime_bonus"
+taskId      String?  // If linked to a specific task
+task        NodeTask? @relation(fields: [taskId], references: [id])
+createdAt   DateTime @default(now())
+}
+
+model nodes {
+id         String    @id @default(cuid())
+owner_id   String
+name       String
+endpoint   String?
+status     String    @default("offline")
+last_ping  DateTime?
+created_at DateTime  @default(now())
+updated_at DateTime  @updatedAt
+
+owner        users          @relation("owner", fields: [owner_id], references: [id])
+node_tasks   node_tasks[]
+node_rewards node_rewards[]
+}
+
+model NodeTask {
+id          String   @id @default(cuid())
+nodeId      String
+node        Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+agentId     String
+agents       agents    @relation(fields: [agentId], references: [id])
+userId      String   // Who requested the task
+user        users    @relation(fields: [userId], references: [id])
+type        String   // e.g., "inference", "training", "rag"
+input       Json?    // Task input data
+output      Json?    // Task result
+status      String   @default("pending") // pending, assigned, running, completed, failed
+startedAt   DateTime?
+completedAt DateTime?
+reward      Float?   // AGIX earned for this task
+createdAt   DateTime @default(now())
+}
+
+model notifications {
+id         String   @id @default(cuid())
+user_id    String
+type       String
+title      String
+message    String?
+read       Boolean  @default(false)
+created_at DateTime @default(now())
+
+user users @relation(fields: [user_id], references: [id])
+}
+
+model platform_connections {
+id          String   @id @default(cuid())
+user_id     String
+platform    String
+credentials Json
+status      String   @default("active")
+created_at  DateTime @default(now())
+updated_at  DateTime @updatedAt
+
+user        users         @relation(fields: [user_id], references: [id])
+deployments deployments[]
+}
+
+model positions {
+id          String   @id @default(cuid())
+user_id     String
+contract_id String
+side        String
+quantity    Int
+created_at  DateTime @default(now())
+updated_at  DateTime @updatedAt
+
+user     users                @relation(fields: [user_id], references: [id])
+contract derivative_contracts @relation(fields: [contract_id], references: [id])
+}
+
+model pricing_rules {
+id         String   @id @default(cuid())
+agent_type String
+base_price Float
+demand     Float
+multiplier Float
+updated_at DateTime @updatedAt
+}
+
+model Proposal {
+id          String   @id @default(cuid())
+title       String
+description String
+options     Json     // Array of strings, e.g. ["Yes", "No", "Abstain"]
+endDate     DateTime
+createdById String
+createdBy   users    @relation(fields: [createdById], references: [id])
+status      String   @default("active") // active, passed, rejected
+createdAt   DateTime @default(now())
+updatedAt   DateTime @updatedAt
+votes       Vote[]
+}
+
+model proposals {
+id          String    @id @default(cuid())
+title       String
+description String
+proposer_id String
+status      String    @default("active")
+voting_ends DateTime?
+created_at  DateTime  @default(now())
+updated_at  DateTime  @updatedAt
+
+proposer users   @relation(fields: [proposer_id], references: [id])
+votes    votes[]
+}
+
+model quantum_keys {
+id         String   @id @default(cuid())
+agent_id   String   @unique
+public_key String
+created_at DateTime @default(now())
+updated_at DateTime @updatedAt
+
+agents agents @relation(fields: [agent_id], references: [id])
+}
+
+model recommendations {
+id          String   @id @default(cuid())
+user_id     String
+type        String
+title       String
+description String?
+priority    Int
+metadata    Json?
+created_at  DateTime @default(now())
+
+user users @relation(fields: [user_id], references: [id])
+}
+
+model Recording {
+id         String   @id @default(cuid())
+userId     String
+user       users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+filename   String
+filepath   String
+duration   Int?
+transcript String?
+analysis   String? // AI-generated summary/action items
+createdAt  DateTime @default(now())
+updatedAt  DateTime @updatedAt
+}
+
+model revenue_logs {
+id            String   @id @default(cuid())
+deployment_id String
+amount        Float
+description   String?
+created_at    DateTime @default(now())
+
+deployment deployments @relation(fields: [deployment_id], references: [id])
+}
+
+model Reward {
+id        String   @id @default(cuid())
+stakeId   String
+stake     Stake    @relation(fields: [stakeId], references: [id], onDelete: Cascade)
+amount    Float
+createdAt DateTime @default(now())
+}
+
+model royalty_payments {
+id           String    @id @default(cuid())
+franchise_id String
+amount       Float
+period_start DateTime
+period_end   DateTime
+status       String    @default("pending")
+paid_at      DateTime?
+created_at   DateTime  @default(now())
+
+franchise franchises @relation(fields: [franchise_id], references: [id])
+}
+
+model service_execution_logs {
+id           String    @id @default(cuid())
+order_id     String
+description  String?
+hours_worked Float?
+amount       Float?
+status       String    @default("pending")
+completed_at DateTime?
+created_at   DateTime  @default(now())
+updated_at   DateTime  @updatedAt
+
+order service_orders @relation(fields: [order_id], references: [id])
+}
+
+model service_listings {
+id           String   @id @default(cuid())
+agent_id     String
+title        String
+description  String?
+service_type String
+pricing_type String
+price        Float
+currency     String   @default("USD")
+status       String   @default("active")
+created_at   DateTime @default(now())
+updated_at   DateTime @updatedAt
+
+agents           agents                  @relation(fields: [agent_id], references: [id])
+orders          service_orders[]
+hire_agreements agent_hire_agreements[]
+}
+
+model service_orders {
+id           String   @id @default(cuid())
+listing_id   String
+buyer_id     String
+description  String?
+total_amount Float
+status       String   @default("pending")
+created_at   DateTime @default(now())
+updated_at   DateTime @updatedAt
+
+listing service_listings         @relation(fields: [listing_id], references: [id])
+buyer   users                    @relation("buyer", fields: [buyer_id], references: [id])
+logs    service_execution_logs[]
+}
+
+model settlement_logs {
+id           String   @id @default(cuid())
+contract_id  String
+agent_metric Float
+payout       Float
+created_at   DateTime @default(now())
+updated_at   DateTime @updatedAt
+
+contract derivative_contracts @relation(fields: [contract_id], references: [id])
+}
+
+model Stake {
+id        String   @id @default(cuid())
+userId    String
+user      users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+agentId   String
+agents     agents    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+amount    Float
+status    String   @default("active") // active, unstaked
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+@@unique([userId, agentId, status])
+@@index([userId])
+@@index([agentId])
+@@index([status])
+rewards    Reward[]
+}
+
+model stakes {
+id          String    @id @default(cuid())
+staker_id   String
+agent_id    String?
+amount      Float
+status      String    @default("active")
+lock_until  DateTime?
+unstaked_at DateTime?
+created_at  DateTime  @default(now())
+updated_at  DateTime  @updatedAt
+
+staker users   @relation(fields: [staker_id], references: [id])
+agents  agents? @relation(fields: [agent_id], references: [id])
+}
+
+model startups {
+id           String   @id @default(cuid())
+name         String
+description  String?
+website      String?
+stage        String
+founder_id   String
+token_amount Float    @default(0)
+created_at   DateTime @default(now())
+updated_at   DateTime @updatedAt
+
+founder   users                  @relation("startup_founder", fields: [founder_id], references: [id])
+proposals investment_proposals[]
+}
+
+model system_diagnostics {
+id           String   @id @default(cuid())
+metric       String
+value        Float
+threshold    Float
+action_taken String
+created_at   DateTime @default(now())
+}
+
+model Team {
+id          String   @id @default(cuid())
+name        String
+description String?
+userId      String
+user users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+agents      TeamAgent[]
+createdAt   DateTime @default(now())
+updatedAt   DateTime @updatedAt
+
+@@unique([name, userId])
+@@index([userId])
+}
+
+model TeamAgent {
+id        String   @id @default(cuid())
+teamId    String
+team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+agentId   String
+agents     agents    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+createdAt DateTime @default(now())
+
+@@unique([teamId, agentId])
+@@index([teamId])
+@@index([agentId])
+}
+
+model token_transactions {
+id           String   @id @default(cuid())
+from_user_id String?
+to_user_id   String?
+amount       Float
+type         String
+description  String?
+status       String   @default("completed")
+created_at   DateTime @default(now())
+reference_id String?
+
+from_user users? @relation("sent", fields: [from_user_id], references: [id])
+to_user   users? @relation("received", fields: [to_user_id], references: [id])
+}
+
+model user_connections {
+id           String   @id @default(cuid())
+user_id      String
+connector_id String
+credentials  Json?
+status       String   @default("active")
+created_at   DateTime @default(now())
+updated_at   DateTime @updatedAt
+
+user             users                    @relation(fields: [user_id], references: [id])
+connector        connectors               @relation(fields: [connector_id], references: [id])
+bindings         agent_service_bindings[]
+integration_logs integration_logs[]
+}
+
+model votes {
+id          String   @id @default(cuid())
+proposal_id String
+voter_id    String
+support     Boolean
+weight      Float
+created_at  DateTime @default(now())
+
+proposal proposals @relation(fields: [proposal_id], references: [id])
+voter    users     @relation(fields: [voter_id], references: [id])
+
+@@unique([proposal_id, voter_id])
+}
+
+model agent_hire_agreements {
+id              String    @id @default(cuid())
+listing_id      String
+hiring_agent_id String
+hired_agent_id  String
+terms           Json?
+total_value     Float
+revenue_share   Float?
+status          String    @default("pending")
+started_at      DateTime?
+completed_at    DateTime?
+created_at      DateTime  @default(now())
+updated_at      DateTime  @updatedAt
+
+listing      service_listings @relation(fields: [listing_id], references: [id])
+hiring_agent agents           @relation("hiring", fields: [hiring_agent_id], references: [id])
+hired_agent  agents           @relation("hired", fields: [hired_agent_id], references: [id])
+}
+
+model agent_blueprints {
+id            String   @id @default(cuid())
+name          String
+description   String?
+agent_type    String
+configuration Json?
+specialties   Json?
+price         Float
+royalty_rate  Float
+status        String   @default("active")
+creator_id    String
+created_at    DateTime @default(now())
+updated_at    DateTime @updatedAt
+
+creator    users          @relation("creator", fields: [creator_id], references: [id])
+franchises franchises[]
+clones     agent_clones[]
+}
+
+model agent_messages {
+id            String    @id @default(cuid())
+from_agent_id String
+to_agent_id   String
+content       String
+signature     String
+status        String    @default("pending")
+delivered_at  DateTime?
+created_at    DateTime  @default(now())
+updated_at    DateTime  @updatedAt
+
+from_agent agents @relation("sent", fields: [from_agent_id], references: [id])
+to_agent   agents @relation("received", fields: [to_agent_id], references: [id])
+}
+
+model Vote {
+id         String   @id @default(cuid())
+proposalId String
+proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+userId     String
+user       users    @relation(fields: [userId], references: [id])
+option     String   // The selected option text
+weight     Float    // Based on staked amount at time of vote
+createdAt  DateTime @default(now())
+
+@@unique([proposalId, userId])
+}
+
+model agent_clones {
+id             String   @id @default(cuid())
+blueprint_id   String
+agent_id       String
+buyer_id       String
+purchase_price Float
+created_at     DateTime @default(now())
+updated_at     DateTime @updatedAt
+
+blueprint agent_blueprints @relation(fields: [blueprint_id], references: [id])
+agents     agents           @relation(fields: [agent_id], references: [id])
+buyer     users            @relation("buyer", fields: [buyer_id], references: [id])
+}
+
+
+
+
+

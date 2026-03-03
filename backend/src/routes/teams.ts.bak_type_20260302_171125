@@ -1,0 +1,162 @@
+import express from 'express';
+import { authenticate } from '../middleware/auth';
+import { PrismaClient } from '@prisma/client';
+
+const router = express.Router();
+const prisma = new PrismaClient();
+
+// All team routes require authentication
+router.use(authenticate);
+
+// Create a team
+router.post('/', async (req, res) => {
+  try {
+    const { name, description, agentIds } = req.body;
+    if (!name || !agentIds || !Array.isArray(agentIds) || agentIds.length === 0) {
+      return res.status(400).json({ error: 'Name and at least one agent ID required' });
+    }
+
+    // Verify agents belong to user
+    const agents = await prisma.agent.findMany({
+      where: { 
+        id: { in: agentIds }, 
+        userId: req.user!.id 
+      }
+    });
+    if (agents.length !== agentIds.length) {
+      return res.status(400).json({ error: 'Some agents not found or not owned by you' });
+    }
+
+    const team = await prisma.team.create({
+      data: {
+        name,
+        description,
+        userId: req.user!.id,
+        agents: {
+          create: agentIds.map((agentId: string) => ({ agentId }))
+        }
+      },
+      include: { agents: { include: { agent: true } } }
+    });
+    res.json(team);
+  } catch (error) {
+    console.error('Team creation error:', error);
+    res.status(500).json({ error: 'Failed to create team' });
+  }
+});
+
+// Get all teams for user
+router.get('/', async (req, res) => {
+  try {
+    const teams = await prisma.team.findMany({
+      where: { userId: req.user!.id },
+      include: { agents: { include: { agent: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(teams);
+  } catch (error) {
+    console.error('Fetch teams error:', error);
+    res.status(500).json({ error: 'Failed to fetch teams' });
+  }
+});
+
+// Get single team
+router.get('/:id', async (req, res) => {
+  try {
+    const team = await prisma.team.findFirst({
+      where: { id: req.params.id, userId: req.user!.id },
+      include: { agents: { include: { agent: true } } }
+    });
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+    res.json(team);
+  } catch (error) {
+    console.error('Fetch team error:', error);
+    res.status(500).json({ error: 'Failed to fetch team' });
+  }
+});
+
+// Update team (add/remove agents)
+router.put('/:id', async (req, res) => {
+  try {
+    const { name, description, agentIds } = req.body;
+    const team = await prisma.team.findFirst({
+      where: { id: req.params.id, userId: req.user!.id }
+    });
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    // Verify new agents belong to user
+    if (agentIds) {
+      const agents = await prisma.agent.findMany({
+        where: { id: { in: agentIds }, userId: req.user!.id }
+      });
+      if (agents.length !== agentIds.length) {
+        return res.status(400).json({ error: 'Some agents not found or not owned by you' });
+      }
+    }
+
+    const updated = await prisma.team.update({
+      where: { id: req.params.id },
+      data: {
+        name,
+        description,
+        agents: agentIds ? {
+          deleteMany: {},
+          create: agentIds.map((agentId: string) => ({ agentId }))
+        } : undefined
+      },
+      include: { agents: { include: { agent: true } } }
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error('Team update error:', error);
+    res.status(500).json({ error: 'Failed to update team' });
+  }
+});
+
+// Delete team
+router.delete('/:id', async (req, res) => {
+  try {
+    await prisma.team.deleteMany({
+      where: { id: req.params.id, userId: req.user!.id }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Team delete error:', error);
+    res.status(500).json({ error: 'Failed to delete team' });
+  }
+});
+
+// Send message to team (broadcast to all agents in team)
+router.post('/:id/messages', async (req, res) => {
+  try {
+    const { content } = req.body;
+    if (!content) return res.status(400).json({ error: 'Message content required' });
+
+    const team = await prisma.team.findFirst({
+      where: { id: req.params.id, userId: req.user!.id },
+      include: { agents: { include: { agent: true } } }
+    });
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    // Create a message for each agent
+    const messages = await prisma.$transaction(
+      team.agents.map((tag: { agentId: string }) =>
+        prisma.message.create({
+          data: {
+            content,
+            senderId: req.user!.id,
+            receiverId: tag.agentId,
+            status: 'sent'
+          }
+        })
+      )
+    );
+
+    res.json({ messages, teamId: team.id, count: messages.length });
+  } catch (error) {
+    console.error('Team message error:', error);
+    res.status(500).json({ error: 'Failed to send message to team' });
+  }
+});
+
+export default router;

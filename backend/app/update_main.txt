@@ -1,0 +1,5 @@
+﻿# Add this import near other imports
+from app.api.endpoints.api_connector import router as api_connector_router
+
+# Add this line with other router includes
+app.include_router(api_connector_router, prefix="/api/v1/api", tags=["api-connectors"])

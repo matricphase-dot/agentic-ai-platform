@@ -1,0 +1,356 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- ENUMS ----------
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AgentType {
+  MARKETING
+  CODING
+  RESEARCH
+  SALES
+  SUPPORT
+  ANALYTICS
+  NEGOTIATION
+  CREATIVE
+}
+
+enum AgentStatus {
+  IDLE
+  WORKING
+  TRAINING
+  MAINTENANCE
+  TERMINATED
+}
+
+enum BusinessType {
+  ECOMMERCE
+  SAAS
+  AGENCY
+  CONTENT
+  CONSULTING
+  MARKETPLACE
+}
+
+enum BusinessStatus {
+  ACTIVE
+  PAUSED
+  SCALING
+  TERMINATED
+}
+
+enum ContractStatus {
+  ACTIVE
+  COMPLETED
+  TERMINATED
+  DISPUTED
+}
+
+enum TransactionType {
+  AGENT_PAYMENT
+  STAKE_PURCHASE
+  DIVIDEND_PAYOUT
+  BUSINESS_REVENUE
+  WITHDRAWAL
+  DEPOSIT
+  REFERRAL_BONUS
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum NotificationType {
+  AGENT_COMPLETED_TASK
+  BUSINESS_REVENUE
+  STAKE_PAYOUT
+  SYSTEM_ALERT
+  MARKET_UPDATE
+}
+
+// ---------- MODELS ----------
+model User {
+  id              String        @id @default(cuid())
+  email           String        @unique
+  passwordHash    String
+  name            String?
+  avatar          String?
+  balance         Float         @default(0)
+  reputationScore Int           @default(1000)
+  role            Role          @default(USER)
+
+  agents          Agent[]
+  businesses      Business[]
+  stakes          Stake[]
+  notifications   Notification[]
+
+  fromTransactions Transaction[] @relation("FromUser")
+  toTransactions   Transaction[] @relation("ToUser")
+
+  // Relations for derivatives
+  sellerFutures   AgentFuture[]  @relation("Seller")
+  buyerFutures    AgentFuture[]  @relation("Buyer")
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([email])
+  @@index([reputationScore])
+}
+
+model Agent {
+  id                  String        @id @default(cuid())
+  name                String
+  description         String?
+  agentType           AgentType
+  status              AgentStatus   @default(IDLE)
+  reputationScore     Int           @default(1000)
+  hourlyRate          Float         @default(50)
+  successRate         Float         @default(0.85)
+  totalValueCreated   Float         @default(0)
+  totalEarnings       Float         @default(0)
+  configuration       Json?
+  tasksCompleted      Int           @default(0)
+  specialties         Json?         // Changed to Json for SQLite
+
+  ownerId             String
+  owner               User          @relation(fields: [ownerId], references: [id])
+
+  stakes              Stake[]
+  contracts           Contract[]
+  businessAgents      BusinessAgent[]
+  earnings            AgentEarning[]
+  transactions        Transaction[]
+
+  // Relations for derivatives
+  futures             AgentFuture[]
+
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([reputationScore])
+  @@index([ownerId])
+  @@index([agentType])
+}
+
+model Business {
+  id                    String        @id @default(cuid())
+  name                  String
+  description           String?
+  businessType          BusinessType
+  status                BusinessStatus @default(ACTIVE)
+  revenue               Float         @default(0)
+  profit                Float         @default(0)
+  monthlyRecurringRevenue Float       @default(0)
+  configuration         Json?
+
+  ownerId               String
+  owner                 User          @relation(fields: [ownerId], references: [id])
+
+  agents                BusinessAgent[]
+  contracts             Contract[]
+  transactions          Transaction[]
+
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([ownerId])
+}
+
+model Contract {
+  id              String        @id @default(cuid())
+  businessId      String
+  business        Business      @relation(fields: [businessId], references: [id])
+  agentId         String
+  agent           Agent         @relation(fields: [agentId], references: [id])
+  terms           Json?
+  status          ContractStatus @default(ACTIVE)
+  valueCreated    Float         @default(0)
+  agentCut        Float         @default(0.15)
+
+  createdAt       DateTime      @default(now())
+  expiresAt       DateTime?
+
+  @@index([businessId, agentId])
+}
+
+model Stake {
+  id              String        @id @default(cuid())
+  stakeAmount     Float
+  sharePercentage Float
+  stakerId        String
+  staker          User          @relation(fields: [stakerId], references: [id])
+  agentId         String
+  agent           Agent         @relation(fields: [agentId], references: [id])
+  totalReturns    Float         @default(0)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([stakerId, agentId])
+  @@index([agentId])
+}
+
+model Transaction {
+  id            String          @id @default(cuid())
+  type          TransactionType
+  amount        Float
+  currency      String          @default("USD")
+  fromUserId    String?
+  fromUser      User?           @relation("FromUser", fields: [fromUserId], references: [id])
+  toUserId      String?
+  toUser        User?           @relation("ToUser", fields: [toUserId], references: [id])
+  agentId       String?
+  agent         Agent?          @relation(fields: [agentId], references: [id])
+  businessId    String?
+  business      Business?       @relation(fields: [businessId], references: [id])
+  description   String?
+  metadata      Json?
+  status        TransactionStatus @default(PENDING)
+
+  createdAt     DateTime        @default(now())
+  completedAt   DateTime?
+
+  @@index([fromUserId, toUserId])
+}
+
+model BusinessAgent {
+  id          String    @id @default(cuid())
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id])
+  agentId     String
+  agent       Agent     @relation(fields: [agentId], references: [id])
+  role        String?
+  assignedAt  DateTime  @default(now())
+
+  @@unique([businessId, agentId])
+}
+
+model AgentEarning {
+  id          String    @id @default(cuid())
+  agentId     String
+  agent       Agent     @relation(fields: [agentId], references: [id])
+  amount      Float
+  source      String
+  sourceId    String?
+  createdAt   DateTime  @default(now())
+
+  @@index([agentId])
+}
+
+model Notification {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+  type        NotificationType
+  title       String
+  message     String
+  read        Boolean         @default(false)
+  data        Json?
+  createdAt   DateTime        @default(now())
+
+  @@index([userId, read])
+}
+
+// ---------- DERIVATIVES ----------
+model AgentFuture {
+  id          String   @id @default(cuid())
+  agentId     String
+  agent       Agent    @relation(fields: [agentId], references: [id])
+  sellerId    String
+  seller      User     @relation("Seller", fields: [sellerId], references: [id])
+  buyerId     String?
+  buyer       User?    @relation("Buyer", fields: [buyerId], references: [id])
+
+  strikePrice Float
+  expiryDate  DateTime
+  quantity    Int
+
+  status      String   @default("OPEN") // OPEN, FILLED, EXPIRED, SETTLED
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Placeholder for options – uncomment and add fields when ready
+// model AgentOption {
+//   id          String   @id @default(cuid())
+//   agentId     String
+//   agent       Agent    @relation(fields: [agentId], references: [id])
+//   // other fields
+// }
+// ---------- ENHANCED DERIVATIVES ----------
+enum ContractType {
+  FUTURE
+  CALL_OPTION
+  PUT_OPTION
+  INSURANCE
+}
+
+enum ContractStatus {
+  OPEN
+  FILLED
+  EXPIRED
+  SETTLED
+  CANCELLED
+}
+
+model DerivativeContract {
+  id              String         @id @default(cuid())
+  contractType    ContractType
+  agentId         String
+  agent           Agent          @relation(fields: [agentId], references: [id])
+  sellerId        String
+  seller          User           @relation("Seller", fields: [sellerId], references: [id])
+  buyerId         String?
+  buyer           User?          @relation("Buyer", fields: [buyerId], references: [id])
+  
+  // Contract terms
+  strikePrice     Float          // For options: strike price; for futures: agreed price
+  quantity        Int            // Number of hours (or units)
+  expiryDate      DateTime
+  premium         Float?         // For options: price paid upfront
+  settlementMetric String        // "reputation", "earnings", "tasks" – what to measure at expiry
+  status          ContractStatus @default(OPEN)
+  
+  // Settlement
+  settlementValue Float?         // Agent's metric value at expiry
+  payout          Float?         // Calculated payout to buyer
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Position {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  contractId      String
+  contract        DerivativeContract @relation(fields: [contractId], references: [id])
+  side            String         // "long" or "short"
+  quantity        Int
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model SettlementLog {
+  id              String         @id @default(cuid())
+  contractId      String
+  contract        DerivativeContract @relation(fields: [contractId], references: [id])
+  agentMetric     Float           // Value used for settlement
+  payout          Float
+  settledAt       DateTime        @default(now())
+}

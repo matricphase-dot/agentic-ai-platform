@@ -1,0 +1,86 @@
+import express from 'express';
+import { registerNode, heartbeat, getNodes, assignTask, completeTask } from '../services/nodeService';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
+
+const router = express.Router();
+
+// Register a new node
+router.post('/register', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const { name, endpoint } = req.body;
+    const node = await registerNode(req.user.id, name, endpoint);
+    res.json(node);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Heartbeat (public, no auth needed – node identifies by ID)
+router.post('/:node_id/heartbeat', async (req, res) => {
+  try {
+    if (!req.params.node_id) {
+      return res.status(400).json({ error: 'Node ID is required' });
+    }
+    const { version } = req.body;
+    const node = await heartbeat(req.params.node_id, version);
+    res.json(node);
+  } catch (error: any) {
+    res.status(404).json({ error: 'Node not found' });
+  }
+});
+
+// Get nodes (for the authenticated user)
+router.get('/my-nodes', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const nodes = await getNodes(req.user.id);
+    res.json(nodes);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin: get all nodes
+router.get('/all', authenticateToken, async (req: AuthRequest, res) => {
+  // Check if admin (you can add role check)
+  try {
+    const nodes = await getNodes();
+    res.json(nodes);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Assign a task to a node (for testing)
+router.post('/:node_id/tasks', authenticateToken, async (req, res) => {
+  try {
+    if (!req.params.node_id) {
+      return res.status(400).json({ error: 'Node ID is required' });
+    }
+    const task = await assignTask(req.params.node_id, req.body);
+    res.json(task);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Complete a task (node would call this)
+router.post('/tasks/:taskId/complete', async (req, res) => {
+  try {
+    if (!req.params.taskId) {
+      return res.status(400).json({ error: 'Task ID is required' });
+    }
+    const { result, reward } = req.body;
+    const task = await completeTask(req.params.taskId, result, reward);
+    res.json(task);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+export default router;
+
+
+
+

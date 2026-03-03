@@ -1,11 +1,6 @@
-# Dependencies 
 node_modules/ 
 .next/ 
- 
-# Build files and binaries 
 *.bundle 
 *.node 
- 
-# Environment and logs 
 .env 
-*.log 
+.vercel

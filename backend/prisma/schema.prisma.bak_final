@@ -1,0 +1,157 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model users {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  name             String?
+  password_hash    String
+  balance          Float    @default(0)
+  token_balance    Float    @default(0)
+  reputation_score Float    @default(0)
+  role             String   @default("user")
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  agents        agents[]
+  businesses    businesses[]
+  proposals     proposals[]
+  votes         votes[]
+  stakes        stakes[]
+  notifications notifications[]
+  sent_transactions token_transactions[] @relation("sent")
+  received_transactions token_transactions[] @relation("received")
+  rewards rewards[]
+}
+
+model agents {
+  id                  String   @id @default(cuid())
+  name                String
+  description         String?
+  agent_type          String
+  status              String   @default("active")
+  configuration       Json?
+  capabilities        Json?
+  hourly_rate         Float    @default(0)
+  success_rate        Float    @default(0)
+  total_value_created Float    @default(0)
+  tasks_completed     Int      @default(0)
+  reputation_score    Float    @default(0)
+  owner_id            String
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  owner users @relation(fields: [owner_id], references: [id])
+
+  stakes stakes[]
+}
+
+model businesses {
+  id                       String   @id @default(cuid())
+  name                     String
+  description              String?
+  business_type            String
+  configuration            Json?
+  owner_id                 String
+  revenue                  Float    @default(0)
+  profit                   Float    @default(0)
+  monthly_recurring_revenue Float   @default(0)
+  status                   String   @default("active")
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
+
+  owner users @relation(fields: [owner_id], references: [id])
+}
+
+model proposals {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  proposer_id String
+  status      String   @default("active")
+  voting_ends DateTime?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  proposer users @relation(fields: [proposer_id], references: [id])
+  votes    votes[]
+}
+
+model votes {
+  id          String   @id @default(cuid())
+  proposal_id String
+  voter_id    String
+  support     Boolean
+  weight      Float
+  created_at  DateTime @default(now())
+
+  proposal proposals @relation(fields: [proposal_id], references: [id])
+  voter    users     @relation(fields: [voter_id], references: [id])
+
+  @@unique([proposal_id, voter_id])
+}
+
+model stakes {
+  id          String   @id @default(cuid())
+  staker_id   String
+  agent_id    String?
+  amount      Float
+  status      String   @default("active")
+  lock_until  DateTime?
+  unstaked_at DateTime?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  staker users   @relation(fields: [staker_id], references: [id])
+  agent  agents? @relation(fields: [agent_id], references: [id])
+}
+
+model notifications {
+  id         String   @id @default(cuid())
+  user_id    String
+  type       String
+  title      String
+  message    String?
+  read       Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  user users @relation(fields: [user_id], references: [id])
+}
+
+model token_transactions {
+  id          String   @id @default(cuid())
+  from_user_id String?
+  to_user_id   String?
+  amount      Float
+  type        String
+  description String?
+  status      String   @default("completed")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  from_user users? @relation("sent", fields: [from_user_id], references: [id])
+  to_user   users? @relation("received", fields: [to_user_id], references: [id])
+  reference_id String?  // Optional reference to stake or other entity
+}
+
+model rewards {
+  id          String   @id @default(cuid())
+  user_id     String
+  amount      Float
+  type        String
+  reference_id String?
+  created_at  DateTime @default(now())
+
+  user users @relation(fields: [user_id], references: [id])
+  reason String?  // e.g., 'staking', 'reward'
+}
+
+
+
+

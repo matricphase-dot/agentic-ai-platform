@@ -1,0 +1,247 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+
+}
+
+generator client {
+  provider = "prisma-client-js"
+
+}
+
+model users {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  passwordHash String
+  balance   Float    @default(0)
+  tokenBalance Float @default(0)
+  reputationScore Float @default(0)
+  role      String   @default("users")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agents        agents[]
+  businesses    businesses[]
+  //   stakes        Stakes[]  // temporarily disabled
+  //   proposals     Proposal[]  // temporarily disabled
+  //   votes         Vote[]  // temporarily disabled
+  //   notifications Notification[]  // temporarily disabled
+  @@map("users")
+
+  startups_founded startups[] @relation("founder")
+  investment_proposals_proposed investment_proposals[] @relation("proposer")
+  investments_made investments[] @relation("investor")
+  citizenships citizens[]`n}
+
+model agents {
+  id                  String   @id @default(cuid())
+  name                String
+  description         String?
+  agent_type          String
+  status              String   @default("active")
+  configuration       Json?
+  capabilities        Json?
+  hourly_rate         Float    @default(0)
+  success_rate        Float    @default(0)
+  total_value_created Float    @default(0)
+  tasks_completed     Int      @default(0)
+  reputation_score    Float    @default(0)
+  owner_id            String
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  owner users @relation(fields: [owner_id], references: [id])
+
+  // Relations added by script
+  quantum_keys quantum_keys[]
+  agent_messages_sent agent_messages[] @relation("sent")
+  agent_messages_received agent_messages[] @relation("received")
+  consensus_votes consensus_votes[]
+}
+
+// Add other models as needed...
+
+model startups {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  website       String?
+  stage         String
+  founder_id    String
+  token_amount  Float    @default(0)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  founder users @relation("founder", fields: [founder_id], references: [id])
+  proposals investment_proposals[]
+
+}
+
+model investment_proposals {
+  id           String   @id @default(cuid())
+  startup_id   String
+  proposer_id  String
+  title        String
+  description  String
+  ask_amount   Float
+  equity       Float?
+  status       String   @default("pending")
+  created_at   DateTime @default(now())
+  reviewed_at  DateTime?
+  funded_at    DateTime?
+
+  startup   startups               @relation(fields: [startup_id], references: [id])
+  proposer users @relation("proposer", fields: [proposer_id], references: [id])
+  reports   due_diligence_reports[]
+  investments investments[]
+
+}
+
+model due_diligence_reports {
+  id            String   @id @default(cuid())
+  proposal_id   String
+  agent_id      String?
+  score         Float
+  summary       String
+  details       Json?
+  risks         Json?
+  recommendation String
+  created_at    DateTime @default(now())
+
+  proposal investment_proposals @relation(fields: [proposal_id], references: [id])
+
+}
+
+model investments {
+  id          String   @id @default(cuid())
+  proposal_id String
+  investor_id String
+  amount      Float
+  equity      Float?
+  created_at  DateTime @default(now())
+
+  proposal investment_proposals @relation(fields: [proposal_id], references: [id])
+  investor users @relation("investor", fields: [investor_id], references: [id])
+
+}
+
+
+model businesses {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  owner_id    String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  owner users @relation(fields: [owner_id], references: [id])
+
+}
+
+
+
+model quantum_keys {
+  id         String   @id @default(cuid())
+  agent_id   String   @unique
+  public_key String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  agent agents @relation(fields: [agent_id], references: [id])
+}
+
+model agent_messages {
+  id            String   @id @default(cuid())
+  from_agent_id String
+  to_agent_id   String
+  content       String
+  signature     String
+  status        String   @default("pending")
+  delivered_at  DateTime?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  from_agent agents @relation("sent", fields: [from_agent_id], references: [id])
+  to_agent   agents @relation("received", fields: [to_agent_id], references: [id])
+}
+
+model consensus_rounds {
+  id           String   @id @default(cuid())
+  round_number Int      @unique
+  status       String   @default("active")
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  votes consensus_votes[]
+}
+
+model consensus_votes {
+  id         String   @id @default(cuid())
+  round_id   String
+  agent_id   String
+  vote       Boolean
+  weight     Float
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  round consensus_rounds @relation(fields: [round_id], references: [id])
+  agent agents           @relation(fields: [agent_id], references: [id])
+}
+
+
+
+
+model nations {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  citizens    citizens[]
+  proposals   nation_proposals[]
+}
+
+model citizens {
+  id         String   @id @default(cuid())
+  nation_id  String
+  user_id    String
+  joined_at  DateTime @default(now())
+
+  nation nations @relation(fields: [nation_id], references: [id])
+  user   users   @relation(fields: [user_id], references: [id])
+
+  @@unique([nation_id, user_id])
+}
+
+model nation_proposals {
+  id          String   @id @default(cuid())
+  nation_id   String
+  proposer_id String
+  title       String
+  description String
+  status      String   @default("active")
+  voting_ends DateTime?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  nation nations      @relation(fields: [nation_id], references: [id])
+  proposer citizens   @relation(fields: [proposer_id], references: [id])
+  votes    nation_votes[]
+}
+
+model nation_votes {
+  id          String   @id @default(cuid())
+  proposal_id String
+  voter_id    String
+  support     Boolean
+  weight      Float
+  created_at  DateTime @default(now())
+
+  proposal nation_proposals @relation(fields: [proposal_id], references: [id])
+  voter    citizens         @relation(fields: [voter_id], references: [id])
+
+  @@unique([proposal_id, voter_id])
+}
+

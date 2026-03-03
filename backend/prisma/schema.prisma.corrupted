@@ -1,0 +1,971 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Agent {
+  id                                                         String                  @id
+  name                                                       String
+  description                                                String?
+  agentType                                                  String
+  status                                                     String                  @default("IDLE")
+  reputationScore                                            Int                     @default(1000)
+  hourlyRate                                                 Float                   @default(50)
+  successRate                                                Float                   @default(0.85)
+  totalValueCreated                                          Float                   @default(0)
+  totalEarnings                                              Float                   @default(0)
+  configuration                                              Json?
+  tasksCompleted                                             Int                     @default(0)
+  specialties                                                Json?
+  ownerId                                                    String
+  createdAt                                                  DateTime                @default(now())
+  updatedAt                                                  DateTime
+  User                                                       User                    @relation(fields: [ownerId], references: [id])
+  AgentClone                                                 AgentClone[]
+  AgentEarning                                               AgentEarning[]
+  AgentHireAgreement_AgentHireAgreement_hiredAgentIdToAgent  AgentHireAgreement[]    @relation("AgentHireAgreement_hiredAgentIdToAgent")
+  AgentHireAgreement_AgentHireAgreement_hiringAgentIdToAgent AgentHireAgreement[]    @relation("AgentHireAgreement_hiringAgentIdToAgent")
+  AgentServiceBinding                                        AgentServiceBinding[]
+  AgentServiceListing                                        AgentServiceListing[]
+  BusinessAgent                                              BusinessAgent[]
+  Contract                                                   Contract[]
+  Contribution                                               Contribution[]
+  DerivativeContract                                         DerivativeContract[]
+  IntegrationLog                                             IntegrationLog[]
+  Transaction                                                Transaction[]
+  deployments                                                deployments[]
+  due_diligence_reports                                      due_diligence_reports[]
+  node_tasks                                                 node_tasks[]
+  stakes                                                     stakes[]
+
+  @@index([agentType])
+  @@index([ownerId])
+  @@index([reputationScore])
+}
+
+model AgentBlueprint {
+  id            String       @id
+  name          String
+  description   String?
+  agentType     String
+  configuration Json?
+  specialties   Json?
+  price         Float        @default(0)
+  royaltyRate   Float        @default(0.1)
+  ownerId       String
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime
+  User          User         @relation(fields: [ownerId], references: [id])
+  AgentClone    AgentClone[]
+}
+
+model AgentClone {
+  id             String         @id
+  blueprintId    String
+  agentId        String
+  buyerId        String
+  purchasePrice  Float
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime
+  User           User           @relation(fields: [buyerId], references: [id])
+  Agent          Agent          @relation(fields: [agentId], references: [id])
+  AgentBlueprint AgentBlueprint @relation(fields: [blueprintId], references: [id])
+}
+
+model AgentEarning {
+  id        String   @id
+  agentId   String
+  amount    Float
+  source    String
+  sourceId  String?
+  createdAt DateTime @default(now())
+  Agent     Agent    @relation(fields: [agentId], references: [id])
+
+  @@index([agentId])
+}
+
+model AgentHireAgreement {
+  id                                            String                @id
+  listingId                                     String
+  hiringAgentId                                 String
+  hiredAgentId                                  String
+  terms                                         Json?
+  totalValue                                    Float
+  revenueShare                                  Float?
+  status                                        String                @default("PENDING")
+  startedAt                                     DateTime?
+  completedAt                                   DateTime?
+  createdAt                                     DateTime              @default(now())
+  updatedAt                                     DateTime
+  Agent_AgentHireAgreement_hiredAgentIdToAgent  Agent                 @relation("AgentHireAgreement_hiredAgentIdToAgent", fields: [hiredAgentId], references: [id])
+  Agent_AgentHireAgreement_hiringAgentIdToAgent Agent                 @relation("AgentHireAgreement_hiringAgentIdToAgent", fields: [hiringAgentId], references: [id])
+  AgentServiceListing                           AgentServiceListing   @relation(fields: [listingId], references: [id])
+  ServiceExecutionLog                           ServiceExecutionLog[]
+}
+
+model AgentServiceBinding {
+  id             String         @id
+  agentId        String
+  connectionId   String
+  permissions    Json?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime
+  UserConnection UserConnection @relation(fields: [connectionId], references: [id])
+  Agent          Agent          @relation(fields: [agentId], references: [id])
+
+  @@unique([agentId, connectionId])
+}
+
+model AgentServiceListing {
+  id                 String               @id
+  agentId            String
+  title              String
+  description        String?
+  serviceType        String
+  pricingType        String
+  price              Float
+  currency           String               @default("USD")
+  status             String               @default("ACTIVE")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  AgentHireAgreement AgentHireAgreement[]
+  Agent              Agent                @relation(fields: [agentId], references: [id])
+}
+
+model Business {
+  id                      String          @id
+  name                    String
+  description             String?
+  businessType            String
+  status                  String          @default("ACTIVE")
+  revenue                 Float           @default(0)
+  profit                  Float           @default(0)
+  monthlyRecurringRevenue Float           @default(0)
+  configuration           Json?
+  ownerId                 String
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime
+  User                    User            @relation(fields: [ownerId], references: [id])
+  BusinessAgent           BusinessAgent[]
+  Contract                Contract[]
+  Transaction             Transaction[]
+
+  @@index([ownerId])
+}
+
+model BusinessAgent {
+  id         String   @id
+  businessId String
+  agentId    String
+  role       String?
+  assignedAt DateTime @default(now())
+  Agent      Agent    @relation(fields: [agentId], references: [id])
+  Business   Business @relation(fields: [businessId], references: [id])
+
+  @@unique([businessId, agentId])
+}
+
+model BusinessTemplate {
+  id            String   @id
+  name          String   @unique
+  description   String?
+  industry      String
+  configuration Json?
+  thumbnail     String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+}
+
+model CompetitorInsight {
+  id          String   @id
+  competitor  String
+  feature     String
+  description String
+  createdAt   DateTime @default(now())
+}
+
+model Connector {
+  id             String           @id
+  name           String           @unique
+  description    String?
+  logoUrl        String?
+  authType       String
+  authConfig     Json?
+  baseUrl        String
+  endpoints      Json?
+  isBuiltIn      Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  UserConnection UserConnection[]
+}
+
+model Contract {
+  id           String    @id
+  businessId   String
+  agentId      String
+  terms        Json?
+  status       String    @default("ACTIVE")
+  valueCreated Float     @default(0)
+  agentCut     Float     @default(0.15)
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime?
+  Agent        Agent     @relation(fields: [agentId], references: [id])
+  Business     Business  @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, agentId])
+}
+
+model Contribution {
+  id            String        @id
+  roundId       String
+  agentId       String
+  modelDelta    Json?
+  quality       Float?
+  reward        Float?
+  submittedAt   DateTime      @default(now())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime
+  Agent         Agent         @relation(fields: [agentId], references: [id])
+  LearningRound LearningRound @relation(fields: [roundId], references: [id])
+
+  @@unique([roundId, agentId])
+}
+
+model DerivativeContract {
+  id                                     String          @id
+  contractType                           String
+  agentId                                String
+  sellerId                               String
+  buyerId                                String?
+  strikePrice                            Float
+  quantity                               Int
+  expiryDate                             DateTime
+  premium                                Float?
+  settlementMetric                       String
+  status                                 String          @default("OPEN")
+  settlementValue                        Float?
+  payout                                 Float?
+  createdAt                              DateTime        @default(now())
+  updatedAt                              DateTime
+  User_DerivativeContract_buyerIdToUser  User?           @relation("DerivativeContract_buyerIdToUser", fields: [buyerId], references: [id])
+  User_DerivativeContract_sellerIdToUser User            @relation("DerivativeContract_sellerIdToUser", fields: [sellerId], references: [id])
+  Agent                                  Agent           @relation(fields: [agentId], references: [id])
+  Position                               Position[]
+  SettlementLog                          SettlementLog[]
+}
+
+model IntegrationLog {
+  id             String          @id
+  agentId        String?
+  connectionId   String?
+  action         String
+  request        Json?
+  response       Json?
+  status         String
+  error          String?
+  createdAt      DateTime        @default(now())
+  UserConnection UserConnection? @relation(fields: [connectionId], references: [id])
+  Agent          Agent?          @relation(fields: [agentId], references: [id])
+}
+
+model IntegrationTemplate {
+  id            String   @id
+  apiName       String   @unique
+  apiDocsUrl    String
+  generatedCode String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+}
+
+model LearningRound {
+  id                String         @id
+  roundNumber       Int            @unique
+  globalModel       Json?
+  startedAt         DateTime       @default(now())
+  completedAt       DateTime?
+  status            String         @default("active")
+  contributionCount Int            @default(0)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime
+  Contribution      Contribution[]
+}
+
+model Notification {
+  id        String   @id
+  userId    String
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  data      Json?
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+}
+
+model Position {
+  id                 String             @id
+  userId             String
+  contractId         String
+  side               String
+  quantity           Int
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime
+  DerivativeContract DerivativeContract @relation(fields: [contractId], references: [id])
+  User               User               @relation(fields: [userId], references: [id])
+}
+
+model PricingRule {
+  id         String   @id
+  agentType  String   @unique
+  basePrice  Float
+  demand     Float
+  multiplier Float
+  updatedAt  DateTime
+}
+
+model Recommendation {
+  id          String    @id
+  userId      String
+  type        String
+  title       String
+  description String
+  priority    Int       @default(1)
+  metadata    Json?
+  isRead      Boolean   @default(false)
+  isActioned  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+  User        User      @relation(fields: [userId], references: [id])
+}
+
+model ServiceExecutionLog {
+  id                 String             @id
+  agreementId        String
+  description        String?
+  hoursWorked        Float?
+  amount             Float?
+  status             String             @default("PENDING")
+  completedAt        DateTime?
+  createdAt          DateTime           @default(now())
+  AgentHireAgreement AgentHireAgreement @relation(fields: [agreementId], references: [id])
+}
+
+model SettlementLog {
+  id                 String             @id
+  contractId         String
+  agentMetric        Float
+  payout             Float
+  settledAt          DateTime           @default(now())
+  DerivativeContract DerivativeContract @relation(fields: [contractId], references: [id])
+}
+
+model SystemDiagnostic {
+  id          String   @id
+  timestamp   DateTime @default(now())
+  metric      String
+  value       Float
+  threshold   Float
+  actionTaken String?
+}
+
+model Transaction {
+  id                                String    @id
+  type                              String
+  amount                            Float
+  currency                          String    @default("USD")
+  fromUserId                        String?
+  toUserId                          String?
+  agentId                           String?
+  businessId                        String?
+  description                       String?
+  metadata                          Json?
+  status                            String    @default("PENDING")
+  createdAt                         DateTime  @default(now())
+  completedAt                       DateTime?
+  Business                          Business? @relation(fields: [businessId], references: [id])
+  Agent                             Agent?    @relation(fields: [agentId], references: [id])
+  User_Transaction_toUserIdToUser   User?     @relation("Transaction_toUserIdToUser", fields: [toUserId], references: [id])
+  User_Transaction_fromUserIdToUser User?     @relation("Transaction_fromUserIdToUser", fields: [fromUserId], references: [id])
+
+  @@index([fromUserId, toUserId])
+}
+
+model User {
+  id                                                       String                 @id
+  email                                                    String                 @unique
+  passwordHash                                             String
+  name                                                     String?
+  avatar                                                   String?
+  balance                                                  Float                  @default(0)
+  tokenBalance                                             Float                  @default(0)
+  reputationScore                                          Int                    @default(1000)
+  role                                                     String                 @default("USER")
+  createdAt                                                DateTime               @default(now())
+  updatedAt                                                DateTime
+  Agent                                                    Agent[]
+  AgentBlueprint                                           AgentBlueprint[]
+  AgentClone                                               AgentClone[]
+  Business                                                 Business[]
+  DerivativeContract_DerivativeContract_buyerIdToUser      DerivativeContract[]   @relation("DerivativeContract_buyerIdToUser")
+  DerivativeContract_DerivativeContract_sellerIdToUser     DerivativeContract[]   @relation("DerivativeContract_sellerIdToUser")
+  Notification                                             Notification[]
+  Position                                                 Position[]
+  Recommendation                                           Recommendation[]
+  Transaction_Transaction_toUserIdToUser                   Transaction[]          @relation("Transaction_toUserIdToUser")
+  Transaction_Transaction_fromUserIdToUser                 Transaction[]          @relation("Transaction_fromUserIdToUser")
+  UserConnection                                           UserConnection[]
+  investment_proposals                                     investment_proposals[]
+  investments                                              investments[]
+  nodes                                                    nodes[]
+  platform_connections                                     platform_connections[]
+  proposals                                                proposals[]
+  rewards                                                  rewards[]
+  stakes                                                   stakes[]
+  startups                                                 startups[]
+  token_transactions_token_transactions_to_user_idToUser   token_transactions[]   @relation("token_transactions_to_user_idToUser")
+  token_transactions_token_transactions_from_user_idToUser token_transactions[]   @relation("token_transactions_from_user_idToUser")
+  votes                                                    votes[]
+
+  @@index([reputationScore])
+  @@index([email])
+}
+
+model UserConnection {
+  id                  String                @id
+  userId              String
+  connectorId         String
+  credentials         Json?
+  status              String                @default("active")
+  lastUsed            DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  AgentServiceBinding AgentServiceBinding[]
+  IntegrationLog      IntegrationLog[]
+  Connector           Connector             @relation(fields: [connectorId], references: [id])
+  User                User                  @relation(fields: [userId], references: [id])
+
+  @@unique([userId, connectorId])
+}
+
+model Deployment {
+  id                   String               @id
+  agentId             String
+  platform_id          String
+  externalId           String?
+  config               Json?
+  status               String               @default("pending")
+  revenue              Float                @default(0)
+  last_ping            DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime
+  platform_connections platform_connections @relation(fields: [platform_id], references: [id])
+  Agent                Agent                @relation(fields: [agent_id], references: [id])
+  revenue_logs         revenue_logs[]
+}
+
+model due_diligencereport {
+  id                   String               @id
+  proposalId          String
+  agentId             String?
+  score                Float
+  summary              String
+  details              Json?
+  risks                Json?
+  recommendation       String
+  createdAt           DateTime             @default(now())
+  Agent                Agent?               @relation(fields: [agent_id], references: [id])
+  investment_proposals investment_proposals @relation(fields: [proposal_id], references: [id])
+}
+
+model investmentproposal {
+  id                    String                  @id
+  startupId            String
+  proposerId           String
+  title                 String
+  description           String
+  askAmount             Float
+  equity                Float?
+  status                String                  @default("pending")
+  createdAt            DateTime                @default(now())
+  reviewed_at           DateTime?
+  funded_at             DateTime?
+  due_diligence_reports due_diligence_reports[]
+  User                  User                    @relation(fields: [proposer_id], references: [id])
+  startups              startups                @relation(fields: [startup_id], references: [id])
+  investments           investments[]
+}
+
+model investments {
+  id                   String               @id
+  proposalId          String
+  investor_id          String
+  amount               Float
+  equity               Float?
+  tokenValue           Float?
+  status               String               @default("active")
+  createdAt           DateTime             @default(now())
+  exited_at            DateTime?
+  returnAmount         Float?
+  User                 User                 @relation(fields: [investor_id], references: [id])
+  investment_proposals investment_proposals @relation(fields: [proposal_id], references: [id])
+}
+
+model nodereward {
+  id           String   @id
+  nodeId      String
+  amount       Float
+  reason       String
+  period_start DateTime
+  period_end   DateTime
+  paid         Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  nodes        nodes    @relation(fields: [node_id], references: [id])
+}
+
+model nodetask {
+  id           String    @id
+  nodeId      String
+  agentId     String?
+  type         String
+  payload      Json?
+  status       String    @default("pending")
+  result       Json?
+  startedAt   DateTime?
+  completedAt DateTime?
+  reward       Float?
+  createdAt   DateTime  @default(now())
+  Agent        Agent?    @relation(fields: [agent_id], references: [id])
+  nodes        nodes     @relation(fields: [node_id], references: [id])
+}
+
+model nodes {
+  id           String         @id
+  owner_id     String
+  name         String
+  endpoint     String?
+  status       String         @default("offline")
+  version      String?
+  last_ping    DateTime?
+  totalEarned  Float          @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime
+  node_rewards node_rewards[]
+  node_tasks   node_tasks[]
+  User         User           @relation(fields: [owner_id], references: [id])
+}
+
+model platformconnection {
+  id          String        @id
+  user_id     String
+  platform    String
+  credentials Json
+  status      String        @default("active")
+  last_used   DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime
+  deployments deployments[]
+  User        User          @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, platform])
+}
+
+model proposals {
+  id                 String               @id
+  title              String
+  description        String
+  proposerId        String
+  status             String               @default("active")
+  voting_starts      DateTime             @default(now())
+  voting_ends        DateTime
+  createdAt         DateTime             @default(now())
+  executed_at        DateTime?
+  User               User                 @relation(fields: [proposer_id], references: [id])
+  token_transactions token_transactions[]
+  votes              votes[]
+}
+
+model revenuelog {
+  id            String      @id
+  deployment_id String
+  amount        Float
+  currency      String      @default("USD")
+  description   String?
+  recorded_at   DateTime    @default(now())
+  settled       Boolean     @default(false)
+  deployments   deployments @relation(fields: [deployment_id], references: [id])
+}
+
+model rewards {
+  id          String    @id
+  user_id     String
+  amount      Float
+  reason      String
+  referenceId String?
+  claimed     Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  claimed_at  DateTime?
+  User        User      @relation(fields: [user_id], references: [id])
+}
+
+model stakes {
+  id          String    @id
+  stakerId   String
+  agentId    String?
+  amount      Float
+  status      String    @default("active")
+  lockUntil  DateTime?
+  createdAt  DateTime  @default(now())
+  unstaked_at DateTime?
+  Agent       Agent?    @relation(fields: [agent_id], references: [id])
+  User        User      @relation(fields: [staker_id], references: [id])
+
+  @@unique([staker_id, agent_id])
+}
+
+model startups {
+  id                   String                 @id
+  name                 String
+  description          String
+  founder_id           String
+  website              String?
+  stage                String
+  tokenAmount          Float                  @default(0)
+  valuation            Float?
+  status               String                 @default("pending")
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime
+  investment_proposals investment_proposals[]
+  User                 User                   @relation(fields: [founder_id], references: [id])
+}
+
+model tokentransaction {
+  id                                         String     @id
+  fromUserId                               String?
+  toUserId                                 String?
+  amount                                     Float
+  type                                       String
+  referenceId                                String?
+  createdAt                                 DateTime   @default(now())
+  proposalId                                 String?
+  proposals                                  proposals? @relation(fields: [proposalId], references: [id])
+  User_token_transactions_to_user_idToUser   User?      @relation("token_transactions_to_user_idToUser", fields: [to_user_id], references: [id])
+  User_token_transactions_from_user_idToUser User?      @relation("token_transactions_from_user_idToUser", fields: [from_user_id], references: [id])
+}
+
+model votes {
+  id          String    @id
+  proposalId String
+  voter_id    String
+  support     Boolean
+  weight      Float
+  createdAt  DateTime  @default(now())
+  User        User      @relation(fields: [voter_id], references: [id])
+  proposals   proposals @relation(fields: [proposal_id], references: [id])
+
+  @@unique([proposal_id, voter_id])
+}
+
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  agentType   String
+  configuration Json    // the agent's configuration (prompts, skills, etc.)
+  price       Float     // price in $AGENT to purchase this blueprint
+  royaltyRate Float     // percentage (0-100) of franchise revenue paid to blueprint creator
+  status      String    @default("active") // active, inactive
+  creatorId   String    @map("creator_id") // user who created the blueprint
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  creator     User      @relation(fields: [creatorId], references: [id])
+  franchises  Franchise[]
+
+  @@map("agent_blueprints")
+}
+
+model Franchise {
+  id          String   @id @default(cuid())
+  blueprintId String   @map("blueprint_id")
+  ownerId     String   @map("owner_id") // user who bought the franchise
+  agentId     String?  @map("agent_id") // the actual agent created from this blueprint (optional)
+  status      String   @default("active") // active, paused, terminated
+  purchasePrice Float   // price paid at purchase
+  totalRoyaltyPaid Float @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  blueprint   AgentBlueprint @relation(fields: [blueprintId], references: [id])
+  owner       User           @relation(fields: [ownerId], references: [id])
+  agent       Agent?         @relation(fields: [agentId], references: [id])
+  royaltyPayments RoyaltyPayment[]
+
+  @@map("franchises")
+}
+
+model RoyaltyPayment {
+  id          String   @id @default(cuid())
+  franchiseId String   @map("franchise_id")
+  amount      Float
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  status      String   @default("pending") // pending, paid
+  paidAt      DateTime? @map("paid_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  franchise   Franchise @relation(fields: [franchiseId], references: [id])
+
+  @@map("royalty_payments")
+}
+
+  id          String   @id @default(cuid())
+  blueprintId String   @map("blueprint_id")
+  ownerId     String   @map("owner_id")
+  agentId     String?  @map("agent_id")
+  status      String   @default("active")
+  purchasePrice Float
+  totalRoyaltyPaid Float @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  blueprint   AgentBlueprint @relation(fields: [blueprintId], references: [id])
+  owner       User           @relation(fields: [ownerId], references: [id])
+  agent       Agent?         @relation(fields: [agentId], references: [id])
+  royaltyPayments RoyaltyPayment[]
+
+  @@map("franchises")
+}
+
+  id          String   @id @default(cuid())
+  franchiseId String   @map("franchise_id")
+  amount      Float
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  status      String   @default("pending")
+  paidAt      DateTime? @map("paid_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  franchise   Franchise @relation(fields: [franchiseId], references: [id])
+
+  @@map("royalty_payments")
+}
+
+
+model Nation {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  founderId   String   @map("founder_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  treasury    Float    @default(0) // $AGENT held by the nation
+
+  founder     User     @relation(fields: [founderId], references: [id])
+  citizens    Citizen[]
+  proposals   NationProposal[]
+
+  @@map("nations")
+}
+
+model Citizen {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  nationId  String   @map("nation_id")
+  role      String   @default("citizen") // "founder", "citizen", "minister"
+  joinedAt  DateTime @default(now()) @map("joined_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+  nation    Nation   @relation(fields: [nationId], references: [id])
+
+  @@unique([userId, nationId])
+  @@map("citizens")
+}
+
+model NationProposal {
+  id          String   @id @default(cuid())
+  nationId    String   @map("nation_id")
+  title       String
+  description String
+  proposerId  String   @map("proposer_id")
+  status      String   @default("active") // active, passed, rejected, executed
+  votingStarts DateTime @default(now()) @map("voting_starts")
+  votingEnds  DateTime @map("voting_ends")
+  executedAt  DateTime? @map("executed_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  nation      Nation   @relation(fields: [nationId], references: [id])
+  proposer    User     @relation(fields: [proposerId], references: [id])
+  votes       NationVote[]
+  transactions TokenTransaction[] // if proposal involves treasury spending
+
+  @@map("nation_proposals")
+}
+
+model NationVote {
+  id          String   @id @default(cuid())
+  proposalId  String   @map("proposal_id")
+  voterId     String   @map("voter_id")
+  support     Boolean
+  weight      Float    // based on staked tokens or citizenship duration
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  proposal    NationProposal @relation(fields: [proposalId], references: [id])
+  voter       User           @relation(fields: [voterId], references: [id])
+
+  @@unique([proposalId, voterId])
+  @@map("nation_votes")
+}
+
+model DeploymentLog {
+  id          String   @id @default(cuid())
+  deploymentId String  @map("deployment_id")
+  level       String   // "info", "warn", "error"
+  message     String
+  metadata    Json?
+  timestamp   DateTime @default(now()) @map("timestamp")
+
+  deployment  Deployment @relation(fields: [deploymentId], references: [id])
+
+  @@map("deployment_logs")
+}
+// A2AP Messages
+model AgentMessage {
+  id          String   @id @default(cuid())
+  fromAgentId String   @map("from_agent_id")
+  toAgentId   String   @map("to_agent_id")
+  content     Json
+  signature   String   // quantum‑resistant signature
+  status      String   @default("pending") // pending, delivered, failed
+  createdAt   DateTime @default(now()) @map("created_at")
+  deliveredAt DateTime? @map("delivered_at")
+
+  fromAgent   Agent    @relation("MessagesFrom", fields: [fromAgentId], references: [id])
+  toAgent     Agent    @relation("MessagesTo", fields: [toAgentId], references: [id])
+
+  @@map("agent_messages")
+}
+
+// Consensus rounds
+model ConsensusRound {
+  id          String   @id @default(cuid())
+  roundNumber Int      @unique
+  topic       String   // e.g., "work_verification", "agent_task"
+  data        Json?    // data to be agreed upon
+  status      String   @default("voting") // voting, accepted, rejected
+  createdAt   DateTime @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+  result      Json?    // final agreed result
+
+  votes       ConsensusVote[]
+
+  @@map("consensus_rounds")
+}
+
+model ConsensusVote {
+  id          String   @id @default(cuid())
+  roundId     String   @map("round_id")
+  voterId     String   @map("voter_id") // agent or node ID
+  vote        Boolean  // true = accept, false = reject
+  weight      Int      @default(1)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  round       ConsensusRound @relation(fields: [roundId], references: [id])
+  voter       Agent          @relation(fields: [voterId], references: [id]) // could also be Node
+
+  @@map("consensus_votes")
+}
+
+// Quantum‑resistant keys (simplified)
+model QuantumKey {
+  id          String   @id @default(cuid())
+  agentId     String   @map("agent_id") @unique
+  publicKey   String   // stored as base64
+  privateKey  String   // encrypted (or not stored)
+  algorithm   String   @default("kyber512") // kyber, sphincs, etc.
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  agent       Agent    @relation(fields: [agentId], references: [id])
+
+  @@map("quantum_keys")
+}
+
+// A2AP Messages
+model AgentMessage {
+  id          String   @id @default(cuid())
+  fromAgentId String   @map("from_agent_id")
+  toAgentId   String   @map("to_agent_id")
+  content     Json
+  signature   String   // quantum‑resistant signature
+  status      String   @default("pending") // pending, delivered, failed
+  createdAt   DateTime @default(now()) @map("created_at")
+  deliveredAt DateTime? @map("delivered_at")
+
+  fromAgent   Agent    @relation("MessagesFrom", fields: [fromAgentId], references: [id])
+  toAgent     Agent    @relation("MessagesTo", fields: [toAgentId], references: [id])
+
+  @@map("agent_messages")
+}
+
+// Consensus rounds
+model ConsensusRound {
+  id          String   @id @default(cuid())
+  roundNumber Int      @unique
+  topic       String   // e.g., "work_verification", "agent_task"
+  data        Json?    // data to be agreed upon
+  status      String   @default("voting") // voting, accepted, rejected
+  createdAt   DateTime @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+  result      Json?    // final agreed result
+
+  votes       ConsensusVote[]
+
+  @@map("consensus_rounds")
+}
+
+model ConsensusVote {
+  id          String   @id @default(cuid())
+  roundId     String   @map("round_id")
+  voterId     String   @map("voter_id") // agent or node ID
+  vote        Boolean  // true = accept, false = reject
+  weight      Int      @default(1)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  round       ConsensusRound @relation(fields: [roundId], references: [id])
+  voter       Agent          @relation(fields: [voterId], references: [id]) // could also be Node
+
+  @@map("consensus_votes")
+}
+
+// Quantum‑resistant keys (simplified)
+model QuantumKey {
+  id          String   @id @default(cuid())
+  agentId     String   @map("agent_id") @unique
+  publicKey   String   // stored as base64
+  privateKey  String   // encrypted (or not stored)
+  algorithm   String   @default("kyber512") // kyber, sphincs, etc.
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  agent       Agent    @relation(fields: [agentId], references: [id])
+
+  @@map("quantum_keys")
+}
+
+
+// REMINDER: Add @id @default(cuid()) to all id fields and @updatedAt to all updatedAt fields.

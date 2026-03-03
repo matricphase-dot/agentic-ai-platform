@@ -1,0 +1,168 @@
+import { Router } from 'express';
+import prisma from '../lib/prisma';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { io } from '../server';
+
+const router = Router();
+
+// GET /api/marketplace/agents – list available agents
+router.get('/agents', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { type, minRep, maxRate, page = '1', limit = '20' } = req.query;
+    const pageNum = parseInt(page as string) || 1;
+    const limitNum = parseInt(limit as string) || 20;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where: any = { status: 'IDLE' };
+    if (type) where.agentType = type;
+    if (minRep) where.reputationScore = { gte: parseInt(minRep as string) };
+    if (maxRate) where.hourlyRate = { lte: parseFloat(maxRate as string) };
+
+    const [agents, total] = await Promise.all([
+      prisma.agent.findMany({
+        where,
+        include: { owner: { select: { id: true, name: true, reputationScore: true } } },
+        orderBy: { reputationScore: 'desc' },
+        skip,
+        take: limitNum,
+      }),
+      prisma.agent.count({ where }),
+    ]);
+
+    res.json({
+      agents,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum),
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/marketplace/agents/:agentId/hire – hire an agent
+router.post('/agents/:agentId/hire', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { agentId } = req.params as { agentId: string };   // ✅ Assert string
+    const { businessId, terms } = req.body;
+
+    const agent = await prisma.agent.findUnique({ where: { id: agentId } });
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+    if (agent.status !== 'IDLE') return res.status(400).json({ error: 'Agent not available' });
+
+    const business = await prisma.business.findUnique({
+      where: { id: businessId, ownerId: req.user!.id },
+    });
+    if (!business) return res.status(404).json({ error: 'Business not found or not owned by you' });
+
+    const contract = await prisma.contract.create({
+      data: {
+        businessId,
+        agentId,
+        terms: terms || {},
+        status: 'ACTIVE',
+      },
+    });
+
+    await prisma.agent.update({
+      where: { id: agentId },
+      data: { status: 'WORKING' },
+    });
+
+    await prisma.businessAgent.create({
+      data: {
+        businessId,
+        agentId,
+        role: terms?.role || 'general',
+      },
+    });
+
+    io.to(`user-${agent.ownerId}`).emit('agent-hired', {
+      agentId,
+      contractId: contract.id,
+      businessName: business.name,
+      businessId,
+    });
+
+    res.status(201).json({ success: true, contract });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/marketplace/agents/:agentId/stake – stake on an agent
+router.post('/agents/:agentId/stake', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { agentId } = req.params as { agentId: string };   // ✅ Assert string
+    const { amount } = req.body;
+    const stakeAmount = parseFloat(amount);
+
+    if (stakeAmount <= 0) return res.status(400).json({ error: 'Amount must be positive' });
+
+    const user = await prisma.user.findUnique({ where: { id: req.user!.id } });
+    if (!user || user.balance < stakeAmount) {
+      return res.status(400).json({ error: 'Insufficient balance' });
+    }
+
+    const agent = await prisma.agent.findUnique({
+      where: { id: agentId },
+      include: { stakes: true },
+    });
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+
+    const totalStaked = agent.stakes.reduce((sum, s) => sum + s.stakeAmount, 0) + stakeAmount;
+    const sharePercentage = (stakeAmount / totalStaked) * 100;
+
+    const stake = await prisma.stake.upsert({
+      where: { stakerId_agentId: { stakerId: req.user!.id, agentId } },
+      update: {
+        stakeAmount: { increment: stakeAmount },
+        sharePercentage,
+      },
+      create: {
+        stakerId: req.user!.id,
+        agentId,
+        stakeAmount,
+        sharePercentage,
+      },
+    });
+
+    await prisma.user.update({
+      where: { id: req.user!.id },
+      data: { balance: { decrement: stakeAmount } },
+    });
+
+    await prisma.agent.update({
+      where: { id: agentId },
+      data: { reputationScore: { increment: Math.floor(stakeAmount / 10) } },
+    });
+
+    await prisma.transaction.create({
+      data: {
+        type: 'STAKE_PURCHASE',
+        amount: stakeAmount,
+        fromUserId: req.user!.id,
+        agentId,
+        status: 'COMPLETED',
+      },
+    });
+
+    io.to(`user-${agent.ownerId}`).emit('agent-staked', {
+      agentId,
+      stakeAmount,
+      stakerName: user.name,
+    });
+
+    res.json({ success: true, stake });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+export default router;

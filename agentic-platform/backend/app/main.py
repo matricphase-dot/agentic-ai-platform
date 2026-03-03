@@ -1,699 +1,442 @@
-"""
-Agentic AI Platform - Production Backend
-Simplified and Working Version
-"""
-
-import os
-import logging
-import time
-from contextlib import asynccontextmanager
-from typing import List, Optional
-from datetime import datetime, timedelta
-
-from fastapi import FastAPI, Request, HTTPException, Depends, status, Query, Body
+# backend/app/main.py
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.exc import SQLAlchemyError
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-import openai
+from datetime import datetime
+import os
+import logging
 
-# Database and Models
-from app.database import engine, SessionLocal, Base, get_db
-from app.models.user import User
-from app.models.agent import Agent, AgentExecution
+from app.routers import auth, agents, users, analytics, teams, agent_containers, websocket
+from app.database import engine, Base
 
-# Pydantic models
-from pydantic import BaseModel, Field
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
-)
-
+# Setup logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ========== SIMPLE CONFIGURATION ==========
-
-# Load environment variables directly
-from dotenv import load_dotenv
-load_dotenv()
-
-# Configuration with defaults
-class Settings:
-    # OpenAI Configuration
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-    OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
-    OPENAI_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", "1000"))
-    OPENAI_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
-    
-    # Database Configuration
-    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agentic.db")
-    
-    # JWT Authentication
-    SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key-change-this-in-production")
-    ALGORITHM = os.getenv("ALGORITHM", "HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
-    
-    # CORS Configuration
-    ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
-    
-    # Admin User
-    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@agenticai.com")
-    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "Admin123!")
-    ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-    
-    # Server Configuration
-    HOST = os.getenv("HOST", "0.0.0.0")
-    PORT = int(os.getenv("PORT", "8000"))
-    DEBUG = os.getenv("DEBUG", "False").lower() == "true"
-    ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
-    
-    # Application URLs
-    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
-    BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
-
-settings = Settings()
-
-# ========== PYDANTIC MODELS ==========
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-    user: dict
-
-class UserBase(BaseModel):
-    email: str
-    username: str
-    full_name: Optional[str] = None
-    is_admin: bool = False
-    is_active: bool = True
-
-class UserCreate(UserBase):
-    password: str
-
-class UserResponse(UserBase):
-    id: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    
-    class Config:
-        from_attributes = True
-
-class AgentBase(BaseModel):
-    name: str
-    description: str
-    category: str
-    instructions: str
-    is_public: bool = True
-
-class AgentCreate(AgentBase):
-    pass
-
-class AgentResponse(AgentBase):
-    id: int
-    created_by: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    
-    class Config:
-        from_attributes = True
-
-class ExecutionRequest(BaseModel):
-    input: str
-    agent_id: int
-    parameters: Optional[dict] = None
-
-class ExecutionResponse(BaseModel):
-    id: int
-    agent_id: int
-    user_id: int
-    input: str
-    output: str
-    execution_time: float
-    created_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-# ========== SECURITY SETUP ==========
-
-security = HTTPBearer()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# ========== DATABASE INITIALIZATION ==========
-
-def init_database():
-    """Initialize database and create tables"""
-    try:
-        Base.metadata.create_all(bind=engine)
-        logger.info("✅ Database tables created successfully")
-        
-        # Create admin user if not exists
-        db = SessionLocal()
-        try:
-            admin = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
-            if not admin:
-                hashed_password = pwd_context.hash(settings.ADMIN_PASSWORD)
-                admin = User(
-                    email=settings.ADMIN_EMAIL,
-                    username=settings.ADMIN_USERNAME,
-                    full_name="System Administrator",
-                    hashed_password=hashed_password,
-                    is_admin=True,
-                    is_active=True
-                )
-                db.add(admin)
-                db.commit()
-                logger.info(f"✅ Admin user created: {settings.ADMIN_EMAIL}")
-            else:
-                logger.info("✅ Admin user already exists")
-                
-            # Create sample agents if none exist
-            agent_count = db.query(Agent).count()
-            if agent_count == 0:
-                create_sample_agents(db)
-                
-        except Exception as e:
-            logger.error(f"❌ Failed to create admin user: {e}")
-            db.rollback()
-        finally:
-            db.close()
-            
-    except Exception as e:
-        logger.error(f"❌ Database initialization failed: {e}")
-        raise
-
-def create_sample_agents(db: SessionLocal):
-    """Create sample agents for the platform"""
-    sample_agents = [
-        {
-            "name": "Marketing Copywriter",
-            "description": "Creates compelling marketing copy",
-            "category": "Marketing",
-            "instructions": "You are a marketing copywriter. Create engaging copy.",
-            "is_public": True,
-            "created_by": 1
-        },
-        {
-            "name": "Code Assistant",
-            "description": "Helps with coding tasks",
-            "category": "Development",
-            "instructions": "You are a software developer. Provide code solutions.",
-            "is_public": True,
-            "created_by": 1
-        },
-        {
-            "name": "Customer Support",
-            "description": "Handles customer queries",
-            "category": "Support",
-            "instructions": "You are a customer support agent. Help customers.",
-            "is_public": True,
-            "created_by": 1
-        },
-        {
-            "name": "Content Summarizer",
-            "description": "Summarizes long content",
-            "category": "Content",
-            "instructions": "You summarize content concisely.",
-            "is_public": True,
-            "created_by": 1
-        },
-        {
-            "name": "SEO Optimizer",
-            "description": "Optimizes content for SEO",
-            "category": "Marketing",
-            "instructions": "You are an SEO expert. Optimize content.",
-            "is_public": True,
-            "created_by": 1
-        },
-        {
-            "name": "Data Analyst",
-            "description": "Analyzes data insights",
-            "category": "Analytics",
-            "instructions": "You are a data analyst. Provide insights.",
-            "is_public": True,
-            "created_by": 1
-        }
-    ]
-    
-    for agent_data in sample_agents:
-        agent = Agent(**agent_data)
-        db.add(agent)
-    
-    db.commit()
-    logger.info(f"✅ Created {len(sample_agents)} sample agents")
-
-# ========== AUTHENTICATION UTILITIES ==========
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
-
-def create_access_token(data: dict) -> str:
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return encoded_jwt
-
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: SessionLocal = Depends(get_db)
-) -> User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        token = credentials.credentials
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    
-    user = db.query(User).filter(User.email == email).first()
-    if user is None:
-        raise credentials_exception
-    return user
-
-async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
-    if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
-
-# ========== OPENAI INTEGRATION ==========
-
-def init_openai():
-    """Initialize OpenAI client"""
-    try:
-        if settings.OPENAI_API_KEY:
-            openai.api_key = settings.OPENAI_API_KEY
-            logger.info("✅ OpenAI initialized successfully")
-        else:
-            logger.warning("⚠️ OPENAI_API_KEY not set. OpenAI features will not work.")
-    except Exception as e:
-        logger.error(f"❌ OpenAI initialization failed: {e}")
-
-# ========== LIFESPAN MANAGER ==========
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Lifespan context manager for startup and shutdown events
-    """
-    # Startup
-    logger.info("🚀 Starting Agentic AI Platform Backend...")
-    logger.info(f"📊 Environment: {settings.ENVIRONMENT}")
-    logger.info(f"🌐 Backend URL: {settings.BACKEND_URL}")
-    
-    try:
-        # Initialize database
-        logger.info("🗄️ Initializing database...")
-        init_database()
-        
-        # Initialize OpenAI
-        logger.info("🤖 Initializing OpenAI service...")
-        init_openai()
-        
-        logger.info("✅ Startup complete")
-        
-    except Exception as e:
-        logger.error(f"❌ Startup failed: {str(e)}")
-        raise
-    
-    yield
-    
-    # Shutdown
-    logger.info("🛑 Shutting down Agentic AI Platform Backend...")
-
-# ========== FASTAPI APP ==========
+# Create tables
+try:
+    Base.metadata.create_all(bind=engine)
+    logger.info("✅ Database tables created successfully")
+except Exception as e:
+    logger.error(f"❌ Failed to create database tables: {e}")
 
 app = FastAPI(
     title="Agentic AI Platform API",
-    description="No-Code AI Agent Platform for Businesses",
     version="1.0.0",
+    description="AWS for AI Agents - Cloud platform for deploying and managing AI agents",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json",
-    lifespan=lifespan,
-    contact={
-        "name": "Agentic AI Support",
-        "email": "support@agenticai.com",
-    }
+    openapi_url="/openapi.json"
 )
 
-# ========== MIDDLEWARE ==========
+# Add GZip middleware for compression
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-# CORS Middleware
+# CORS middleware - Configure properly for production
+allowed_origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
+    "http://localhost:3003",
+    "http://localhost:3004",
+    "https://agentic-platform-umber.vercel.app",
+    "https://agentic-platform-*.vercel.app",
+    "https://agentic-platform-*.vercel.app",
+]
+
+# Get allowed origins from environment
+env_origins = os.getenv("ALLOWED_ORIGINS", "")
+if env_origins:
+    allowed_origins.extend([origin.strip() for origin in env_origins.split(",")])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
-# GZip Compression Middleware
-app.add_middleware(GZipMiddleware, minimum_size=1000)
-
-# Logging Middleware
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    start_time = time.time()
-    
-    # Skip logging for health checks
-    if request.url.path in ["/health", "/metrics", "/favicon.ico"]:
-        response = await call_next(request)
-        return response
-    
-    logger.info(f"📥 {request.method} {request.url.path}")
-    
-    try:
-        response = await call_next(request)
-    except Exception as e:
-        logger.error(f"❌ Request failed: {str(e)}")
-        raise
-    
-    process_time = (time.time() - start_time) * 1000
-    formatted_time = f"{process_time:.2f}ms"
-    
-    response.headers["X-Process-Time"] = formatted_time
-    return response
-
-# ========== HEALTH ENDPOINTS ==========
+# Include routers
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(agents.router)
+app.include_router(analytics.router)
+app.include_router(teams.router)
+app.include_router(agent_containers.router)
+app.include_router(websocket.router)
 
 @app.get("/")
 async def root():
-    """Root endpoint"""
     return {
-        "message": "Welcome to Agentic AI Platform API",
+        "message": "Agentic AI Platform API",
         "version": "1.0.0",
-        "status": "operational",
-        "environment": settings.ENVIRONMENT,
         "docs": "/docs",
-        "endpoints": {
-            "health": "/health",
-            "login": "/api/v1/auth/login",
-            "register": "/api/v1/auth/register",
-            "agents": "/api/v1/agents",
-            "docs": "/docs"
-        }
+        "status": "operational",
+        "timestamp": datetime.utcnow().isoformat(),
+        "environment": os.getenv("ENVIRONMENT", "development"),
+        "features": [
+            "AI Agent Marketplace",
+            "No-Code Agent Builder",
+            "Team Collaboration",
+            "Analytics Dashboard",
+            "Agent Containers (Docker)",
+            "Agent Communication Protocol",
+            "Real-time WebSocket API"
+        ]
     }
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint for monitoring"""
     try:
-        db = SessionLocal()
-        db.execute("SELECT 1")
-        db_status = "connected"
-        db.close()
-    except Exception:
-        db_status = "disconnected"
-    
+        # Test database connection
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
+        
+        return {
+            "status": "healthy",
+            "service": "agentic-ai-platform",
+            "version": "1.0.0",
+            "timestamp": datetime.utcnow().isoformat(),
+            "environment": os.getenv("ENVIRONMENT", "development"),
+            "database": "connected"
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return {
+            "status": "unhealthy",
+            "service": "agentic-ai-platform",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+@app.get("/info")
+async def api_info():
+    """API information endpoint"""
     return {
-        "status": "healthy",
-        "service": "agentic-ai-backend",
-        "timestamp": datetime.utcnow().isoformat(),
-        "environment": settings.ENVIRONMENT,
-        "database": db_status,
-        "openai": "configured" if settings.OPENAI_API_KEY else "not_configured",
-    }
-
-# ========== AUTHENTICATION ENDPOINTS ==========
-
-@app.post("/api/v1/auth/register", response_model=UserResponse)
-async def register(user_data: UserCreate, db: SessionLocal = Depends(get_db)):
-    """Register a new user"""
-    # Check if user already exists
-    existing_user = db.query(User).filter(
-        (User.email == user_data.email) | (User.username == user_data.username)
-    ).first()
-    
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email or username already exists"
-        )
-    
-    # Create new user
-    hashed_password = get_password_hash(user_data.password)
-    user_dict = user_data.dict(exclude={"password"})
-    user_dict["hashed_password"] = hashed_password
-    
-    db_user = User(**user_dict)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    
-    logger.info(f"✅ New user registered: {user_data.email}")
-    
-    return db_user
-
-@app.post("/api/v1/auth/login", response_model=Token)
-async def login(
-    email: str = Body(..., embed=True),
-    password: str = Body(..., embed=True),
-    db: SessionLocal = Depends(get_db)
-):
-    """Login user and return JWT token"""
-    user = db.query(User).filter(User.email == email).first()
-    
-    if not user or not verify_password(password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-        )
-    
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user"
-        )
-    
-    # Create access token
-    access_token = create_access_token(data={"sub": user.email})
-    
-    logger.info(f"✅ User logged in: {email}")
-    
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "username": user.username,
-            "full_name": user.full_name,
-            "is_admin": user.is_admin,
-            "is_active": user.is_active
+        "name": "Agentic AI Platform",
+        "version": "1.0.0",
+        "description": "AWS for AI Agents - Cloud platform for deploying and managing AI agents",
+        "repository": "https://github.com/matricphase-dot/agentic-ai-platform",
+        "endpoints": {
+            "auth": "/api/v1/auth",
+            "users": "/api/v1/users",
+            "agents": "/api/v1/agents",
+            "analytics": "/api/v1/analytics",
+            "teams": "/api/v1/teams",
+            "agent_containers": "/api/v1/agent-containers",
+            "websocket": "/api/v1/ws/{agent_id}",
+            "docs": "/docs",
+            "health": "/health"
+        },
+        "status": "live",
+        "live_urls": {
+            "frontend": "https://agentic-platform-umber.vercel.app",
+            "backend": "https://agentic-ai-platform-tajr.onrender.com",
+            "api_docs": "https://agentic-ai-platform-tajr.onrender.com/docs"
         }
     }
 
-@app.get("/api/v1/auth/me", response_model=UserResponse)
-async def get_current_user_profile(current_user: User = Depends(get_current_active_user)):
-    """Get current user profile"""
-    return current_user
-
-# ========== AGENTS ENDPOINTS ==========
-
-@app.get("/api/v1/agents", response_model=List[AgentResponse])
-async def list_agents(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
-    category: Optional[str] = None,
-    search: Optional[str] = None,
-    db: SessionLocal = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """List all agents"""
-    query = db.query(Agent)
-    
-    if category:
-        query = query.filter(Agent.category == category)
-    
-    if search:
-        query = query.filter(
-            (Agent.name.contains(search)) | 
-            (Agent.description.contains(search))
-        )
-    
-    # Only show public agents or user's own agents
-    query = query.filter((Agent.is_public == True) | (Agent.created_by == current_user.id))
-    
-    agents = query.order_by(Agent.created_at.desc()).offset(skip).limit(limit).all()
-    return agents
-
-@app.get("/api/v1/agents/{agent_id}", response_model=AgentResponse)
-async def get_agent(
-    agent_id: int,
-    db: SessionLocal = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Get agent by ID"""
-    agent = db.query(Agent).filter(Agent.id == agent_id).first()
-    
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    if not agent.is_public and agent.created_by != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
-    
-    return agent
-
-@app.post("/api/v1/agents", response_model=AgentResponse)
-async def create_agent(
-    agent_data: AgentCreate,
-    db: SessionLocal = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Create a new agent"""
-    db_agent = Agent(**agent_data.dict(), created_by=current_user.id)
-    db.add(db_agent)
-    db.commit()
-    db.refresh(db_agent)
-    
-    logger.info(f"✅ Agent created: {agent_data.name} by {current_user.email}")
-    
-    return db_agent
-
-@app.post("/api/v1/agents/{agent_id}/execute", response_model=ExecutionResponse)
-async def execute_agent(
-    agent_id: int,
-    execution_data: ExecutionRequest,
-    db: SessionLocal = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Execute an agent"""
-    start_time = time.time()
-    
-    # Get agent
-    agent = db.query(Agent).filter(Agent.id == agent_id).first()
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    if not agent.is_public and agent.created_by != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+@app.get("/status")
+async def status_check():
+    """Detailed status check"""
+    status_info = {
+        "api": "online",
+        "database": "checking",
+        "redis": "not_configured",
+        "websocket": "available",
+        "timestamp": datetime.utcnow().isoformat()
+    }
     
     try:
-        # Check OpenAI API key
-        if not settings.OPENAI_API_KEY:
-            raise HTTPException(status_code=500, detail="OpenAI API key not configured")
-        
-        # Call OpenAI API
-        response = openai.ChatCompletion.create(
-            model=settings.OPENAI_MODEL,
-            messages=[
-                {"role": "system", "content": agent.instructions},
-                {"role": "user", "content": execution_data.input}
-            ],
-            max_tokens=settings.OPENAI_MAX_TOKENS,
-            temperature=settings.OPENAI_TEMPERATURE,
-        )
-        
-        output = response.choices[0].message.content.strip()
-        
+        # Check database
+        with engine.connect() as conn:
+            result = conn.execute("SELECT version()")
+            db_version = result.fetchone()[0]
+            status_info["database"] = "connected"
+            status_info["database_version"] = db_version.split()[0]
     except Exception as e:
-        logger.error(f"❌ OpenAI API error: {str(e)}")
-        output = f"Error executing agent: {str(e)}"
+        status_info["database"] = "error"
+        status_info["database_error"] = str(e)
     
-    execution_time = time.time() - start_time
-    
-    # Save execution
-    db_execution = AgentExecution(
-        agent_id=agent_id,
-        user_id=current_user.id,
-        input=execution_data.input,
-        output=output,
-        execution_time=execution_time,
-        parameters=execution_data.parameters or {}
-    )
-    db.add(db_execution)
-    db.commit()
-    db.refresh(db_execution)
-    
-    logger.info(f"✅ Agent executed: {agent.name} - Time: {execution_time:.2f}s")
-    
-    return db_execution
+    return status_info
 
-# ========== EXECUTION HISTORY ==========
+# Error handlers
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
-@app.get("/api/v1/executions", response_model=List[ExecutionResponse])
-async def list_executions(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
-    agent_id: Optional[int] = None,
-    db: SessionLocal = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """List execution history"""
-    query = db.query(AgentExecution).filter(AgentExecution.user_id == current_user.id)
-    
-    if agent_id:
-        query = query.filter(AgentExecution.agent_id == agent_id)
-    
-    executions = query.order_by(AgentExecution.created_at.desc()).offset(skip).limit(limit).all()
-    return executions
-
-# ========== ERROR HANDLERS ==========
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    """Handle HTTP exceptions"""
-    logger.warning(f"HTTP {exc.status_code}: {exc.detail}")
-    
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "error": True,
-            "code": exc.status_code,
+            "error": "HTTP Error",
             "message": exc.detail,
+            "status_code": exc.status_code,
+            "path": request.url.path,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "Validation Error",
+            "message": "Invalid request parameters",
+            "details": exc.errors(),
+            "path": request.url.path,
             "timestamp": datetime.utcnow().isoformat()
         }
     )
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    """Handle all exceptions"""
-    logger.error(f"Unhandled Exception: {str(exc)}")
-    
-    error_message = "Internal server error"
-    if settings.ENVIRONMENT != "production":
-        error_message = str(exc)
-    
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
         content={
-            "error": True,
-            "code": 500,
-            "message": error_message,
+            "error": "Internal Server Error",
+            "message": "An unexpected error occurred",
+            "status_code": 500,
+            "path": request.url.path,
             "timestamp": datetime.utcnow().isoformat()
         }
     )
 
-# ========== MAIN ENTRY POINT ==========
+# Startup and shutdown events
+@app.on_event("startup")
+async def startup_event():
+    """Run on application startup"""
+    logger.info("🚀 Agentic AI Platform API starting up...")
+    logger.info(f"📊 Environment: {os.getenv('ENVIRONMENT', 'development')}")
+    logger.info(f"🔗 API Documentation: /docs")
+    logger.info(f"🌐 Allowed Origins: {allowed_origins}")
+    
+    # Check environment variables
+    required_vars = ["SECRET_KEY", "DATABASE_URL"]
+    for var in required_vars:
+        if not os.getenv(var):
+            logger.warning(f"⚠️  Environment variable {var} is not set")
+    
+    logger.info("✅ Startup completed")
 
-if __name__ == "__main__":
-    import uvicorn
-    
-    logger.info(f"🚀 Starting Agentic AI Platform Backend")
-    logger.info(f"🌐 Host: {settings.HOST}")
-    logger.info(f"🔌 Port: {settings.PORT}")
-    logger.info(f"📊 Environment: {settings.ENVIRONMENT}")
-    
-    uvicorn.run(
-        "app.main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.DEBUG
-    )
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Run on application shutdown"""
+    logger.info("👋 Agentic AI Platform API shutting down...")
+    # Cleanup resources if needed
+
+# WebSocket test endpoint
+@app.get("/ws-test")
+async def websocket_test():
+    """HTML page for testing WebSocket connections"""
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Agentic AI - WebSocket Test</title>
+        <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .container { max-width: 800px; margin: 0 auto; }
+            .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+            .connected { background: #d4edda; color: #155724; }
+            .disconnected { background: #f8d7da; color: #721c24; }
+            .message { padding: 10px; margin: 5px 0; background: #f8f9fa; border-radius: 5px; }
+            .input-group { margin: 10px 0; }
+            input, button { padding: 10px; margin: 5px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Agentic AI - Agent Communication Test</h1>
+            
+            <div class="input-group">
+                <input type="text" id="agentId" placeholder="Enter Agent ID" value="test-agent-1">
+                <button onclick="connect()">Connect</button>
+                <button onclick="disconnect()">Disconnect</button>
+            </div>
+            
+            <div id="status" class="status disconnected">Disconnected</div>
+            
+            <div class="input-group">
+                <input type="text" id="receiverId" placeholder="Receiver Agent ID" value="test-agent-2">
+                <input type="text" id="message" placeholder="Type message...">
+                <button onclick="sendMessage()">Send Message</button>
+            </div>
+            
+            <div class="input-group">
+                <button onclick="registerAgent()">Register Agent</button>
+                <button onclick="ping()">Ping</button>
+            </div>
+            
+            <h3>Messages:</h3>
+            <div id="messages"></div>
+        </div>
+        
+        <script>
+            let ws = null;
+            
+            function updateStatus(connected) {
+                const status = document.getElementById('status');
+                status.textContent = connected ? 'Connected' : 'Disconnected';
+                status.className = 'status ' + (connected ? 'connected' : 'disconnected');
+            }
+            
+            function addMessage(text, type = 'info') {
+                const messages = document.getElementById('messages');
+                const message = document.createElement('div');
+                message.className = 'message';
+                message.textContent = `[\${new Date().toLocaleTimeString()}] \${text}`;
+                messages.appendChild(message);
+                messages.scrollTop = messages.scrollHeight;
+            }
+            
+            function connect() {
+                const agentId = document.getElementById('agentId').value;
+                if (!agentId) {
+                    alert('Please enter an Agent ID');
+                    return;
+                }
+                
+                // Use secure WebSocket if page is HTTPS
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `\${protocol}//\${window.location.host}/api/v1/ws/agent/\${agentId}`;
+                
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = function() {
+                    updateStatus(true);
+                    addMessage('Connected to agent network');
+                    
+                    // Auto-register on connect
+                    registerAgent();
+                };
+                
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    addMessage(`Received: \${JSON.stringify(data)}`, 'received');
+                };
+                
+                ws.onclose = function() {
+                    updateStatus(false);
+                    addMessage('Disconnected from agent network');
+                };
+                
+                ws.onerror = function(error) {
+                    addMessage(`WebSocket error: \${error}`, 'error');
+                };
+            }
+            
+            function disconnect() {
+                if (ws) {
+                    ws.close();
+                    ws = null;
+                }
+            }
+            
+            function registerAgent() {
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    alert('Not connected');
+                    return;
+                }
+                
+                const agentId = document.getElementById('agentId').value;
+                ws.send(JSON.stringify({
+                    type: 'register',
+                    agent_id: agentId,
+                    agent_info: {
+                        name: `Agent \${agentId}`,
+                        type: 'web_client',
+                        capabilities: ['chat', 'collaboration']
+                    }
+                }));
+                
+                addMessage('Sent registration request');
+            }
+            
+            function sendMessage() {
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    alert('Not connected');
+                    return;
+                }
+                
+                const receiverId = document.getElementById('receiverId').value;
+                const message = document.getElementById('message').value;
+                
+                if (!receiverId || !message) {
+                    alert('Please enter receiver ID and message');
+                    return;
+                }
+                
+                ws.send(JSON.stringify({
+                    type: 'message',
+                    receiver_id: receiverId,
+                    content: message,
+                    message_type: 'text'
+                }));
+                
+                addMessage(`Sent to \${receiverId}: \${message}`);
+                document.getElementById('message').value = '';
+            }
+            
+            function ping() {
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    alert('Not connected');
+                    return;
+                }
+                
+                ws.send(JSON.stringify({
+                    type: 'ping'
+                }));
+                
+                addMessage('Sent ping');
+            }
+            
+            // Auto-connect on page load for testing
+            window.onload = function() {
+                setTimeout(connect, 1000);
+            };
+        </script>
+    </body>
+    </html>
+    """
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(html)
+
+# Rate limiting endpoint (placeholder for future implementation)
+@app.get("/rate-limit-info")
+async def rate_limit_info():
+    return {
+        "message": "Rate limiting will be implemented in production",
+        "limits": {
+            "free_tier": "100 requests/hour",
+            "pro_tier": "1000 requests/hour",
+            "enterprise": "Unlimited"
+        },
+        "current_tier": "development",
+        "note": "No rate limiting applied in development mode"
+    }
+
+# Metrics endpoint (placeholder for future implementation)
+@app.get("/metrics")
+async def get_metrics():
+    """Basic metrics endpoint (to be expanded with Prometheus)"""
+    return {
+        "timestamp": datetime.utcnow().isoformat(),
+        "status": "healthy",
+        "uptime": "unknown",  # Would calculate from startup time
+        "endpoints": {
+            "total": 6,
+            "active": 6
+        },
+        "database": {
+            "status": "connected",
+            "tables": len(Base.metadata.tables)
+        }
+    }

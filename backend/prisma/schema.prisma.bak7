@@ -1,0 +1,54 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  passwordHash String
+  balance   Float    @default(0)
+  tokenBalance Float @default(0)
+  reputationScore Float @default(0)
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agents        Agent[]
+  businesses    Business[]
+  stakes        Stakes[]
+  proposals     Proposal[]
+  votes         Vote[]
+  notifications Notification[]
+  @@map("users")
+}
+
+model Agent {
+  id        String   @id @default(cuid())
+  name      String
+  description String?
+  agentType String
+  status    String   @default("active")
+  configuration Json?
+  capabilities Json?
+  hourlyRate Float   @default(0)
+  successRate Float  @default(0)
+  totalValueCreated Float @default(0)
+  tasksCompleted Int @default(0)
+  reputationScore Float @default(0)
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id])
+  deployments Deployment[]
+  stakes Stakes[]
+  @@map("agents")
+}
+
+// Add other models as needed...
