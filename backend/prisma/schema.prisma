@@ -110,21 +110,6 @@ status                    String   @default("active")
 owner           users             @relation(fields: [owner_id], references: [id])
 contracts       contracts[]
 
-model citizens {
-id        String   @id @default(cuid())
-nation_id String
-user_id   String
-role      String?
-joined_at DateTime @default(now())
-
-nation nations @relation(fields: [nation_id], references: [id])
-user   users   @relation(fields: [user_id], references: [id])
-
-proposed_proposals nation_proposals[] @relation("proposer")
-votes              nation_votes[]     @relation("voter")
-
-@@unique([user_id, nation_id])
-}
 
 model competitor_insights {
 id          String   @id @default(cuid())
@@ -902,3 +887,19 @@ buyer     users            @relation("buyer", fields: [buyer_id], references: [i
 
 
 
+
+model citizens {
+  id        String   @id @default(cuid())
+  nation_id String
+  user_id   String
+  role      String?
+  joined_at DateTime @default(now())
+
+  nation nations @relation(fields: [nation_id], references: [id])
+  user   users   @relation(fields: [user_id], references: [id])
+
+  proposed_proposals nation_proposals[] @relation("proposer")
+  votes              nation_votes[]     @relation("voter")
+
+  @@unique([user_id, nation_id])
+}
