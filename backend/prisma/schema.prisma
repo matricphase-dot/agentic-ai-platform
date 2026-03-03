@@ -111,13 +111,6 @@ owner           users             @relation(fields: [owner_id], references: [id]
 contracts       contracts[]
 
 
-model competitor_insights {
-id          String   @id @default(cuid())
-competitor  String
-feature     String
-description String
-created_at  DateTime @default(now())
-}
 
 model connectors {
 id          String   @id @default(cuid())
@@ -902,4 +895,12 @@ model citizens {
   votes              nation_votes[]     @relation("voter")
 
   @@unique([user_id, nation_id])
+}
+
+model competitor_insights {
+  id          String   @id @default(cuid())
+  competitor  String
+  feature     String
+  description String
+  created_at  DateTime @default(now())
 }
