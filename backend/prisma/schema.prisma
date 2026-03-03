@@ -897,6 +897,7 @@ model citizens {
   @@unique([user_id, nation_id])
 }
 
+
 model competitor_insights {
   id          String   @id @default(cuid())
   competitor  String
