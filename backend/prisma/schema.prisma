@@ -8,85 +8,84 @@ datasource db {
 }
 
 model agents {
-  @@map("Agent")
-  id                String          @id
+  id                String           @id
   name              String
   description       String?
   agentType         AgentType
-  status            AgentStatus     @default(IDLE)
-  reputationScore   Int             @default(1000)
-  hourlyRate        Float           @default(50)
-  successRate       Float           @default(0.85)
-  totalValueCreated Float           @default(0)
-  totalEarnings     Float           @default(0)
+  status            AgentStatus      @default(IDLE)
+  reputationScore   Int              @default(1000)
+  hourlyRate        Float            @default(50)
+  successRate       Float            @default(0.85)
+  totalValueCreated Float            @default(0)
+  totalEarnings     Float            @default(0)
   configuration     Json?
-  tasksCompleted    Int             @default(0)
+  tasksCompleted    Int              @default(0)
   specialties       String[]
   ownerId           String
-  createdAt         DateTime        @default(now())
+  createdAt         DateTime         @default(now())
   updatedAt         DateTime
-  User              User            @relation(fields: [ownerId], references: [id])
-  AgentEarning      AgentEarning[]
-  BusinessAgent     BusinessAgent[]
-  Contract          Contract[]
-  Stake             Stake[]
-  Transaction       Transaction[]
+  users             users            @relation(fields: [ownerId], references: [id])
+  AgentEarnings     AgentEarnings[]
+  BusinessAgents    BusinessAgents[]
+  Contracts         Contracts[]
+  stakes            stakes[]
+  Transactions      Transactions[]
 
   @@index([agentType])
   @@index([ownerId])
   @@index([reputationScore])
+  @@map("agents")
 }
 
 model AgentEarnings {
-  @@map("AgentEarning")
   id        String   @id
   agentId   String
   amount    Float
   source    String
   sourceId  String?
   createdAt DateTime @default(now())
-  Agent     Agent    @relation(fields: [agentId], references: [id])
+  agents    agents   @relation(fields: [agentId], references: [id])
 
   @@index([agentId])
+  @@map("AgentEarnings")
 }
 
 model businesses {
-  @@map("Business")
-  id                      String          @id
+  id                      String           @id
   name                    String
   description             String?
   businessType            BusinessType
-  status                  BusinessStatus  @default(ACTIVE)
-  revenue                 Float           @default(0)
-  profit                  Float           @default(0)
-  monthlyRecurringRevenue Float           @default(0)
+  status                  BusinessStatus   @default(ACTIVE)
+  revenue                 Float            @default(0)
+  profit                  Float            @default(0)
+  monthlyRecurringRevenue Float            @default(0)
   configuration           Json?
   ownerId                 String
-  createdAt               DateTime        @default(now())
+  createdAt               DateTime         @default(now())
   updatedAt               DateTime
-  User                    User            @relation(fields: [ownerId], references: [id])
-  BusinessAgent           BusinessAgent[]
-  Contract                Contract[]
-  Transaction             Transaction[]
+  users                   users            @relation(fields: [ownerId], references: [id])
+  BusinessAgents          BusinessAgents[]
+  Contracts               Contracts[]
+  Transactions            Transactions[]
 
   @@index([ownerId])
+  @@map("businesses")
 }
 
 model BusinessAgents {
-  @@map("BusinessAgent")
-  id         String   @id
+  id         String     @id
   businessId String
   agentId    String
   role       String?
-  assignedAt DateTime @default(now())
-  Agent      Agent    @relation(fields: [agentId], references: [id])
-  Business   Business @relation(fields: [businessId], references: [id])
+  assignedAt DateTime   @default(now())
+  agents     agents     @relation(fields: [agentId], references: [id])
+  businesses businesses @relation(fields: [businessId], references: [id])
 
   @@unique([businessId, agentId])
+  @@map("BusinessAgents")
 }
 
 model Contracts {
-  @@map("Contract")
   id           String         @id
   businessId   String
   agentId      String
@@ -96,14 +95,14 @@ model Contracts {
   agentCut     Float          @default(0.15)
   createdAt    DateTime       @default(now())
   expiresAt    DateTime?
-  Agent        Agent          @relation(fields: [agentId], references: [id])
-  Business     Business       @relation(fields: [businessId], references: [id])
+  agents       agents         @relation(fields: [agentId], references: [id])
+  businesses   businesses     @relation(fields: [businessId], references: [id])
 
   @@index([businessId, agentId])
+  @@map("Contracts")
 }
 
 model Notifications {
-  @@map("Notification")
   id        String           @id
   userId    String
   type      NotificationType
@@ -112,13 +111,13 @@ model Notifications {
   read      Boolean          @default(false)
   data      Json?
   createdAt DateTime         @default(now())
-  User      User             @relation(fields: [userId], references: [id])
+  users     users            @relation(fields: [userId], references: [id])
 
   @@index([userId, read])
+  @@map("Notifications")
 }
 
 model stakes {
-  @@map("Stake")
   id              String   @id
   stakeAmount     Float
   sharePercentage Float
@@ -127,57 +126,58 @@ model stakes {
   totalReturns    Float    @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime
-  Agent           Agent    @relation(fields: [agentId], references: [id])
-  User            User     @relation(fields: [stakerId], references: [id])
+  agents          agents   @relation(fields: [agentId], references: [id])
+  users           users    @relation(fields: [stakerId], references: [id])
 
   @@unique([stakerId, agentId])
   @@index([agentId])
+  @@map("stakes")
 }
 
 model Transactions {
-  @@map("Transaction")
-  id                                String            @id
-  type                              TransactionType
-  amount                            Float
-  currency                          String            @default("USD")
-  fromUserId                        String?
-  toUserId                          String?
-  agentId                           String?
-  businessId                        String?
-  description                       String?
-  metadata                          Json?
-  status                            TransactionStatus @default(PENDING)
-  createdAt                         DateTime          @default(now())
-  completedAt                       DateTime?
-  Agent                             Agent?            @relation(fields: [agentId], references: [id])
-  Business                          Business?         @relation(fields: [businessId], references: [id])
-  User_Transaction_fromUserIdToUser User?             @relation("Transaction_fromUserIdToUser", fields: [fromUserId], references: [id])
-  User_Transaction_toUserIdToUser   User?             @relation("Transaction_toUserIdToUser", fields: [toUserId], references: [id])
+  id                                 String            @id
+  type                               TransactionType
+  amount                             Float
+  currency                           String            @default("USD")
+  fromUserId                         String?
+  toUserId                           String?
+  agentId                            String?
+  businessId                         String?
+  description                        String?
+  metadata                           Json?
+  status                             TransactionStatus @default(PENDING)
+  createdAt                          DateTime          @default(now())
+  completedAt                        DateTime?
+  agents                             agents?           @relation(fields: [agentId], references: [id])
+  businesses                         businesses?       @relation(fields: [businessId], references: [id])
+  users_Transaction_fromUserIdToUser users?            @relation("Transaction_fromUserIdToUser", fields: [fromUserId], references: [id])
+  users_Transaction_toUserIdToUser   users?            @relation("Transaction_toUserIdToUser", fields: [toUserId], references: [id])
 
   @@index([fromUserId, toUserId])
+  @@map("Transactions")
 }
 
 model users {
-  @@map("User")
-  id                                       String         @id
-  email                                    String         @unique
+  id                                       String          @id
+  email                                    String          @unique
   passwordHash                             String
   name                                     String?
   avatar                                   String?
-  balance                                  Float          @default(0)
-  reputationScore                          Int            @default(1000)
-  role                                     Role           @default(USER)
-  createdAt                                DateTime       @default(now())
+  balance                                  Float           @default(0)
+  reputationScore                          Int             @default(1000)
+  role                                     Role            @default(users)
+  createdAt                                DateTime        @default(now())
   updatedAt                                DateTime
-  Agent                                    Agent[]
-  Business                                 Business[]
-  Notification                             Notification[]
-  Stake                                    Stake[]
-  Transaction_Transaction_fromUserIdToUser Transaction[]  @relation("Transaction_fromUserIdToUser")
-  Transaction_Transaction_toUserIdToUser   Transaction[]  @relation("Transaction_toUserIdToUser")
+  agents                                   agents[]
+  businesses                               businesses[]
+  Notifications                            Notifications[]
+  stakes                                   stakes[]
+  Transaction_Transaction_fromUserIdToUser Transactions[]  @relation("Transaction_fromUserIdToUser")
+  Transaction_Transaction_toUserIdToUser   Transactions[]  @relation("Transaction_toUserIdToUser")
 
   @@index([email])
   @@index([reputationScore])
+  @@map("users")
 }
 
 enum AgentStatus {
@@ -231,7 +231,7 @@ enum NotificationType {
 }
 
 enum Role {
-  USER
+  users
   ADMIN
 }
 
