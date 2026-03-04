@@ -7,7 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Agent {
+model agents {
+  @@map("Agent")
   id                String          @id
   name              String
   description       String?
@@ -36,7 +37,8 @@ model Agent {
   @@index([reputationScore])
 }
 
-model AgentEarning {
+model AgentEarnings {
+  @@map("AgentEarning")
   id        String   @id
   agentId   String
   amount    Float
@@ -48,7 +50,8 @@ model AgentEarning {
   @@index([agentId])
 }
 
-model Business {
+model businesses {
+  @@map("Business")
   id                      String          @id
   name                    String
   description             String?
@@ -69,7 +72,8 @@ model Business {
   @@index([ownerId])
 }
 
-model BusinessAgent {
+model BusinessAgents {
+  @@map("BusinessAgent")
   id         String   @id
   businessId String
   agentId    String
@@ -81,7 +85,8 @@ model BusinessAgent {
   @@unique([businessId, agentId])
 }
 
-model Contract {
+model Contracts {
+  @@map("Contract")
   id           String         @id
   businessId   String
   agentId      String
@@ -97,7 +102,8 @@ model Contract {
   @@index([businessId, agentId])
 }
 
-model Notification {
+model Notifications {
+  @@map("Notification")
   id        String           @id
   userId    String
   type      NotificationType
@@ -111,7 +117,8 @@ model Notification {
   @@index([userId, read])
 }
 
-model Stake {
+model stakes {
+  @@map("Stake")
   id              String   @id
   stakeAmount     Float
   sharePercentage Float
@@ -127,7 +134,8 @@ model Stake {
   @@index([agentId])
 }
 
-model Transaction {
+model Transactions {
+  @@map("Transaction")
   id                                String            @id
   type                              TransactionType
   amount                            Float
@@ -149,7 +157,8 @@ model Transaction {
   @@index([fromUserId, toUserId])
 }
 
-model User {
+model users {
+  @@map("User")
   id                                       String         @id
   email                                    String         @unique
   passwordHash                             String
