@@ -30,6 +30,10 @@ model agents {
   Contracts         Contracts[]
   stakes            stakes[]
   Transactions      Transactions[]
+  sentMessages      Message[]        @relation("SentMessages")
+  receivedMessages  Message[]        @relation("ReceivedMessages")
+
+  teamAgents TeamAgent[]
 
   @@index([agentType])
   @@index([ownerId])
@@ -128,6 +132,7 @@ model stakes {
   updatedAt       DateTime
   agents          agents   @relation(fields: [agentId], references: [id])
   users           users    @relation(fields: [stakerId], references: [id])
+  rewards         Reward[]
 
   @@unique([stakerId, agentId])
   @@index([agentId])
@@ -174,6 +179,8 @@ model users {
   stakes                                   stakes[]
   Transaction_Transaction_fromUserIdToUser Transactions[]  @relation("Transaction_fromUserIdToUser")
   Transaction_Transaction_toUserIdToUser   Transactions[]  @relation("Transaction_toUserIdToUser")
+  teams                                    Team[]
+  recordings                               Recording[]
 
   @@index([email])
   @@index([reputationScore])
@@ -250,4 +257,73 @@ enum TransactionType {
   WITHDRAWAL
   DEPOSIT
   REFERRAL_BONUS
+}
+
+// ---------- Added full models from original design ----------
+model Reward {
+  id        String   @id @default(cuid())
+  stakeId   String
+  stake     stakes   @relation(fields: [stakeId], references: [id], onDelete: Cascade)
+  amount    Float
+  createdAt DateTime @default(now())
+
+  @@map("rewards")
+}
+
+model Team {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  user        users       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agents      TeamAgent[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([name, userId])
+  @@index([userId])
+  @@map("teams")
+}
+
+model TeamAgent {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  agentId   String
+  agent     agents   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([teamId, agentId])
+  @@index([teamId])
+  @@index([agentId])
+  @@map("team_agents")
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  senderId    String
+  sender      agents    @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId  String
+  receiver    agents    @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content     String
+  status      String    @default("sent")
+  createdAt   DateTime  @default(now())
+  deliveredAt DateTime?
+
+  @@map("messages")
+}
+
+model Recording {
+  id         String   @id @default(cuid())
+  userId     String
+  user       users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  filename   String
+  filepath   String
+  duration   Int?
+  transcript String?
+  analysis   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("recordings")
 }
