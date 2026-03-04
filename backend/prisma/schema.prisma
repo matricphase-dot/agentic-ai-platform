@@ -192,6 +192,8 @@ model users {
   nodes                                    Node[]
 
   nodeTasks NodeTask[]
+  proposals Proposal[]
+  votes     Vote[]
 
   @@index([email])
   @@index([reputationScore])
@@ -391,4 +393,35 @@ model NodeReward {
   createdAt DateTime  @default(now())
 
   @@map("node_rewards")
+}
+
+// ---------- Added Proposal and Vote models ----------
+model Proposal {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  options     Json
+  endDate     DateTime
+  createdById String
+  createdBy   users    @relation(fields: [createdById], references: [id])
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  votes       Vote[]
+
+  @@map("proposals")
+}
+
+model Vote {
+  id         String   @id @default(cuid())
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  userId     String
+  user       users    @relation(fields: [userId], references: [id])
+  option     String
+  weight     Float
+  createdAt  DateTime @default(now())
+
+  @@unique([proposalId, userId])
+  @@map("votes")
 }
