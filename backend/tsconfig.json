@@ -8,9 +8,9 @@
     "strict": false,
     "noImplicitAny": false,
     "strictNullChecks": false,
-    "exactOptionalPropertyTypes": false,
-    "esModuleInterop": true,
     "skipLibCheck": true,
+    "noEmitOnError": false,
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*"],
