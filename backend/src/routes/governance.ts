@@ -1,5 +1,5 @@
-import express from 'express';
-import { authenticate } from '../middleware/auth';
+﻿import express from 'express';
+import { authenticate } from "../middleware/auth";
 import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
@@ -13,8 +13,8 @@ const finalizeProposalIfNeeded = async (proposal: any) => {
   const now = new Date();
   if (now > proposal.endDate) {
     // Calculate results
-    const votes = await prisma.vote.findMany({ where: { proposalId: proposal.id } });
-    const results = proposal.options.reduce((acc: any, opt: string) => {
+    const votes = await (prisma as any).votes.findMany({ where: { proposalId: proposal.id } });
+    const results = (((proposal.options as any) as string[]) as string[]).reduce((acc: any, opt: string) => {
       acc[opt] = votes.filter(v => v.option === opt).reduce((sum, v) => sum + v.weight, 0);
       return acc;
     }, {});
@@ -29,7 +29,7 @@ const finalizeProposalIfNeeded = async (proposal: any) => {
       }
     }
     const status = maxWeight > totalWeight / 2 ? 'passed' : 'rejected';
-    return await prisma.proposal.update({
+    return await (prisma as any).proposals.update({
       where: { id: proposal.id },
       data: { status }
     });
@@ -48,7 +48,7 @@ router.post('/proposals', async (req, res) => {
       return res.status(400).json({ error: 'End date must be in the future' });
     }
 
-    const proposal = await prisma.proposal.create({
+    const proposal = await (prisma as any).proposals.create({
       data: {
         title,
         description,
@@ -68,12 +68,12 @@ router.post('/proposals', async (req, res) => {
 // Get all proposals (auto-finalize expired ones)
 router.get('/proposals', async (req, res) => {
   try {
-    let proposals = await prisma.proposal.findMany({
+    let proposals = await (prisma as any).proposals.findMany({
       include: {
         _count: { select: { votes: true } },
         createdBy: { select: { email: true } }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { created_at: 'desc' }
     });
     // Finalize any expired proposals
     proposals = await Promise.all(proposals.map(p => finalizeProposalIfNeeded(p)));
@@ -87,12 +87,12 @@ router.get('/proposals', async (req, res) => {
 // Get single proposal with votes and results
 router.get('/proposals/:id', async (req, res) => {
   try {
-    let proposal = await prisma.proposal.findUnique({
+    let proposal = await (prisma as any).proposals.findUnique({
       where: { id: req.params.id },
       include: {
         votes: {
           include: { user: { select: { email: true } } },
-          orderBy: { createdAt: 'desc' }
+          orderBy: { created_at: 'desc' }
         },
         createdBy: { select: { email: true } }
       }
@@ -103,11 +103,11 @@ router.get('/proposals/:id', async (req, res) => {
     proposal = await finalizeProposalIfNeeded(proposal);
 
     // Calculate results
-    const results = proposal.options.reduce((acc: any, opt: string) => {
-      acc[opt] = proposal.votes.filter(v => v.option === opt).reduce((sum, v) => sum + v.weight, 0);
+    const results = (((proposal.options as any) as string[]) as string[]).reduce((acc: any, opt: string) => {
+      acc[opt] = (proposal as any).votes.filter(v => v.option === opt).reduce((sum, v) => sum + v.weight, 0);
       return acc;
     }, {});
-    const totalWeight = proposal.votes.reduce((sum, v) => sum + v.weight, 0);
+    const totalWeight = (proposal as any).votes.reduce((sum, v) => sum + v.weight, 0);
 
     res.json({ ...proposal, results, totalWeight });
   } catch (error) {
@@ -122,7 +122,7 @@ router.post('/proposals/:id/vote', async (req, res) => {
     const { option } = req.body;
     if (!option) return res.status(400).json({ error: 'Option required' });
 
-    let proposal = await prisma.proposal.findUnique({
+    let proposal = await (prisma as any).proposals.findUnique({
       where: { id: req.params.id }
     });
     if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
@@ -134,7 +134,7 @@ router.post('/proposals/:id/vote', async (req, res) => {
     }
 
     // Check if already voted
-    const existing = await prisma.vote.findUnique({
+    const existing = await (prisma as any).votes.findUnique({
       where: {
         proposalId_userId: {
           proposalId: proposal.id,
@@ -145,18 +145,18 @@ router.post('/proposals/:id/vote', async (req, res) => {
     if (existing) return res.status(400).json({ error: 'Already voted' });
 
     // Verify option is valid
-    if (!proposal.options.includes(option)) {
+    if (!(((proposal.options as any) as string[]) as string[]).includes(option)) {
       return res.status(400).json({ error: 'Invalid option' });
     }
 
     // Calculate vote weight based on user's total active stake
-    const stakes = await prisma.stake.aggregate({
+    const stakes = await (prisma as any).stakes.aggregate({
       where: { userId: req.user!.id, status: 'active' },
       _sum: { amount: true }
     });
     const weight = stakes._sum.amount || 0;
 
-    const vote = await prisma.vote.create({
+    const vote = await (prisma as any).votes.create({
       data: {
         proposalId: proposal.id,
         userId: req.user!.id,
@@ -174,7 +174,7 @@ router.post('/proposals/:id/vote', async (req, res) => {
 // Manually finalize a proposal (optional)
 router.post('/proposals/:id/finalize', async (req, res) => {
   try {
-    let proposal = await prisma.proposal.findUnique({
+    let proposal = await (prisma as any).proposals.findUnique({
       where: { id: req.params.id }
     });
     if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
@@ -190,3 +190,12 @@ router.post('/proposals/:id/finalize', async (req, res) => {
 });
 
 export default router;
+
+
+
+
+
+
+
+
+

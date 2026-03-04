@@ -1,25 +1,25 @@
-/// <reference path="../types/express.d.ts" />
+﻿/// <reference path="../types/express.d.ts" />
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticate } from '../middleware/auth';;;
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 const prisma = new PrismaClient();
 
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { name, description, capabilities, systemPrompt, ollamaEndpoint } = req.body;
+    const { name, description, capabilities, systemPrompt, ollama_endpoint } = req.body;
     if (!(req as any).user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const agent = await prisma.agent.create({
+    const agent = await (prisma as any).agents.create({
       data: {
-        ownerId: (req as any).user.id,
+        owner_id: (req as any).user.id,
         name,
         description,
         capabilities: capabilities ? String(capabilities) : null,
         systemPrompt,
-        ollamaEndpoint,
+        ollama_endpoint,
       }
     });
     res.json(agent);
@@ -34,8 +34,8 @@ router.get('/', authenticate, async (req, res) => {
     if (!(req as any).user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const agents = await prisma.agent.findMany({
-      where: { ownerId: (req as any).user.id }
+    const agents = await (prisma as any).agents.findMany({
+      where: { owner_id: (req as any).user.id }
     });
     res.json(agents);
   } catch (error) {
@@ -45,4 +45,12 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 export default router;
+
+
+
+
+
+
+
+
 

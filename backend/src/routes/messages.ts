@@ -1,6 +1,6 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticate } from '../middleware/auth';;;
+import { authenticate } from "../middleware/auth";
 import { queueMessageForProcessing } from '../services/messageProcessor';
 
 const router = Router();
@@ -13,12 +13,12 @@ router.post('/', authenticate, async (req, res) => {
     if (!senderId) return res.status(400).json({ error: 'senderId required' });
 
     // Verify sender belongs to user
-    const sender = await prisma.agent.findFirst({
-      where: { id: senderId, ownerId: (req as any).user!.id }
+    const sender = await (prisma as any).agents.findFirst({
+      where: { id: senderId, owner_id: (req as any).user!.id }
     });
     if (!sender) return res.status(403).json({ error: 'Not your agent' });
 
-    const message = await prisma.message.create({
+    const message = await (prisma as any).message.create({
       data: {
         senderId,
         receiverId,
@@ -38,14 +38,14 @@ router.post('/', authenticate, async (req, res) => {
 router.get('/inbox/:agentId', authenticate, async (req, res) => {
   try {
     const agentId = req.params.agentId as string;
-    const agent = await prisma.agent.findFirst({
-      where: { id: agentId, ownerId: (req as any).user!.id }
+    const agent = await (prisma as any).agents.findFirst({
+      where: { id: agentId, owner_id: (req as any).user!.id }
     });
     if (!agent) return res.status(403).json({ error: 'Not your agent' });
 
-    const messages = await prisma.message.findMany({
+    const messages = await (prisma as any).message.findMany({
       where: { receiverId: agentId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       include: { sender: { select: { name: true } } }
     });
     res.json(messages);
@@ -60,12 +60,12 @@ router.patch('/:id/status', authenticate, async (req, res) => {
   try {
     const { status } = req.body;
     const messageId = req.params.id as string;
-    const message = await prisma.message.findFirst({
-      where: { id: messageId, receiver: { ownerId: (req as any).user!.id } }
+    const message = await (prisma as any).message.findFirst({
+      where: { id: messageId, receiver: { owner_id: (req as any).user!.id } }
     });
     if (!message) return res.status(404).json({ error: 'Message not found' });
 
-    const updated = await prisma.message.update({
+    const updated = await (prisma as any).message.update({
       where: { id: messageId },
       data: {
         status,
@@ -80,4 +80,12 @@ router.patch('/:id/status', authenticate, async (req, res) => {
 });
 
 export default router;
+
+
+
+
+
+
+
+
 
