@@ -33,7 +33,15 @@ model agents {
   sentMessages      Message[]        @relation("SentMessages")
   receivedMessages  Message[]        @relation("ReceivedMessages")
 
-  teamAgents TeamAgent[]
+  teamAgents     TeamAgent[]
+  capabilities   String?
+  systemPrompt   String?     @map("system_prompt")
+  modelProvider  String?     @default("ollama-local") @map("model_provider")
+  modelName      String?     @default("llama2") @map("model_name")
+  ollamaEndpoint String?     @map("ollama_endpoint")
+  apiEndpoint    String?     @map("api_endpoint")
+  endpoint       String?     @map("endpoint")
+  nodeTasks      NodeTask[]
 
   @@index([agentType])
   @@index([ownerId])
@@ -181,6 +189,9 @@ model users {
   Transaction_Transaction_toUserIdToUser   Transactions[]  @relation("Transaction_toUserIdToUser")
   teams                                    Team[]
   recordings                               Recording[]
+  nodes                                    Node[]
+
+  nodeTasks NodeTask[]
 
   @@index([email])
   @@index([reputationScore])
@@ -326,4 +337,58 @@ model Recording {
   updatedAt  DateTime @updatedAt
 
   @@map("recordings")
+}
+
+// ---------- Added Node models ----------
+model Node {
+  id          String       @id @default(cuid())
+  ownerId     String
+  owner       users        @relation(fields: [ownerId], references: [id])
+  name        String
+  description String?
+  status      String       @default("offline")
+  specs       Json
+  location    String?
+  version     String
+  lastPing    DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  tasks       NodeTask[]
+  rewards     NodeReward[]
+
+  @@map("nodes")
+}
+
+model NodeTask {
+  id          String       @id @default(cuid())
+  nodeId      String
+  node        Node         @relation(fields: [nodeId], references: [id])
+  agentId     String
+  agent       agents       @relation(fields: [agentId], references: [id])
+  userId      String
+  user        users        @relation(fields: [userId], references: [id])
+  type        String
+  input       Json?
+  output      Json?
+  status      String       @default("pending")
+  startedAt   DateTime?
+  completedAt DateTime?
+  reward      Float?
+  createdAt   DateTime     @default(now())
+  nodeRewards NodeReward[]
+
+  @@map("node_tasks")
+}
+
+model NodeReward {
+  id        String    @id @default(cuid())
+  nodeId    String
+  node      Node      @relation(fields: [nodeId], references: [id])
+  amount    Float
+  reason    String?
+  taskId    String?
+  task      NodeTask? @relation(fields: [taskId], references: [id])
+  createdAt DateTime  @default(now())
+
+  @@map("node_rewards")
 }
