@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import {
-HomeIcon,
+  HomeIcon,
   CpuChipIcon,
   RocketLaunchIcon,
   ChartBarIcon,
@@ -13,7 +13,6 @@ HomeIcon,
   Cog6ToothIcon,
   CircleStackIcon,
   BuildingOfficeIcon,
-  ArrowRightOnRectangleIcon,
   CurrencyDollarIcon,
   DocumentDuplicateIcon,
   BriefcaseIcon,
@@ -24,7 +23,6 @@ const navigation = [
   { name: 'Agents', href: '/agents', icon: CpuChipIcon, requiresAuth: true },
   { name: 'Launch', href: '/launch', icon: RocketLaunchIcon, requiresAuth: true },
   { name: 'Templates', href: '/templates', icon: RocketLaunchIcon, requiresAuth: true },
-  
   { name: 'Self-Evolving', href: '/self-evolving', icon: ChartBarIcon, requiresAuth: true },
   { name: 'Staking', href: '/staking', icon: ChartBarIcon, requiresAuth: true },
   { name: 'Governance', href: '/governance', icon: UserGroupIcon, requiresAuth: true },
@@ -85,21 +83,10 @@ export default function Sidebar() {
             href="/auth/login"
             className="group flex items-center rounded-md px-2 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
           >
-            <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-white" />
             Login
           </Link>
         )}
-                <Link href="/staking" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-            <Coins className="w-5 h-5 mr-3" />
-            Staking
-          </Link>
-        
-    </nav></div>
+      </nav>
+    </div>
   );
 }
-
-
-
-
-
-

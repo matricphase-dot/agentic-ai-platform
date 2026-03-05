@@ -1,4 +1,4 @@
-import { NextAuthOptions } from 'next-auth';
+﻿import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
 // Simple in-memory user store for demo
@@ -43,15 +43,15 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
-        token.id = user.id;
+        token.role = (user as any).role;
+        token.id = (user as any).id;
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
-        session.user.role = token.role as string;
-        session.user.id = token.id as string;
+        (session.user as any).role = token.role as string;
+        (session.user as any).id = token.id as string;
       }
       return session;
     },
@@ -64,3 +64,5 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production',
 };
+
+
