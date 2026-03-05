@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useEffect, useState } from 'react';
-import axios from '../../../../../../lib/axios';
+import axios from '../../../../../lib/axios';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -73,3 +73,4 @@ export default function ProposalDetailPage() {
     </div>
   );
 }
+

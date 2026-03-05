@@ -1,4 +1,4 @@
-import { User, Star, Clock } from 'lucide-react';
+﻿import { User, Star, Clock } from 'lucide-react';
 
 interface AgentCardProps {
   role: {
@@ -22,7 +22,7 @@ export default function AgentCard({ role }: AgentCardProps) {
   return (
     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
       <div className="flex items-center space-x-3">
-        <div className={\h-10 w-10 rounded-full flex items-center justify-center \\}>
+        <div className="h-10 w-10 rounded-full flex items-center justify-center">
           <User className="h-5 w-5" />
         </div>
         <div>
@@ -42,3 +42,4 @@ export default function AgentCard({ role }: AgentCardProps) {
     </div>
   );
 }
+

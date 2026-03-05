@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -163,7 +163,7 @@ export default function AgentChatPage() {
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{agent.name}</div>
                     <div className="text-xs text-gray-500 truncate">
-                      {normalizeCapabilities(agent.capabilities).join(' • ')}
+                      {normalizeCapabilities(selectedAgent?.capabilities).join(' â€¢ ')}
                     </div>
                   </div>
                 </div>
@@ -206,7 +206,7 @@ export default function AgentChatPage() {
                 </p>
                 <h3 className="font-semibold mt-3 mb-2">Capabilities</h3>
                 <div className="flex flex-wrap gap-2">
-                  {selectednormalizeCapabilities(agent.capabilities).map(cap => (
+                  {normalizeCapabilities(selectedAgent?.capabilities).map(cap => (
                     <span key={cap} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
                       {cap}
                     </span>
@@ -290,3 +290,5 @@ export default function AgentChatPage() {
     </div>
   );
 }
+
+

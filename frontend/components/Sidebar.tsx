@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname }, Store from 'next/navigation';
-import { useAuth }, Store from '@/hooks/useAuth';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 import {
-  HomeIcon,
+HomeIcon,
   CpuChipIcon,
   RocketLaunchIcon,
   ChartBarIcon,
@@ -94,9 +94,12 @@ export default function Sidebar() {
             Staking
           </Link>
         
-    </div>
+    </nav></div>
   );
 }
+
+
+
 
 
 

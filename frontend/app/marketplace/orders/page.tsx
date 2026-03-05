@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
-import axios from '../../lib/axios';
+import axios from '../../../lib/axios';
 import Link from 'next/link';
 
 export default function OrdersPage() {

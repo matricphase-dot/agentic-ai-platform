@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import axios from '../../../lib/axios';
@@ -17,7 +17,7 @@ export default function SubmitProposalPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // First create startup (simplified – in real app you'd have a startup registration)
+      // First create startup (simplified � in real app you'd have a startup registration)
       const startupRes = await axios.post('/venture/startups', {
         name: form.startupName,
         description: form.description,

@@ -100,7 +100,7 @@ export default function MarketplacePage() {
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ['all', ...new Set(templates.map(t => t.category))];
+  const categories = ['all', ...Array.from(new Set(templates.map(t => t.category)))];
 
   if (loading) {
     return (
@@ -290,3 +290,6 @@ export default function MarketplacePage() {
     </div>
   );
 }
+
+
+

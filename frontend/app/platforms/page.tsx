@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import axios from '../../lib/axios';
@@ -64,7 +64,7 @@ export default function PlatformsPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">Inter‑Platform Agents</h1>
+      <h1 className="text-3xl font-bold mb-6">Inter-Platform Agents</h1>
       <p className="mb-4">Connect your external cloud accounts to deploy agents and earn revenue.</p>
 
       <button

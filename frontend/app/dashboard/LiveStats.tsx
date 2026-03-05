@@ -11,7 +11,7 @@ interface LiveStats {
 }
 
 export default function LiveStatsComponent() {
-  const { socket, isConnected, sendMessage } = useWebSocket();
+  const { socket, isConnected } = useWebSocket();
   const [stats, setStats] = useState<LiveStats>({
     activeAgents: 12,
     tasksToday: 156,
@@ -22,7 +22,7 @@ export default function LiveStatsComponent() {
   useEffect(() => {
     if (socket && isConnected) {
       // Request initial stats
-      sendMessage('get_stats', {});
+      // sendMessage('get_stats', {});
 
       // Listen for stats updates
       socket.on('stats_update', (data: LiveStats) => {
@@ -50,7 +50,7 @@ export default function LiveStatsComponent() {
         clearInterval(interval);
       };
     }
-  }, [socket, isConnected, sendMessage]);
+  }, [socket, isConnected]);
 
   return (
     <div className="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -104,15 +104,18 @@ export default function LiveStatsComponent() {
             <span className="text-sm text-gray-600">
               Last updated: Just now
             </span>
-            <button
+            {/* <button
               onClick={() => sendMessage('refresh_stats', {})}
               className="text-sm text-blue-600 hover:text-blue-800"
             >
               Refresh
-            </button>
+            </button> */}
           </div>
         </div>
       )}
     </div>
   );
 }
+
+
+

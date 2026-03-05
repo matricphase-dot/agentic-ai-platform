@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useEffect, useState } from 'react';
-import axios from '../../../lib/axios';
+import axios from '../../../../lib/axios';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -66,3 +66,4 @@ export default function BlueprintDetailPage() {
     </div>
   );
 }
+

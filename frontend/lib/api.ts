@@ -1,4 +1,4 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -68,16 +68,18 @@ export const healthApi = {
 
 // Debug: log all requests
 api.interceptors.request.use((config) => {
-  console.log(`ÃƒÂ°Ã…Â¸Ã…â€™Ã‚Â ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
+  console.log(`ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã¢â‚¬â„¢Ãƒâ€šÃ‚Â ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
   return config;
 });
 // Request logging
 api.interceptors.request.use((config) => {
-  console.log(`Ã°Å¸â€Âµ ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
+  console.log(`ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Âµ ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
   return config;
 });
 // Log all API requests
 api.interceptors.request.use((config) => {
-  console.log(`ðŸ”µ ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
+  console.log(`Ã°Å¸â€Âµ ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
   return config;
 });
+// Agent creation
+export const createAgent = (data) => api.post('/agents', data);

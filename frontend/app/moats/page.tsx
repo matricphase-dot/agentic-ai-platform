@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import axios from '../../lib/axios';
@@ -21,24 +21,27 @@ export default function MoatsPage() {
 
   const fetchAgents = async () => {
     try {
-      const res = await axios.get('/agents/my-agents');
+      const res = await axios.get('/api/agents');
       setAgents(res.data);
-    } catch (error) {
-      console.error('Failed to fetch agents', error);
+    } catch (err) {
+      console.error('Error fetching agents:', err);
     }
   };
 
   const fetchMessages = async () => {
+    if (!selectedAgent) return;
     try {
+      const res = await axios.get(`/api/messages?agentId=${selectedAgent}`);
       setMessages(res.data);
-    } catch (error) {
-      console.error('Failed to fetch messages', error);
+    } catch (err) {
+      console.error('Error fetching messages:', err);
     }
   };
 
   const generateKey = async () => {
     if (!selectedAgent) return alert('Select an agent');
     try {
+      const res = await axios.post(`/api/quantum/keys`, { agentId: selectedAgent });
       setKeyResult(`Key generated: ${res.data.publicKey}`);
     } catch (err: any) {
       setKeyResult('Error: ' + err.response?.data?.error);
@@ -49,26 +52,27 @@ export default function MoatsPage() {
     if (!selectedAgent || !targetAgent || !messageContent) return alert('Fill all fields');
     try {
       const content = JSON.parse(messageContent);
+      const response = await axios.post('/api/messages/send', {
         fromAgentId: selectedAgent,
         toAgentId: targetAgent,
-        content,
+        content
       });
-      alert('Message sent');
-      setMessageContent('');
-      fetchMessages();
+      if (response.data) {
+        alert('Message sent');
+        setMessageContent('');
+        fetchMessages();
+      }
     } catch (err: any) {
       alert('Error: ' + err.response?.data?.error);
     }
   };
 
   const startConsensus = async () => {
-    // This is a placeholder - implement as needed
     alert('Consensus round started (mock)');
   };
 
   return (
     <div className="p-8">
-
       <div className="mb-4">
         <label className="block mb-1 font-semibold">Select Your Agent</label>
         <select
