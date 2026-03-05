@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+﻿import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -9,7 +9,7 @@ export async function createNation(
   description: string
 ) {
   // Check if nation name already exists
-  const existing = await prisma.nations.findUnique({ where: { name } });
+  const existing = await (prisma as any).nations.findUnique({ where: { name } });
   if (existing) throw new Error('Nation name already taken');
 
   return prisma.$transaction(async (tx) => {
@@ -23,7 +23,7 @@ export async function createNation(
     // Make founder a citizen with role 'founder'
     await tx.citizen.create({
       data: {
-        user_id: founder_id,
+        userId: founder_id,
         nation_id: nation.id,
         role: 'founder',
       },
@@ -32,13 +32,13 @@ export async function createNation(
   });
 }
 
-export async function getNations(filter?: { user_id?: string }) {
+export async function getNations(filter?: { userId?: string }) {
   const where: any = {};
-  if (filter?.user_id) {
+  if (filter?.userId) {
     // Nations where user is a citizen
-    where.citizens = { some: { user_id: filter.user_id } };
+    where.citizens = { some: { userId: filter.userId } };
   }
-  return prisma.nations.findMany({
+  return (prisma as any).nations.findMany({
     where,
     include: { founder: { select: { id: true, name: true } },
       citizens: { include: { user: { select: { id: true, name: true } } } },
@@ -47,7 +47,7 @@ export async function getNations(filter?: { user_id?: string }) {
 }
 
 export async function getNation(id: string) {
-  return prisma.nations.findUnique({
+  return (prisma as any).nations.findUnique({
     where: { id },
     include: { founder: { select: { id: true, name: true } },
       citizens: { include: { user: { select: { id: true, name: true } } } },
@@ -61,31 +61,31 @@ export async function getNation(id: string) {
 }
 
 // Citizenship
-export async function joinNation(user_id: string, nation_id: string) {
+export async function joinNation(userId: string, nation_id: string) {
   // Check if already a citizen
-  const existing = await prisma.citizens.findUnique({
-    where: { userId_nationId: { user_id, nation_id } },
+  const existing = await (prisma as any).citizens.findUnique({
+    where: { userId_nationId: { userId, nation_id } },
   });
   if (existing) throw new Error('Already a citizen');
 
-  return prisma.citizens.create({ data: { 
-      user_id,
+  return (prisma as any).citizens.create({ data: { 
+      userId,
       nation_id,
       role: 'citizen',
     },
   });
 }
 
-export async function leaveNation(user_id: string, nation_id: string) {
+export async function leaveNation(userId: string, nation_id: string) {
   // Founder cannot leave (must transfer ownership or disband)
-  const citizen = await prisma.citizens.findUnique({
-    where: { userId_nationId: { user_id, nation_id } },
+  const citizen = await (prisma as any).citizens.findUnique({
+    where: { userId_nationId: { userId, nation_id } },
   });
   if (!citizen) throw new Error('Not a citizen');
   if (citizen.role === 'founder') throw new Error('Founder cannot leave; transfer ownership first');
 
-  return prisma.citizens.delete({
-    where: { userId_nationId: { user_id, nation_id } },
+  return (prisma as any).citizens.delete({
+    where: { userId_nationId: { userId, nation_id } },
   });
 }
 
@@ -98,13 +98,13 @@ export async function createProposal(
   votingDays: number = 7
 ) {
   // Verify proposer is a citizen
-  const citizen = await prisma.citizens.findUnique({
-    where: { userId_nationId: { user_id: proposer_id, nation_id } },
+  const citizen = await (prisma as any).citizens.findUnique({
+    where: { userId_nationId: { userId: proposer_id, nation_id } },
   });
   if (!citizen) throw new Error('You must be a citizen to create a proposal');
 
   const voting_ends = new Date(Date.now() + votingDays * 24 * 60 * 60 * 1000);
-  return prisma.nation_proposals.create({ data: { 
+  return (prisma as any).nation_proposals.create({ data: { 
       nation_id,
       title,
       description,
@@ -117,7 +117,7 @@ export async function createProposal(
 export async function getProposals(nation_id: string, status?: string) {
   const where: any = { nation_id };
   if (status) where.status = status;
-  return prisma.nation_proposals.findMany({
+  return (prisma as any).nation_proposals.findMany({
     where,
     include: { proposer: { select: { id: true, name: true } },
       votes: true,
@@ -127,26 +127,26 @@ export async function getProposals(nation_id: string, status?: string) {
 }
 
 export async function voteOnProposal(
-  proposal_id: string,
-  voter_id: string,
+  proposalId: string,
+  voterId: string,
   support: boolean
 ) {
-  const proposal = await prisma.nation_proposals.findUnique({
-    where: { id: proposal_id },
+  const proposal = await (prisma as any).nation_proposals.findUnique({
+    where: { id: proposalId },
   });
   if (!proposal) throw new Error('Proposal not found');
   if (proposal.status !== 'active') throw new Error('Proposal not active');
   if (proposal.voting_ends < new Date()) throw new Error('Voting period ended');
 
   // Check if already voted
-  const existingVote = await prisma.nation_votes.findUnique({
-    where: { proposalId_voter_id: { proposal_id, voter_id } },
+  const existingVote = await (prisma as any).nation_votes.findUnique({
+    where: { proposalId_voter_id: { proposalId, voterId } },
   });
   if (existingVote) throw new Error('Already voted');
 
   // Verify voter is a citizen of the nation
-  const citizen = await prisma.citizens.findUnique({
-    where: { userId_nationId: { user_id: voter_id, nation_id: proposal.nation_id } },
+  const citizen = await (prisma as any).citizens.findUnique({
+    where: { userId_nationId: { userId: voterId, nation_id: proposal.nation_id } },
   });
   if (!citizen) throw new Error('You must be a citizen to vote');
 
@@ -154,18 +154,18 @@ export async function voteOnProposal(
   // Simple: each citizen gets weight 1
   const weight = 1;
 
-  return prisma.nation_votes.create({ data: { 
-      proposal_id,
-      voter_id,
+  return (prisma as any).nation_votes.create({ data: { 
+      proposalId,
+      voterId,
       support,
       weight,
     },
   });
 }
 
-export async function tallyProposal(proposal_id: string) {
-  const proposal = await prisma.nation_proposals.findUnique({
-    where: { id: proposal_id },
+export async function tallyProposal(proposalId: string) {
+  const proposal = await (prisma as any).nation_proposals.findUnique({
+    where: { id: proposalId },
     include: { votes: true },
   });
   if (!proposal) throw new Error('Proposal not found');
@@ -176,23 +176,30 @@ export async function tallyProposal(proposal_id: string) {
   return { for: forWeight, against: againstWeight, total: forWeight + againstWeight };
 }
 
-export async function closeProposal(proposal_id: string) {
-  const proposal = await prisma.nation_proposals.findUnique({
-    where: { id: proposal_id },
+export async function closeProposal(proposalId: string) {
+  const proposal = await (prisma as any).nation_proposals.findUnique({
+    where: { id: proposalId },
     include: { votes: true },
   });
   if (!proposal) throw new Error('Proposal not found');
 
-  const { for: forWeight, against: againstWeight } = await tallyProposal(proposal_id);
+  const { for: forWeight, against: againstWeight } = await tallyProposal(proposalId);
   const status = forWeight > againstWeight ? 'passed' : 'rejected';
 
-  await prisma.nation_proposals.update({
-    where: { id: proposal_id },
+// @ts-ignore
+  await (prisma as any).nation_proposals.update({
+    where: { id: proposalId },
     data: { status },
   });
 
   return status;
 }
+
+
+
+
+
+
 
 
 

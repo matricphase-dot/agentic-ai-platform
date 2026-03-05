@@ -1,4 +1,4 @@
-// Mock quantum-resistant crypto
+﻿// Mock quantum-resistant crypto
 // In production, replace with actual pqcrypto library like 'pqcrypto' or 'kyber-js'
 
 export interface KeyPair {
@@ -25,6 +25,12 @@ export async function verify(message: string, signature: string, public_key: str
   // Simulate verification
   return signature.startsWith('sig_') && signature.includes(public_key.slice(0, 8));
 }
+
+
+
+
+
+
 
 
 

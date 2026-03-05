@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import {
   submitProposal,
@@ -7,13 +7,13 @@ import {
   approveProposal,
   fundProposal,
 } from '../services/ventureService';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticate } from "../middleware/auth";
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
 // Submit a new investment proposal
-router.post('/proposals', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/proposals', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const { startup_id, title, description, ask_amount, equity } = req.body;
@@ -25,7 +25,7 @@ router.post('/proposals', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // List proposals (optionally filter by status)
-router.get('/proposals', authenticateToken, async (req, res) => {
+router.get('/proposals', authenticate, async (req, res) => {
   try {
     const { status } = req.query;
     const proposals = await getProposals(status as string);
@@ -36,12 +36,12 @@ router.get('/proposals', authenticateToken, async (req, res) => {
 });
 
 // Run due diligence on a proposal (only proposer or admin)
-router.post('/proposals/:id/due-diligence', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/proposals/:id/due-diligence', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     if (!req.params.id) return res.status(400).json({ error: 'Proposal ID is required' });
 
-    const proposal = await prisma.investment_proposals.findUnique({
+    const proposal = await (prisma as any).investment_proposals.findUnique({
       where: { id: req.params.id },
     });
     if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
@@ -57,12 +57,12 @@ router.post('/proposals/:id/due-diligence', authenticateToken, async (req: AuthR
 });
 
 // Approve a proposal and allocate investment (only proposer)
-router.post('/proposals/:id/approve', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/proposals/:id/approve', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     if (!req.params.id) return res.status(400).json({ error: 'Proposal ID is required' });
 
-    const proposal = await prisma.investment_proposals.findUnique({
+    const proposal = await (prisma as any).investment_proposals.findUnique({
       where: { id: req.params.id },
     });
     if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
@@ -79,12 +79,12 @@ router.post('/proposals/:id/approve', authenticateToken, async (req: AuthRequest
 });
 
 // Mark a proposal as funded (only proposer)
-router.post('/proposals/:id/fund', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/proposals/:id/fund', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     if (!req.params.id) return res.status(400).json({ error: 'Proposal ID is required' });
 
-    const proposal = await prisma.investment_proposals.findUnique({
+    const proposal = await (prisma as any).investment_proposals.findUnique({
       where: { id: req.params.id },
     });
     if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
@@ -100,6 +100,12 @@ router.post('/proposals/:id/fund', authenticateToken, async (req: AuthRequest, r
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

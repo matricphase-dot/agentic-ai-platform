@@ -1,105 +1,24 @@
+generator client {
 
 
+  provider = "prisma-client-js"
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-model Agent {
-id           String   @id @default(cuid())
-ownerId      String
-owner        users    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-name         String
-description  String?
-capabilities String? // JSON array or comma-separated
-systemPrompt String?  // Custom instructions for the agent
-ollamaEndpoint String?  // URL for remote Ollama (e.g., http://your-server:11434)
-modelProvider String? @default("ollama-local")  // ollama-local, ollama-remote, openai, anthropic
-modelName     String? @default("llama2")           // actual model identifier
-apiEndpoint   String?                              // URL for remote Ollama (optional)  status       String   @default("inactive")
-endpoint     String? // URL for external agents (optional)
-createdAt    DateTime @default(now())
-updatedAt    DateTime @updatedAt
-
-sentMessages     Message[] @relation("SentMessages")
-receivedMessages Message[] @relation("ReceivedMessages")
-teamAgents TeamAgent[]
-stakes     Stake[]
-tasks        NodeTask[]
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 
 
+// ============================================================
+// USERS & AGENTS
+// ============================================================
 
 
-model agent_service_bindings {
-id            String   @id @default(cuid())
-agent_id      String
-connection_id String
-permissions   Json?
-created_at    DateTime @default(now())
-updated_at    DateTime @updatedAt
 
-agent      agents           @relation(fields: [agent_id], references: [id])
-connection user_connections @relation(fields: [connection_id], references: [id])
-}
-
-model agents {
+model users {
+model citizens {
 id                  String   @id @default(cuid())
 name                String
 description         String?
@@ -134,69 +53,110 @@ agent_hire_agreements_hiring agent_hire_agreements[]  @relation("hiring")
 integration_logs             integration_logs[]
 agent_service_bindings       agent_service_bindings[]
 // node_tasks                   node_tasks[]           // Temporarily commented
-contributions                contributions[]
 derivative_contracts         derivative_contracts[]
-// positions                    positions[]             // Temporarily commented
-deployments                  deployments[]
+
 }
 
-model business_agents {
-id          String   @id @default(cuid())
-business_id String
-agent_id    String
-role        String?
-assigned_at DateTime @default(now())
+model agents {
+  ownerId        String
+  name           String
+  description    String?
+  systemPrompt   String?
+  capabilities   String?
+  status         String   @default("inactive")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  receivedMessages Message[]   @relation("ReceivedMessages")
+  teamAgents       TeamAgent[]
+  tasks            NodeTask[]
 
-business businesses @relation(fields: [business_id], references: [id])
-agent    agents     @relation(fields: [agent_id], references: [id])
 
-@@unique([business_id, agent_id])
-}
 
-model businesses {
-id                        String   @id @default(cuid())
-name                      String
-description               String?
-business_type             String
-configuration             Json?
-owner_id                  String
-revenue                   Float    @default(0)
-profit                    Float    @default(0)
-monthly_recurring_revenue Float    @default(0)
-status                    String   @default("active")
-created_at                DateTime @default(now())
-updated_at                DateTime @updatedAt
 
-owner           users             @relation(fields: [owner_id], references: [id])
-business_agents business_agents[]
-contracts       contracts[]
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 model citizens {
-id        String   @id @default(cuid())
-nation_id String
-user_id   String
-role      String?
-joined_at DateTime @default(now())
+  id        String   @id @default(cuid())
+  nation_id String
+  user_id   String
+  role      String?
+  joined_at DateTime @default(now())
 
-nation nations @relation(fields: [nation_id], references: [id])
-user   users   @relation(fields: [user_id], references: [id])
+  nation nations @relation(fields: [nation_id], references: [id])
+  user   users   @relation(fields: [user_id], references: [id])
 
-proposed_proposals nation_proposals[] @relation("proposer")
-votes              nation_votes[]     @relation("voter")
+  proposed_proposals nation_proposals[] @relation("proposer")
+  votes              nation_votes[]     @relation("voter")
 
-@@unique([user_id, nation_id])
+  @@unique([user_id, nation_id])
 }
 
+
 model competitor_insights {
-id          String   @id @default(cuid())
-competitor  String
-feature     String
-description String
-created_at  DateTime @default(now())
+model citizens {
+  id          String   @id @default(cuid())
+  competitor  String
+  feature     String
+  description String
+  created_at  DateTime @default(now())
 }
 
 model connectors {
+model citizens {
 id          String   @id @default(cuid())
 name        String
 description String?
@@ -208,11 +168,47 @@ endpoints   Json?
 created_at  DateTime @default(now())
 updated_at  DateTime @updatedAt
 
-user_connections user_connections[]
+}
+
+model agent_service_bindings {
+agent_id      String
+connection_id String
+created_at    DateTime @default(now())
+updated_at    DateTime @updatedAt
+
+agents      agents           @relation(fields: [agent_id], references: [id])
+connection user_connections @relation(fields: [connection_id], references: [id])
+}
+
+model business_agents {
+model citizens {
+id          String   @id @default(cuid())
+business_id String
+agent_id    String
+role        String?
+assigned_at DateTime @default(now())
+
+business businesses @relation(fields: [business_id], references: [id])
+agents    agents     @relation(fields: [agent_id], references: [id])
+
+@@unique([business_id, agent_id])
+}
+
+model businesses {
+model citizens {
+id                        String   @id @default(cuid())
+name                      String
+description               String?
+business_type             String
+configuration             Json?
+owner_id                  String
+revenue                   Float    @default(0)
+profit                    Float    @default(0)
+status                    String   @default("active")
+owner           users             @relation(fields: [owner_id], references: [id])
 }
 
 model consensus_rounds {
-id           String   @id @default(cuid())
 round_number Int      @unique
 status       String   @default("active")
 created_at   DateTime @default(now())
@@ -222,6 +218,7 @@ votes consensus_votes[]
 }
 
 model consensus_votes {
+model citizens {
 id         String   @id @default(cuid())
 round_id   String
 agent_id   String
@@ -231,10 +228,11 @@ created_at DateTime @default(now())
 updated_at DateTime @updatedAt
 
 round consensus_rounds @relation(fields: [round_id], references: [id])
-agent agents           @relation(fields: [agent_id], references: [id])
+agents agents           @relation(fields: [agent_id], references: [id])
 }
 
 model contracts {
+model citizens {
 id          String   @id @default(cuid())
 business_id String
 agent_id    String
@@ -244,10 +242,11 @@ created_at  DateTime @default(now())
 updated_at  DateTime @updatedAt
 
 business businesses @relation(fields: [business_id], references: [id])
-agent    agents     @relation(fields: [agent_id], references: [id])
+agents    agents     @relation(fields: [agent_id], references: [id])
 }
 
 model contributions {
+model citizens {
 id          String   @id @default(cuid())
 round_id    String
 agent_id    String
@@ -257,10 +256,11 @@ created_at  DateTime @default(now())
 updated_at  DateTime @updatedAt
 
 round learning_rounds @relation(fields: [round_id], references: [id])
-agent agents          @relation(fields: [agent_id], references: [id])
+agents agents          @relation(fields: [agent_id], references: [id])
 }
 
 model deployment_logs {
+model citizens {
 id            String   @id @default(cuid())
 deployment_id String
 message       String
@@ -271,6 +271,7 @@ deployment deployments @relation(fields: [deployment_id], references: [id])
 }
 
 model deployments {
+model citizens {
 id          String   @id @default(cuid())
 agent_id    String
 platform_id String
@@ -280,13 +281,14 @@ status      String   @default("pending")
 created_at  DateTime @default(now())
 updated_at  DateTime @updatedAt
 
-agent        agents               @relation(fields: [agent_id], references: [id])
+agents        agents               @relation(fields: [agent_id], references: [id])
 platform     platform_connections @relation(fields: [platform_id], references: [id])
 logs         deployment_logs[]
 revenue_logs revenue_logs[]
 }
 
 model derivative_contracts {
+model citizens {
 id                String   @id @default(cuid())
 contract_type     String
 agent_id          String
@@ -302,7 +304,7 @@ payout            Float?
 created_at        DateTime @default(now())
 updated_at        DateTime @updatedAt
 
-agent           agents            @relation(fields: [agent_id], references: [id])
+agents           agents            @relation(fields: [agent_id], references: [id])
 seller          users             @relation("seller", fields: [seller_id], references: [id])
 buyer           users?            @relation("buyer", fields: [buyer_id], references: [id])
 positions       positions[]
@@ -310,6 +312,7 @@ settlement_logs settlement_logs[]
 }
 
 model due_diligence_reports {
+model citizens {
 id             String   @id @default(cuid())
 proposal_id    String
 agent_id       String?
@@ -324,6 +327,7 @@ proposal investment_proposals @relation(fields: [proposal_id], references: [id])
 }
 
 model franchises {
+model citizens {
 id                 String   @id @default(cuid())
 blueprint_id       String
 owner_id           String
@@ -336,11 +340,12 @@ updated_at         DateTime @updatedAt
 
 blueprint        agent_blueprints   @relation(fields: [blueprint_id], references: [id])
 owner            users              @relation("owner", fields: [owner_id], references: [id])
-agent            agents?            @relation(fields: [agent_id], references: [id])
+agents            agents?            @relation(fields: [agent_id], references: [id])
 royalty_payments royalty_payments[]
 }
 
 model integration_logs {
+model citizens {
 id            String   @id @default(cuid())
 agent_id      String
 connection_id String
@@ -351,11 +356,12 @@ status        String
 created_at    DateTime @default(now())
 updated_at    DateTime @updatedAt
 
-agent      agents           @relation(fields: [agent_id], references: [id])
+agents      agents           @relation(fields: [agent_id], references: [id])
 connection user_connections @relation(fields: [connection_id], references: [id])
 }
 
 model integration_templates {
+model citizens {
 id             String   @id @default(cuid())
 api_name       String
 api_docs_url   String
@@ -365,6 +371,7 @@ updated_at     DateTime @updatedAt
 }
 
 model investment_proposals {
+model citizens {
 id          String    @id @default(cuid())
 startup_id  String
 proposer_id String
@@ -384,6 +391,7 @@ investments investments[]
 }
 
 model investments {
+model citizens {
 id          String   @id @default(cuid())
 proposal_id String
 investor_id String
@@ -396,6 +404,7 @@ investor users                @relation("investor", fields: [investor_id], refer
 }
 
 model learning_rounds {
+model citizens {
 id           String   @id @default(cuid())
 round_number Int      @unique
 global_model Json?
@@ -407,11 +416,12 @@ contributions contributions[]
 }
 
 model Message {
+model citizens {
 id          String    @id @default(cuid())
 senderId    String
-sender      Agent     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+sender      agents     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
 receiverId  String
-receiver    Agent     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+receiver    agents     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
 content     String // JSON string (can include type, payload)
 status      String    @default("sent") // sent, delivered, read
 createdAt   DateTime  @default(now())
@@ -419,6 +429,7 @@ deliveredAt DateTime?
 }
 
 model nation_proposals {
+model citizens {
 id          String    @id @default(cuid())
 nation_id   String
 proposer_id String
@@ -435,6 +446,7 @@ votes    nation_votes[]
 }
 
 model nation_votes {
+model citizens {
 id          String   @id @default(cuid())
 proposal_id String
 voter_id    String
@@ -449,6 +461,7 @@ voter    citizens         @relation("voter", fields: [voter_id], references: [id
 }
 
 model nations {
+model citizens {
 id          String   @id @default(cuid())
 name        String   @unique
 description String?
@@ -462,6 +475,7 @@ proposals nation_proposals[]
 }
 
 model Node {
+model citizens {
 id          String   @id @default(cuid())
 ownerId     String
 owner       users    @relation(fields: [ownerId], references: [id])
@@ -479,6 +493,7 @@ rewards     NodeReward[]
 }
 
 model node_rewards {
+model citizens {
 id           String    @id @default(cuid())
 node_id      String
 amount       Float
@@ -492,6 +507,7 @@ node nodes @relation(fields: [node_id], references: [id])
 }
 
 model node_tasks {
+model citizens {
 id           String    @id @default(cuid())
 node_id      String
 agent_id     String?
@@ -509,6 +525,7 @@ node nodes @relation(fields: [node_id], references: [id])
 }
 
 model NodeReward {
+model citizens {
 id          String   @id @default(cuid())
 nodeId      String
 node        Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
@@ -520,6 +537,7 @@ createdAt   DateTime @default(now())
 }
 
 model nodes {
+model citizens {
 id         String    @id @default(cuid())
 owner_id   String
 name       String
@@ -535,11 +553,12 @@ node_rewards node_rewards[]
 }
 
 model NodeTask {
+model citizens {
 id          String   @id @default(cuid())
 nodeId      String
 node        Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
 agentId     String
-agent       Agent    @relation(fields: [agentId], references: [id])
+agents       agents    @relation(fields: [agentId], references: [id])
 userId      String   // Who requested the task
 user        users    @relation(fields: [userId], references: [id])
 type        String   // e.g., "inference", "training", "rag"
@@ -553,6 +572,7 @@ createdAt   DateTime @default(now())
 }
 
 model notifications {
+model citizens {
 id         String   @id @default(cuid())
 user_id    String
 type       String
@@ -565,6 +585,7 @@ user users @relation(fields: [user_id], references: [id])
 }
 
 model platform_connections {
+model citizens {
 id          String   @id @default(cuid())
 user_id     String
 platform    String
@@ -578,6 +599,7 @@ deployments deployments[]
 }
 
 model positions {
+model citizens {
 id          String   @id @default(cuid())
 user_id     String
 contract_id String
@@ -591,6 +613,7 @@ contract derivative_contracts @relation(fields: [contract_id], references: [id])
 }
 
 model pricing_rules {
+model citizens {
 id         String   @id @default(cuid())
 agent_type String
 base_price Float
@@ -600,6 +623,7 @@ updated_at DateTime @updatedAt
 }
 
 model Proposal {
+model citizens {
 id          String   @id @default(cuid())
 title       String
 description String
@@ -614,6 +638,7 @@ votes       Vote[]
 }
 
 model proposals {
+model citizens {
 id          String    @id @default(cuid())
 title       String
 description String
@@ -628,16 +653,18 @@ votes    votes[]
 }
 
 model quantum_keys {
+model citizens {
 id         String   @id @default(cuid())
 agent_id   String   @unique
 public_key String
 created_at DateTime @default(now())
 updated_at DateTime @updatedAt
 
-agent agents @relation(fields: [agent_id], references: [id])
+agents agents @relation(fields: [agent_id], references: [id])
 }
 
 model recommendations {
+model citizens {
 id          String   @id @default(cuid())
 user_id     String
 type        String
@@ -651,6 +678,7 @@ user users @relation(fields: [user_id], references: [id])
 }
 
 model Recording {
+model citizens {
 id         String   @id @default(cuid())
 userId     String
 user       users    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -664,6 +692,7 @@ updatedAt  DateTime @updatedAt
 }
 
 model revenue_logs {
+model citizens {
 id            String   @id @default(cuid())
 deployment_id String
 amount        Float
@@ -674,6 +703,7 @@ deployment deployments @relation(fields: [deployment_id], references: [id])
 }
 
 model Reward {
+model citizens {
 id        String   @id @default(cuid())
 stakeId   String
 stake     Stake    @relation(fields: [stakeId], references: [id], onDelete: Cascade)
@@ -682,6 +712,7 @@ createdAt DateTime @default(now())
 }
 
 model royalty_payments {
+model citizens {
 id           String    @id @default(cuid())
 franchise_id String
 amount       Float
@@ -695,6 +726,7 @@ franchise franchises @relation(fields: [franchise_id], references: [id])
 }
 
 model service_execution_logs {
+model citizens {
 id           String    @id @default(cuid())
 order_id     String
 description  String?
@@ -709,6 +741,7 @@ order service_orders @relation(fields: [order_id], references: [id])
 }
 
 model service_listings {
+model citizens {
 id           String   @id @default(cuid())
 agent_id     String
 title        String
@@ -721,12 +754,13 @@ status       String   @default("active")
 created_at   DateTime @default(now())
 updated_at   DateTime @updatedAt
 
-agent           agents                  @relation(fields: [agent_id], references: [id])
+agents           agents                  @relation(fields: [agent_id], references: [id])
 orders          service_orders[]
 hire_agreements agent_hire_agreements[]
 }
 
 model service_orders {
+model citizens {
 id           String   @id @default(cuid())
 listing_id   String
 buyer_id     String
@@ -742,6 +776,7 @@ logs    service_execution_logs[]
 }
 
 model settlement_logs {
+model citizens {
 id           String   @id @default(cuid())
 contract_id  String
 agent_metric Float
@@ -753,11 +788,12 @@ contract derivative_contracts @relation(fields: [contract_id], references: [id])
 }
 
 model Stake {
+model citizens {
 id        String   @id @default(cuid())
 userId    String
 user      users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 agentId   String
-agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+agents     agents    @relation(fields: [agentId], references: [id], onDelete: Cascade)
 amount    Float
 status    String   @default("active") // active, unstaked
 createdAt DateTime @default(now())
@@ -771,6 +807,7 @@ rewards    Reward[]
 }
 
 model stakes {
+model citizens {
 id          String    @id @default(cuid())
 staker_id   String
 agent_id    String?
@@ -782,10 +819,11 @@ created_at  DateTime  @default(now())
 updated_at  DateTime  @updatedAt
 
 staker users   @relation(fields: [staker_id], references: [id])
-agent  agents? @relation(fields: [agent_id], references: [id])
+agents  agents? @relation(fields: [agent_id], references: [id])
 }
 
 model startups {
+model citizens {
 id           String   @id @default(cuid())
 name         String
 description  String?
@@ -801,6 +839,7 @@ proposals investment_proposals[]
 }
 
 model system_diagnostics {
+model citizens {
 id           String   @id @default(cuid())
 metric       String
 value        Float
@@ -810,6 +849,7 @@ created_at   DateTime @default(now())
 }
 
 model Team {
+model citizens {
 id          String   @id @default(cuid())
 name        String
 description String?
@@ -824,11 +864,12 @@ updatedAt   DateTime @updatedAt
 }
 
 model TeamAgent {
+model citizens {
 id        String   @id @default(cuid())
 teamId    String
 team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 agentId   String
-agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+agents     agents    @relation(fields: [agentId], references: [id], onDelete: Cascade)
 createdAt DateTime @default(now())
 
 @@unique([teamId, agentId])
@@ -837,6 +878,7 @@ createdAt DateTime @default(now())
 }
 
 model token_transactions {
+model citizens {
 id           String   @id @default(cuid())
 from_user_id String?
 to_user_id   String?
@@ -852,6 +894,7 @@ to_user   users? @relation("received", fields: [to_user_id], references: [id])
 }
 
 model user_connections {
+model citizens {
 id           String   @id @default(cuid())
 user_id      String
 connector_id String
@@ -866,8 +909,8 @@ bindings         agent_service_bindings[]
 integration_logs integration_logs[]
 }
 
-
 model votes {
+model citizens {
 id          String   @id @default(cuid())
 proposal_id String
 voter_id    String
@@ -882,6 +925,7 @@ voter    users     @relation(fields: [voter_id], references: [id])
 }
 
 model agent_hire_agreements {
+model citizens {
 id              String    @id @default(cuid())
 listing_id      String
 hiring_agent_id String
@@ -901,6 +945,7 @@ hired_agent  agents           @relation("hired", fields: [hired_agent_id], refer
 }
 
 model agent_blueprints {
+model citizens {
 id            String   @id @default(cuid())
 name          String
 description   String?
@@ -920,6 +965,7 @@ clones     agent_clones[]
 }
 
 model agent_messages {
+model citizens {
 id            String    @id @default(cuid())
 from_agent_id String
 to_agent_id   String
@@ -935,6 +981,7 @@ to_agent   agents @relation("received", fields: [to_agent_id], references: [id])
 }
 
 model Vote {
+model citizens {
 id         String   @id @default(cuid())
 proposalId String
 proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
@@ -948,6 +995,7 @@ createdAt  DateTime @default(now())
 }
 
 model agent_clones {
+model citizens {
 id             String   @id @default(cuid())
 blueprint_id   String
 agent_id       String
@@ -957,7 +1005,7 @@ created_at     DateTime @default(now())
 updated_at     DateTime @updatedAt
 
 blueprint agent_blueprints @relation(fields: [blueprint_id], references: [id])
-agent     agents           @relation(fields: [agent_id], references: [id])
+agents     agents           @relation(fields: [agent_id], references: [id])
 buyer     users            @relation("buyer", fields: [buyer_id], references: [id])
 }
 

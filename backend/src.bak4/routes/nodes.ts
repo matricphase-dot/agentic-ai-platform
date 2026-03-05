@@ -1,11 +1,11 @@
-import express from 'express';
+﻿import express from 'express';
 import { registerNode, heartbeat, getNodes, assignTask, completeTask } from '../services/nodeService';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticate } from "../middleware/auth";
 
 const router = express.Router();
 
 // Register a new node
-router.post('/register', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/register', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const { name, endpoint } = req.body;
@@ -16,14 +16,14 @@ router.post('/register', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
-// Heartbeat (public, no auth needed � node identifies by ID)
-router.post('/:node_id/heartbeat', async (req, res) => {
+// Heartbeat (public, no auth needed – node identifies by ID)
+router.post('/:nodeId/heartbeat', async (req, res) => {
   try {
-    if (!req.params.node_id) {
+    if (!req.params.nodeId) {
       return res.status(400).json({ error: 'Node ID is required' });
     }
     const { version } = req.body;
-    const node = await heartbeat(req.params.node_id, version);
+    const node = await heartbeat(req.params.nodeId, version);
     res.json(node);
   } catch (error: any) {
     res.status(404).json({ error: 'Node not found' });
@@ -31,7 +31,7 @@ router.post('/:node_id/heartbeat', async (req, res) => {
 });
 
 // Get nodes (for the authenticated user)
-router.get('/my-nodes', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/my-nodes', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const nodes = await getNodes(req.user.id);
@@ -42,7 +42,7 @@ router.get('/my-nodes', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Admin: get all nodes
-router.get('/all', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/all', authenticate, async (req: AuthRequest, res) => {
   // Check if admin (you can add role check)
   try {
     const nodes = await getNodes();
@@ -53,12 +53,12 @@ router.get('/all', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Assign a task to a node (for testing)
-router.post('/:node_id/tasks', authenticateToken, async (req, res) => {
+router.post('/:nodeId/tasks', authenticate, async (req, res) => {
   try {
-    if (!req.params.node_id) {
+    if (!req.params.nodeId) {
       return res.status(400).json({ error: 'Node ID is required' });
     }
-    const task = await assignTask(req.params.node_id, req.body);
+    const task = await assignTask(req.params.nodeId, req.body);
     res.json(task);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -80,6 +80,12 @@ router.post('/tasks/:taskId/complete', async (req, res) => {
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

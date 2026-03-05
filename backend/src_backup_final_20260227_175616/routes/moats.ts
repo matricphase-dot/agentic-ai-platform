@@ -1,5 +1,5 @@
-import { Router } from 'express';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+ï»¿import { Router } from 'express';
+import { authenticate } from "../middleware/auth";
 import prisma from '../lib/prisma';
 import { generateQuantumKey, signMessage, verifySignature, encryptMessage, decryptMessage } from '../services/quantumCryptoService';
 import { sendMessage, receiveMessages, tallyRound } from '../services/a2apService';
@@ -7,16 +7,16 @@ import { sendMessage, receiveMessages, tallyRound } from '../services/a2apServic
 const router = Router();
 
 // Generate quantum-resistant key pair for an agent
-router.post('/keys', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/keys', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { agent_id } = req.body;
-    if (!agent_id) {
-      return res.status(400).json({ error: 'agent_id is required' });
+    const { agentId } = req.body;
+    if (!agentId) {
+      return res.status(400).json({ error: 'agentId is required' });
     }
 
     // Check if agent exists and belongs to user
-    const agent = await prisma.agents.findFirst({
-      where: { id: agent_id, owner_id: req.user!.id }
+    const agent = await (prisma as any).agents.findFirst({
+      where: { id: agentId, owner_id: req.user!.id }
     });
 
     if (!agent) {
@@ -27,11 +27,11 @@ router.post('/keys', authenticateToken, async (req: AuthRequest, res) => {
     const keyPair = generateQuantumKey();
     
     // Store public key (private key should be stored encrypted in production)
-    const key = await prisma.quantum_keys.create({
+    const key = await (prisma as any).quantum_keys.create({
       data: {
-        agent_id: agent_id,
+        agentId: agentId,
         public_key: keyPair.public_key
-        // private_key is not stored in this example – it's returned to the client once
+        // private_key is not stored in this example â€“ it's returned to the client once
       }
     });
 
@@ -47,15 +47,15 @@ router.post('/keys', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Get keys for an agent
-router.get('/keys/:agent_id', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/keys/:agentId', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { agent_id } = req.params;
-    if (!agent_id) {
-      return res.status(400).json({ error: 'agent_id is required' });
+    const { agentId } = req.params;
+    if (!agentId) {
+      return res.status(400).json({ error: 'agentId is required' });
     }
 
-    const key = await prisma.quantum_keys.findUnique({
-      where: { agent_id: agent_id }
+    const key = await (prisma as any).quantum_keys.findUnique({
+      where: { agentId: agentId }
     });
 
     if (!key) {
@@ -63,8 +63,8 @@ router.get('/keys/:agent_id', authenticateToken, async (req: AuthRequest, res) =
     }
 
     // Check if agent belongs to user
-    const agent = await prisma.agents.findFirst({
-      where: { id: agent_id, owner_id: req.user!.id }
+    const agent = await (prisma as any).agents.findFirst({
+      where: { id: agentId, owner_id: req.user!.id }
     });
 
     if (!agent) {
@@ -78,7 +78,7 @@ router.get('/keys/:agent_id', authenticateToken, async (req: AuthRequest, res) =
 });
 
 // Send A2AP message
-router.post('/messages/send', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/messages/send', authenticate, async (req: AuthRequest, res) => {
   try {
     const { fromAgentId, toAgentId, content } = req.body;
     if (!fromAgentId || !toAgentId || !content) {
@@ -86,7 +86,7 @@ router.post('/messages/send', authenticateToken, async (req: AuthRequest, res) =
     }
 
     // Check if fromAgent belongs to user
-    const fromAgent = await prisma.agents.findFirst({
+    const fromAgent = await (prisma as any).agents.findFirst({
       where: { id: fromAgentId, owner_id: req.user!.id }
     });
 
@@ -95,11 +95,11 @@ router.post('/messages/send', authenticateToken, async (req: AuthRequest, res) =
     }
 
     // Get keys
-    const fromKey = await prisma.quantum_keys.findUnique({
-      where: { agent_id: fromAgentId }
+    const fromKey = await (prisma as any).quantum_keys.findUnique({
+      where: { agentId: fromAgentId }
     });
-    const toKey = await prisma.quantum_keys.findUnique({
-      where: { agent_id: toAgentId }
+    const toKey = await (prisma as any).quantum_keys.findUnique({
+      where: { agentId: toAgentId }
     });
 
     if (!fromKey || !toKey) {
@@ -118,23 +118,23 @@ router.post('/messages/send', authenticateToken, async (req: AuthRequest, res) =
 });
 
 // Get messages for an agent
-router.get('/messages/:agent_id', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/messages/:agentId', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { agent_id } = req.params;
-    if (!agent_id) {
-      return res.status(400).json({ error: 'agent_id is required' });
+    const { agentId } = req.params;
+    if (!agentId) {
+      return res.status(400).json({ error: 'agentId is required' });
     }
 
     // Check if agent belongs to user
-    const agent = await prisma.agents.findFirst({
-      where: { id: agent_id, owner_id: req.user!.id }
+    const agent = await (prisma as any).agents.findFirst({
+      where: { id: agentId, owner_id: req.user!.id }
     });
 
     if (!agent) {
       return res.status(404).json({ error: 'Agent not found' });
     }
 
-    const messages = await receiveMessages(agent_id);
+    const messages = await receiveMessages(agentId);
     res.json(messages);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -142,15 +142,15 @@ router.get('/messages/:agent_id', authenticateToken, async (req: AuthRequest, re
 });
 
 // Consensus round endpoints
-router.post('/consensus/rounds', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/consensus/rounds', authenticate, async (req: AuthRequest, res) => {
   try {
-    // Only admins or designated agents can create rounds – simplified check
+    // Only admins or designated agents can create rounds â€“ simplified check
     if (req.user!.role !== 'admin') {
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
     const { round_number } = req.body;
-    const round = await prisma.consensus_rounds.create({
+    const round = await (prisma as any).consensus_rounds.create({
       data: {
         round_number: round_number || Math.floor(Math.random() * 1000000)
       }
@@ -161,28 +161,28 @@ router.post('/consensus/rounds', authenticateToken, async (req: AuthRequest, res
   }
 });
 
-router.post('/consensus/vote', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/consensus/vote', authenticate, async (req: AuthRequest, res) => {
   try {
     const { round_id, vote, weight } = req.body;
-    const { agent_id } = req.body; // agent_id should be provided
+    const { agentId } = req.body; // agentId should be provided
 
-    if (!round_id || !agent_id || vote === undefined || !weight) {
-      return res.status(400).json({ error: 'round_id, agent_id, vote, weight required' });
+    if (!round_id || !agentId || vote === undefined || !weight) {
+      return res.status(400).json({ error: 'round_id, agentId, vote, weight required' });
     }
 
     // Check if agent belongs to user
-    const agent = await prisma.agents.findFirst({
-      where: { id: agent_id, owner_id: req.user!.id }
+    const agent = await (prisma as any).agents.findFirst({
+      where: { id: agentId, owner_id: req.user!.id }
     });
 
     if (!agent) {
       return res.status(404).json({ error: 'Agent not found' });
     }
 
-    const consensusVote = await prisma.consensus_votes.create({
+    const consensusVote = await (prisma as any).consensus_votes.create({
       data: {
         round_id: round_id,
-        agent_id: agent_id,
+        agentId: agentId,
         vote,
         weight
       }
@@ -193,14 +193,14 @@ router.post('/consensus/vote', authenticateToken, async (req: AuthRequest, res) 
   }
 });
 
-router.get('/consensus/rounds/:round_id', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/consensus/rounds/:round_id', authenticate, async (req: AuthRequest, res) => {
   try {
     const { round_id } = req.params;
     if (!round_id) {
       return res.status(400).json({ error: 'round_id is required' });
     }
 
-    const round = await prisma.consensus_rounds.findUnique({
+    const round = await (prisma as any).consensus_rounds.findUnique({
       where: { id: round_id },
       include: { votes: true }
     });
@@ -215,7 +215,7 @@ router.get('/consensus/rounds/:round_id', authenticateToken, async (req: AuthReq
   }
 });
 
-router.post('/consensus/rounds/:round_id/tally', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/consensus/rounds/:round_id/tally', authenticate, async (req: AuthRequest, res) => {
   try {
     const { round_id } = req.params;
     if (!round_id) {
@@ -235,6 +235,12 @@ router.post('/consensus/rounds/:round_id/tally', authenticateToken, async (req: 
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

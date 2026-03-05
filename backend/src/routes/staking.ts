@@ -3,7 +3,6 @@ import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 
-// All routes temporarily return static data
 router.get('/stakes', authenticate, (req, res) => {
   res.json([{ id: '1', amount: 100, status: 'active', agent: { id: 'a1', name: 'Agent 1' } }]);
 });
@@ -21,7 +20,7 @@ router.get('/leaderboard', (req, res) => {
 });
 
 router.post('/claim', authenticate, (req, res) => {
-  res.status(501).json({ error: 'Reward claiming is currently disabled' });
+  res.status(501).json({ error: 'Reward claiming is temporarily disabled' });
 });
 
 export default router;

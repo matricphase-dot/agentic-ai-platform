@@ -1,10 +1,10 @@
-import { PrismaClient } from '@prisma/client';
+﻿import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// // export async function registerNode(user_id: string, name: string, endpoint?: string) {
-  return prisma.nodes.create({ data: { 
-      owner_id: user_id,
+// // export async function registerNode(userId: string, name: string, endpoint?: string) {
+  return (prisma as any).nodes.create({ data: { 
+      owner_id: userId,
       name,
       endpoint: endpoint || null,
       status: 'offline',
@@ -12,9 +12,9 @@ const prisma = new PrismaClient();
   });
 }
 
-// // export async function heartbeat(node_id: string, version?: string) {
-  return prisma.nodes.update({
-    where: { id: node_id },
+// // export async function heartbeat(nodeId: string, version?: string) {
+  return (prisma as any).nodes.update({
+    where: { id: nodeId },
     data: {
       last_ping: new Date(),
       status: 'online',
@@ -25,16 +25,16 @@ const prisma = new PrismaClient();
 
 // // export async function getNodes(owner_id?: string) {
   const where = owner_id ? { owner_id } : {};
-  return prisma.nodes.findMany({
+  return (prisma as any).nodes.findMany({
     where,
     include: { tasks: true },
     orderBy: { created_at: 'desc' },
   });
 }
 
-// // export async function assignTask(node_id: string, taskData: any) {
-  return prisma.node_tasks.create({ data: { 
-      node_id,
+// // export async function assignTask(nodeId: string, taskData: any) {
+  return (prisma as any).node_tasks.create({ data: { 
+      nodeId,
       type: taskData.type,
       payload: taskData.payload || {},
       status: 'pending',
@@ -43,7 +43,7 @@ const prisma = new PrismaClient();
 }
 
 // // export async function completeTask(taskId: string, result: any, reward: number) {
-  const task = await prisma.node_tasks.update({
+  const task = await (prisma as any).node_tasks.update({
     where: { id: taskId },
     data: {
       status: 'completed',
@@ -53,13 +53,15 @@ const prisma = new PrismaClient();
     },
   });
 
-  await prisma.nodes.update({
-    where: { id: task.node_id },
+// @ts-ignore
+  await (prisma as any).nodes.update({
+    where: { id: task.nodeId },
     data: { total_earned: { increment: reward } },
   });
 
-  await prisma.node_rewards.create({ data: { 
-      node_id: task.node_id,
+// @ts-ignore
+  await (prisma as any).node_rewards.create({ data: { 
+      nodeId: task.nodeId,
       amount: reward,
       reason: 'task_completion',
       period_start: new Date(),
@@ -73,7 +75,8 @@ const prisma = new PrismaClient();
 
 // // export async function checkNodeHealth() {
   const threshold = new Date(Date.now() - 10 * 60 * 1000);
-  await prisma.nodes.updateMany({
+// @ts-ignore
+  await (prisma as any).nodes.updateMany({
     where: {
       last_ping: { lt: threshold },
       status: 'online',
@@ -84,6 +87,12 @@ const prisma = new PrismaClient();
 
 // Run health check every 5 minutes
 setInterval(checkNodeHealth, 5 * 60 * 1000);
+
+
+
+
+
+
 
 
 

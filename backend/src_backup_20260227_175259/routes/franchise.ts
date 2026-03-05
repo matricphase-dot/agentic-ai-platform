@@ -1,18 +1,18 @@
-import { Router } from 'express';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+﻿import { Router } from 'express';
+import { authenticate } from "../middleware/auth";
 import { createBlueprint, getBlueprints, getBlueprint, purchaseBlueprint, getUserFranchises, recordRoyaltyPayment } from '../services/franchiseService';
 
 const router = Router();
 
 // Create a new blueprint
-router.post('/blueprints', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/blueprints', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { name, description, agent_id, price, royalty_rate } = req.body;
-    if (!name || !agent_id || !price) {
+    const { name, description, agentId, price, royalty_rate } = req.body;
+    if (!name || !agentId || !price) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const blueprint = await createBlueprint(agent_id, req.user!.id, price, royalty_rate || 5);
+    const blueprint = await createBlueprint(agentId, req.user!.id, price, royalty_rate || 5);
     res.json(blueprint);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -20,7 +20,7 @@ router.post('/blueprints', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Get all blueprints (optionally filter by creator)
-router.get('/blueprints', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/blueprints', authenticate, async (req: AuthRequest, res) => {
   try {
     const { creator_id } = req.query;
     const filter: any = {};
@@ -33,7 +33,7 @@ router.get('/blueprints', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Get a specific blueprint
-router.get('/blueprints/:id', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/blueprints/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.params.id) return res.status(400).json({ error: 'Blueprint ID required' });
     if (!req.params.id) return res.status(400).json({ error: "Blueprint ID required" });
@@ -46,7 +46,7 @@ router.get('/blueprints/:id', authenticateToken, async (req: AuthRequest, res) =
 });
 
 // Purchase a blueprint
-router.post('/purchase', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/purchase', authenticate, async (req: AuthRequest, res) => {
   try {
     const { blueprint_id } = req.body;
     if (!blueprint_id) return res.status(400).json({ error: 'blueprint_id required' });
@@ -59,7 +59,7 @@ router.post('/purchase', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Get my franchises (as owner)
-router.get('/my-franchises', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/my-franchises', authenticate, async (req: AuthRequest, res) => {
   try {
     const franchises = await getUserFranchises(req.user!.id);
     res.json(franchises);
@@ -69,7 +69,7 @@ router.get('/my-franchises', authenticateToken, async (req: AuthRequest, res) =>
 });
 
 // Record a royalty payment (for the platform, or automated)
-router.post('/royalty', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/royalty', authenticate, async (req: AuthRequest, res) => {
   try {
     const { franchise_id, amount } = req.body;
     if (!franchise_id || !amount) return res.status(400).json({ error: 'franchise_id and amount required' });
@@ -82,6 +82,12 @@ router.post('/royalty', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

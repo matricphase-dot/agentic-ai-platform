@@ -1,4 +1,4 @@
-// Mock quantum crypto service � replace with actual implementation later
+﻿// Mock quantum crypto service – replace with actual implementation later
 export const generateQuantumKey = () => {
   return {
     public_key: 'pub_' + Math.random().toString(36).substring(2),
@@ -21,5 +21,11 @@ export const encryptMessage = (message: string, public_key: string) => {
 export const decryptMessage = (encrypted: string, private_key: string) => {
   return encrypted.replace('enc_', '');
 };
+
+
+
+
+
+
 
 

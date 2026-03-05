@@ -1,4 +1,4 @@
-import ventureRoutes from './routes/venture';
+﻿import ventureRoutes from './routes/venture';
 import moatsRoutes from './routes/moats';
 import nationRoutes from './routes/nation';
 import franchiseRoutes from './routes/franchise';
@@ -39,6 +39,12 @@ app.use('/api/moats', moatsRoutes);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+
+
+
+
+
 
 
 

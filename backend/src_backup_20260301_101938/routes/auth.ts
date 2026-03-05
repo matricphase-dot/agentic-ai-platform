@@ -1,4 +1,4 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
@@ -11,7 +11,7 @@ router.post('/register', async (req, res) => {
     const { email, password, name } = req.body;
 
     // Check if user exists
-    const existingUser = await prisma.users.findUnique({
+    const existingUser = await (prisma as any).users.findUnique({
       where: { email }
     });
 
@@ -23,10 +23,10 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const user = await prisma.users.create({
+    const user = await (prisma as any).users.create({
       data: {
         email,
-        password_hash: hashedPassword,
+        passwordHash: hashedPassword,
         name,
         role: 'user'
       }
@@ -40,7 +40,7 @@ router.post('/register', async (req, res) => {
     );
 
     // Return user without password
-    const { password_hash, ...userWithoutPassword } = user;
+    const { passwordHash, ...userWithoutPassword } = user;
 
     res.json({ token, user: userWithoutPassword });
   } catch (error) {
@@ -55,7 +55,7 @@ router.post('/signin', async (req, res) => {
     const { email, password } = req.body;
 
     // Find user
-    const user = await prisma.users.findUnique({
+    const user = await (prisma as any).users.findUnique({
       where: { email }
     });
 
@@ -64,7 +64,7 @@ router.post('/signin', async (req, res) => {
     }
 
     // Check password
-    const valid = await bcrypt.compare(password, user.password_hash);
+    const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -77,7 +77,7 @@ router.post('/signin', async (req, res) => {
     );
 
     // Return user without password
-    const { password_hash, ...userWithoutPassword } = user;
+    const { passwordHash, ...userWithoutPassword } = user;
 
     res.json({ token, user: userWithoutPassword });
   } catch (error) {
@@ -95,7 +95,7 @@ router.get('/me', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
-    const user = await prisma.users.findUnique({
+    const user = await (prisma as any).users.findUnique({
       where: { id: decoded.id }
     });
 
@@ -103,7 +103,7 @@ router.get('/me', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const { password_hash, ...userWithoutPassword } = user;
+    const { passwordHash, ...userWithoutPassword } = user;
     res.json({ user: userWithoutPassword });
   } catch (error) {
     res.status(401).json({ error: 'Invalid token' });
@@ -116,7 +116,7 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     // Find user
-    const user = await prisma.users.findUnique({
+    const user = await (prisma as any).users.findUnique({
       where: { email }
     });
 
@@ -125,7 +125,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Check password
-    const valid = await bcrypt.compare(password, user.password_hash);
+    const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -138,7 +138,7 @@ router.post('/login', async (req, res) => {
     );
 
     // Return user without password
-    const { password_hash, ...userWithoutPassword } = user;
+    const { passwordHash, ...userWithoutPassword } = user;
 
     res.json({ token, user: userWithoutPassword });
   } catch (error) {
@@ -147,6 +147,12 @@ router.post('/login', async (req, res) => {
   }
 });
 export default router;
+
+
+
+
+
+
 
 
 

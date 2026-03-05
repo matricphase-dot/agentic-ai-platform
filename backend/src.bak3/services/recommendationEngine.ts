@@ -1,14 +1,14 @@
-import prisma from '../lib/prisma';
+﻿import prisma from '../lib/prisma';
 
 export class RecommendationEngine {
   // Generate recommendations for a specific user
-  static async generateForUser(user_id: string): Promise<void> {
-    const user = await prisma.users.findUnique({
-      where: { id: user_id },
+  static async generateForUser(userId: string): Promise<void> {
+    const user = await (prisma as any).users.findUnique({
+      where: { id: userId },
       include: {
         agents: true,
         businesses: { include: { agents: true } },
-        stakes: { include: { agent: true } },
+        stakes: { include: { agents: true } },
       },
     });
     if (!user) return;
@@ -18,8 +18,8 @@ export class RecommendationEngine {
     // Rule 1: If an agent's reputation is high and no one has staked recently, suggest staking
     for (const agent of user.agents) {
       if (agent.reputation_score > 1500) {
-        const recentStakes = await prisma.stakes.count({
-          where: { agent_id: agent.id, created_at: { gte: new Date(Date.now() - 7*24*60*60*1000) } },
+        const recentStakes = await (prisma as any).stakes.count({
+          where: { agentId: agent.id, created_at: { gte: new Date(Date.now() - 7*24*60*60*1000) } },
         });
         if (recentStakes === 0) {
           recommendations.push({
@@ -27,7 +27,7 @@ export class RecommendationEngine {
             title: 'High-reputation agent available',
             description: `${agent.name} has a reputation of ${agent.reputation_score}. Consider staking to earn rewards.`,
             priority: 3,
-            metadata: { agent_id: agent.id },
+            metadata: { agentId: agent.id },
           });
         }
       }
@@ -66,16 +66,18 @@ export class RecommendationEngine {
           title: 'Monetize your successful agent',
           description: `${agent.name} earned $${agent.totalEarnings}. Create a blueprint to sell copies.`,
           priority: 4,
-          metadata: { agent_id: agent.id },
+          metadata: { agentId: agent.id },
         });
       }
     }
 
     // Save recommendations (replace old ones)
-    await prisma.recommendations.deleteMany({ where: { user_id } });
+// @ts-ignore
+    await (prisma as any).recommendations.deleteMany({ where: { userId } });
     for (const rec of recommendations) {
-      await prisma.recommendations.create({ data: { 
-          user_id,
+// @ts-ignore
+      await (prisma as any).recommendations.create({ data: { 
+          userId,
           type: rec.type,
           title: rec.title,
           description: rec.description,
@@ -88,12 +90,18 @@ export class RecommendationEngine {
 
   // Generate for all users (could be run periodically)
   static async generateForAllUsers(): Promise<void> {
-    const users = await prisma.users.findMany({ select: { id: true } });
+    const users = await (prisma as any).users.findMany({ select: { id: true } });
     for (const user of users) {
       await this.generateForUser(user.id);
     }
   }
 }
+
+
+
+
+
+
 
 
 

@@ -1,18 +1,18 @@
-import { Router } from 'express';
+ï»¿import { Router } from 'express';
 import prisma from '../lib/prisma';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
 // ---------- Listings ----------
-// GET /api/ai-marketplace/listings – list active listings
-router.get('/listings', authenticateToken, async (req: AuthRequest, res) => {
+// GET /api/ai-marketplace/listings â€“ list active listings
+router.get('/listings', authenticate, async (req: AuthRequest, res) => {
   try {
     const { type, status = 'ACTIVE' } = req.query;
     const where: any = { status };
     if (type) where.serviceType = type;
 
-    const listings = await prisma.service_listings.findMany({
+    const listings = await (prisma as any).service_listings.findMany({
       where,
       include: { agent: { select: { id: true, name: true, reputation_score: true, owner: { select: { name: true } } } },
       },
@@ -25,19 +25,19 @@ router.get('/listings', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
-// POST /api/ai-marketplace/listings – create a new listing
-router.post('/listings', authenticateToken, async (req: AuthRequest, res) => {
+// POST /api/ai-marketplace/listings â€“ create a new listing
+router.post('/listings', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { agent_id, title, description, serviceType, pricingType, price, currency } = req.body;
+    const { agentId, title, description, serviceType, pricingType, price, currency } = req.body;
 
     // Verify agent belongs to user
-    const agent = await prisma.agents.findFirst({
-      where: { id: agent_id, owner_id: req.user!.id },
+    const agent = await (prisma as any).agents.findFirst({
+      where: { id: agentId, owner_id: req.user!.id },
     });
     if (!agent) return res.status(404).json({ error: 'Agent not found or not owned by you' });
 
-    const listing = await prisma.service_listings.create({ data: { 
-        agent_id,
+    const listing = await (prisma as any).service_listings.create({ data: { 
+        agentId,
         title,
         description,
         serviceType,
@@ -53,23 +53,23 @@ router.post('/listings', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
-// PATCH /api/ai-marketplace/listings/:id – update listing (owner only)
-router.patch('/listings/:id', authenticateToken, async (req: AuthRequest, res) => {
+// PATCH /api/ai-marketplace/listings/:id â€“ update listing (owner only)
+router.patch('/listings/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as { id: string };
     const { title, description, price, status } = req.body;
 
     // Verify ownership
-    const listing = await prisma.service_listings.findUnique({
+    const listing = await (prisma as any).service_listings.findUnique({
       where: { id },
-      include: { agent: true },
+      include: { agents: true },
     });
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
     if (listing.agent.owner_id !== req.user!.id) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    const updated = await prisma.service_listings.update({
+    const updated = await (prisma as any).service_listings.update({
       where: { id },
       data: { title, description, price, status },
     });
@@ -81,37 +81,37 @@ router.patch('/listings/:id', authenticateToken, async (req: AuthRequest, res) =
 });
 
 // ---------- Hiring ----------
-// POST /api/ai-marketplace/listings/:id/hire – hire an agent from a listing
-router.post('/listings/:id/hire', authenticateToken, async (req: AuthRequest, res) => {
+// POST /api/ai-marketplace/listings/:id/hire â€“ hire an agent from a listing
+router.post('/listings/:id/hire', authenticate, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as { id: string };
     const { terms, totalValue, revenueShare } = req.body;
 
     // Get listing
-    const listing = await prisma.service_listings.findUnique({
+    const listing = await (prisma as any).service_listings.findUnique({
       where: { id, status: 'ACTIVE' },
-      include: { agent: true },
+      include: { agents: true },
     });
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
-    // Hiring agent (the user's agent) must be specified – for now, assume user wants to use one of their agents as the hiring agent.
+    // Hiring agent (the user's agent) must be specified â€“ for now, assume user wants to use one of their agents as the hiring agent.
     // We'll need a hiringAgentId in request. For simplicity, we'll require it.
     const { hiringAgentId } = req.body;
-    const hiringAgent = await prisma.agents.findFirst({
+    const hiringAgent = await (prisma as any).agents.findFirst({
       where: { id: hiringAgentId, owner_id: req.user!.id },
     });
     if (!hiringAgent) return res.status(404).json({ error: 'Hiring agent not found or not owned by you' });
 
     // Prevent hiring own agent
-    if (hiringAgent.id === listing.agent_id) {
+    if (hiringAgent.id === listing.agentId) {
       return res.status(400).json({ error: 'Cannot hire your own agent' });
     }
 
     // Create agreement
-    const agreement = await prisma.agent_hire_agreements.create({ data: { 
+    const agreement = await (prisma as any).agent_hire_agreements.create({ data: { 
         listing_id: id,
         hiringAgentId: hiringAgent.id,
-        hiredAgentId: listing.agent_id,
+        hiredAgentId: listing.agentId,
         terms,
         totalValue,
         revenueShare,
@@ -125,17 +125,17 @@ router.post('/listings/:id/hire', authenticateToken, async (req: AuthRequest, re
   }
 });
 
-// GET /api/ai-marketplace/agreements – list user's agreements (as hiring or hired)
-router.get('/agreements', authenticateToken, async (req: AuthRequest, res) => {
+// GET /api/ai-marketplace/agreements â€“ list user's agreements (as hiring or hired)
+router.get('/agreements', authenticate, async (req: AuthRequest, res) => {
   try {
     // Get all agents owned by user
-    const userAgents = await prisma.agents.findMany({
+    const userAgents = await (prisma as any).agents.findMany({
       where: { owner_id: req.user!.id },
       select: { id: true },
     });
     const agentIds = userAgents.map((a: any) => a.id);
 
-    const agreements = await prisma.agent_hire_agreements.findMany({
+    const agreements = await (prisma as any).agent_hire_agreements.findMany({
       where: {
         OR: [
           { hiringAgentId: { in: agentIds } },
@@ -155,11 +155,11 @@ router.get('/agreements', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
-// PATCH /api/ai-marketplace/agreements/:id/accept – accept a pending agreement (hired agent's owner)
-router.patch('/agreements/:id/accept', authenticateToken, async (req: AuthRequest, res) => {
+// PATCH /api/ai-marketplace/agreements/:id/accept â€“ accept a pending agreement (hired agent's owner)
+router.patch('/agreements/:id/accept', authenticate, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as { id: string };
-    const agreement = await prisma.agent_hire_agreements.findUnique({
+    const agreement = await (prisma as any).agent_hire_agreements.findUnique({
       where: { id },
       include: { hired_agent: true },
     });
@@ -169,7 +169,7 @@ router.patch('/agreements/:id/accept', authenticateToken, async (req: AuthReques
     }
     if (agreement.status !== 'PENDING') return res.status(400).json({ error: 'Agreement not pending' });
 
-    const updated = await prisma.agent_hire_agreements.update({
+    const updated = await (prisma as any).agent_hire_agreements.update({
       where: { id },
       data: { status: 'ACTIVE', started_at: new Date() },
     });
@@ -180,13 +180,13 @@ router.patch('/agreements/:id/accept', authenticateToken, async (req: AuthReques
   }
 });
 
-// POST /api/ai-marketplace/agreements/:id/execute – record work done
-router.post('/agreements/:id/execute', authenticateToken, async (req: AuthRequest, res) => {
+// POST /api/ai-marketplace/agreements/:id/execute â€“ record work done
+router.post('/agreements/:id/execute', authenticate, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as { id: string };
     const { description, hoursWorked, amount } = req.body;
 
-    const agreement = await prisma.agent_hire_agreements.findUnique({
+    const agreement = await (prisma as any).agent_hire_agreements.findUnique({
       where: { id },
       include: { hired_agent: true, hiringAgent: true },
     });
@@ -197,7 +197,7 @@ router.post('/agreements/:id/execute', authenticateToken, async (req: AuthReques
     }
     if (agreement.status !== 'ACTIVE') return res.status(400).json({ error: 'Agreement not active' });
 
-    const execution = await prisma.service_execution_logs.create({ data: { 
+    const execution = await (prisma as any).service_execution_logs.create({ data: { 
         agreementId: id,
         description,
         hoursWorked,
@@ -218,6 +218,12 @@ router.post('/agreements/:id/execute', authenticateToken, async (req: AuthReques
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

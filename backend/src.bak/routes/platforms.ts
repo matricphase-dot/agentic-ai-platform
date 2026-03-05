@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import {
   addPlatformConnection,
@@ -7,13 +7,13 @@ import {
   deployAgent,
   recordRevenue,
 } from '../services/platformService';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticate } from "../middleware/auth";
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
 // Add a new platform connection
-router.post('/connect', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/connect', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const { platform, credentials } = req.body;
@@ -25,7 +25,7 @@ router.post('/connect', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // List user's platform connections
-router.get('/connections', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/connections', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const connections = await getPlatformConnections(req.user.id);
@@ -36,13 +36,13 @@ router.get('/connections', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Get a single platform connection by ID
-router.get('/connections/:id', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/connections/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     if (!req.params.id) return res.status(400).json({ error: 'Connection ID is required' });
 
-    const connection = await prisma.platform_connections.findUnique({
-      where: { id: req.params.id, user_id: req.user.id },
+    const connection = await (prisma as any).platform_connections.findUnique({
+      where: { id: req.params.id, userId: req.user.id },
       include: { deployments: true },
     });
 
@@ -57,7 +57,7 @@ router.get('/connections/:id', authenticateToken, async (req: AuthRequest, res) 
 });
 
 // Revoke a connection
-router.delete('/connections/:id', authenticateToken, async (req: AuthRequest, res) => {
+router.delete('/connections/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     if (!req.params.id) return res.status(400).json({ error: 'Connection ID is required' });
@@ -69,11 +69,11 @@ router.delete('/connections/:id', authenticateToken, async (req: AuthRequest, re
 });
 
 // Deploy an agent to a platform
-router.post('/deploy', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/deploy', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const { agent_id, platform_id, config } = req.body;
-    const deployment = await deployAgent(agent_id, platform_id, config);
+    const { agentId, platform_id, config } = req.body;
+    const deployment = await deployAgent(agentId, platform_id, config);
     res.json(deployment);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -81,19 +81,19 @@ router.post('/deploy', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Deploy a test agent to platform (requires existing agent)
-router.post('/deploy-with-agent', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/deploy-with-agent', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const { platform_id, config } = req.body;
 
     // Find an existing agent for this user
-    const agent = await prisma.agents.findFirst({ where: { owner_id: req.user.id } });
+    const agent = await (prisma as any).agents.findFirst({ where: { owner_id: req.user.id } });
     if (!agent) {
       return res.status(400).json({ error: 'No agent found. Please create an agent first.' });
     }
 
-    const deployment = await prisma.deployments.create({ data: { 
-        agent_id: agent.id,
+    const deployment = await (prisma as any).deployments.create({ data: { 
+        agentId: agent.id,
         platform_id,
         config: config || {},
         status: 'running',
@@ -120,12 +120,12 @@ router.post('/revenue', async (req, res) => {
 
 
 // Deploy an existing deployment to cloud (after agent is created)
-router.post('/deployments/:id/deploy-to-cloud', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/deployments/:id/deploy-to-cloud', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const deployment = await prisma.deployments.findUnique({
+    const deployment = await (prisma as any).deployments.findUnique({
       where: { id: req.params.id },
-      include: { agent: true, platform: true },
+      include: { agents: true, platform: true },
     });
     if (!deployment) return res.status(404).json({ error: 'Deployment not found' });
     // Check ownership via agent
@@ -146,12 +146,12 @@ router.post('/deployments/:id/deploy-to-cloud', authenticateToken, async (req: A
 });
 
 // Invoke a deployed cloud agent
-router.post('/deployments/:id/invoke', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/deployments/:id/invoke', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const deployment = await prisma.deployments.findUnique({
+    const deployment = await (prisma as any).deployments.findUnique({
       where: { id: req.params.id },
-      include: { agent: true },
+      include: { agents: true },
     });
     if (!deployment) return res.status(404).json({ error: 'Deployment not found' });
     if (deployment.agent.owner_id !== req.user.id) {
@@ -166,12 +166,12 @@ router.post('/deployments/:id/invoke', authenticateToken, async (req: AuthReques
 });
 
 // Get logs for a deployment
-router.get('/deployments/:id/logs', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/deployments/:id/logs', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const deployment = await prisma.deployments.findUnique({
+    const deployment = await (prisma as any).deployments.findUnique({
       where: { id: req.params.id },
-      include: { agent: true },
+      include: { agents: true },
     });
     if (!deployment) return res.status(404).json({ error: 'Deployment not found' });
     if (deployment.agent.owner_id !== req.user.id) {
@@ -186,12 +186,12 @@ router.get('/deployments/:id/logs', authenticateToken, async (req: AuthRequest, 
 });
 
 // Remove deployment from cloud
-router.delete('/deployments/:id/cloud', authenticateToken, async (req: AuthRequest, res) => {
+router.delete('/deployments/:id/cloud', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const deployment = await prisma.deployments.findUnique({
+    const deployment = await (prisma as any).deployments.findUnique({
       where: { id: req.params.id },
-      include: { agent: true },
+      include: { agents: true },
     });
     if (!deployment) return res.status(404).json({ error: 'Deployment not found' });
     if (deployment.agent.owner_id !== req.user.id) {
@@ -205,6 +205,12 @@ router.delete('/deployments/:id/cloud', authenticateToken, async (req: AuthReque
   }
 });
 export default router;
+
+
+
+
+
+
 
 
 

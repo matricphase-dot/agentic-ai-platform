@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import {
   createNation,
   getNations,
@@ -11,17 +11,17 @@ import {
   tallyProposal,
   closeProposal,
 } from '../services/nationService';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticate } from "../middleware/auth";
 
 const router = express.Router();
 
 // Nations
 
-// Get all nations (public) � optionally filter by user's membership
+// Get all nations (public) – optionally filter by user's membership
 router.get('/', async (req, res) => {
   try {
-    const { user_id } = req.query;
-    const nations = await getNations({ user_id: user_id as string });
+    const { userId } = req.query;
+    const nations = await getNations({ userId: userId as string });
     res.json(nations);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -41,7 +41,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a nation (authenticated)
-router.post('/', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const { name, description } = req.body;
@@ -53,7 +53,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Join a nation (authenticated)
-router.post('/:id/join', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/:id/join', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const citizen = await joinNation(req.user.id, req.params.id);
@@ -64,7 +64,7 @@ router.post('/:id/join', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Leave a nation (authenticated)
-router.post('/:id/leave', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/:id/leave', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const result = await leaveNation(req.user.id, req.params.id);
@@ -88,7 +88,7 @@ router.get('/:id/proposals', async (req, res) => {
 });
 
 // Create a proposal in a nation (authenticated, must be citizen)
-router.post('/:id/proposals', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/:id/proposals', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const { title, description, votingDays } = req.body;
@@ -100,11 +100,11 @@ router.post('/:id/proposals', authenticateToken, async (req: AuthRequest, res) =
 });
 
 // Vote on a proposal
-router.post('/proposals/:proposal_id/vote', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/proposals/:proposalId/vote', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const { support } = req.body;
-    const vote = await voteOnProposal(req.params.proposal_id, req.user.id, support);
+    const vote = await voteOnProposal(req.params.proposalId, req.user.id, support);
     res.json(vote);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -112,9 +112,9 @@ router.post('/proposals/:proposal_id/vote', authenticateToken, async (req: AuthR
 });
 
 // Get tally for a proposal
-router.get('/proposals/:proposal_id/tally', async (req, res) => {
+router.get('/proposals/:proposalId/tally', async (req, res) => {
   try {
-    const tally = await tallyProposal(req.params.proposal_id);
+    const tally = await tallyProposal(req.params.proposalId);
     res.json(tally);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -122,10 +122,10 @@ router.get('/proposals/:proposal_id/tally', async (req, res) => {
 });
 
 // Close a proposal (admin or proposer)
-router.post('/proposals/:proposal_id/close', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/proposals/:proposalId/close', authenticate, async (req: AuthRequest, res) => {
   try {
     // In a real app, you'd check permissions
-    const status = await closeProposal(req.params.proposal_id);
+    const status = await closeProposal(req.params.proposalId);
     res.json({ status });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -133,6 +133,12 @@ router.post('/proposals/:proposal_id/close', authenticateToken, async (req: Auth
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

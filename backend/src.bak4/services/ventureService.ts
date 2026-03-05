@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+﻿import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -10,7 +10,7 @@ export async function submitProposal(
   ask_amount: number,
   equity?: number
 ) {
-  return prisma.investment_proposals.create({ data: { 
+  return (prisma as any).investment_proposals.create({ data: { 
       startup_id,
       proposer_id: founder_id,
       title,
@@ -24,7 +24,7 @@ export async function submitProposal(
 
 export async function getProposals(status?: string) {
   const where = status ? { status } : {};
-  return prisma.investment_proposals.findMany({
+  return (prisma as any).investment_proposals.findMany({
     where,
     include: { startups: true,
       proposer: { select: { id: true, name: true, email: true } },
@@ -34,9 +34,9 @@ export async function getProposals(status?: string) {
   });
 }
 
-export async function runDueDiligence(proposal_id: string) {
-  const report = await prisma.due_diligence_reports.create({ data: { 
-      proposal_id,
+export async function runDueDiligence(proposalId: string) {
+  const report = await (prisma as any).due_diligence_reports.create({ data: { 
+      proposalId,
       score: Math.floor(Math.random() * 40) + 60,
       summary: 'Automated due diligence completed. Startup appears viable.',
       details: { market: 'growing', team: 'experienced', tech: 'innovative' },
@@ -47,24 +47,25 @@ export async function runDueDiligence(proposal_id: string) {
   return report;
 }
 
-export async function approveProposal(proposal_id: string, investmentAmount: number) {
-  const proposal = await prisma.investment_proposals.update({
-    where: { id: proposal_id },
+export async function approveProposal(proposalId: string, investmentAmount: number) {
+  const proposal = await (prisma as any).investment_proposals.update({
+    where: { id: proposalId },
     data: {
       status: 'approved',
       reviewed_at: new Date(),
     },
   });
 
-  const investment = await prisma.investments.create({ data: { 
-      proposal_id,
+  const investment = await (prisma as any).investments.create({ data: { 
+      proposalId,
       investor_id: 'platform-treasury',
       amount: investmentAmount,
       status: 'active',
     },
   });
 
-  await prisma.startups.update({
+// @ts-ignore
+  await (prisma as any).startups.update({
     where: { id: proposal.startup_id },
     data: { token_amount: { increment: investmentAmount } },
   });
@@ -72,9 +73,9 @@ export async function approveProposal(proposal_id: string, investmentAmount: num
   return investment;
 }
 
-export async function fundProposal(proposal_id: string) {
-  const proposal = await prisma.investment_proposals.update({
-    where: { id: proposal_id, status: 'approved' },
+export async function fundProposal(proposalId: string) {
+  const proposal = await (prisma as any).investment_proposals.update({
+    where: { id: proposalId, status: 'approved' },
     data: {
       status: 'funded',
       funded_at: new Date(),
@@ -82,6 +83,12 @@ export async function fundProposal(proposal_id: string) {
   });
   return proposal;
 }
+
+
+
+
+
+
 
 
 

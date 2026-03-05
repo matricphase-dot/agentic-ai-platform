@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import {
   createBlueprint,
   getBlueprints,
@@ -8,7 +8,7 @@ import {
   getMyBlueprintsFranchises,
   recordRoyaltyPayment,
 } from '../services/franchiseService';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticate } from "../middleware/auth";
 
 const router = express.Router();
 
@@ -38,11 +38,11 @@ router.get('/blueprints/:id', async (req, res) => {
 });
 
 // Create a blueprint (authenticated)
-router.post('/blueprints', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/blueprints', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const { name, description, agent_id, price, royalty_rate } = req.body;
-    const blueprint = await createBlueprint(req.user.id, name, description, agent_id, price, royalty_rate);
+    const { name, description, agentId, price, royalty_rate } = req.body;
+    const blueprint = await createBlueprint(req.user.id, name, description, agentId, price, royalty_rate);
     res.json(blueprint);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -52,7 +52,7 @@ router.post('/blueprints', authenticateToken, async (req: AuthRequest, res) => {
 // Franchises
 
 // Purchase a blueprint (authenticated)
-router.post('/purchase', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/purchase', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const { blueprint_id } = req.body;
@@ -64,7 +64,7 @@ router.post('/purchase', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Get user's purchased franchises (authenticated)
-router.get('/my-franchises', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/my-franchises', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const franchises = await getUserFranchises(req.user.id);
@@ -75,7 +75,7 @@ router.get('/my-franchises', authenticateToken, async (req: AuthRequest, res) =>
 });
 
 // Get franchises sold from user's blueprints (authenticated)
-router.get('/my-sales', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/my-sales', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const sales = await getMyBlueprintsFranchises(req.user.id);
@@ -86,7 +86,7 @@ router.get('/my-sales', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Record a royalty payment (could be called internally or via webhook)
-router.post('/royalty', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/royalty', authenticate, async (req: AuthRequest, res) => {
   try {
     const { franchise_id, amount, period_start, period_end } = req.body;
     if (!franchise_id || !amount || !period_start || !period_end) {
@@ -100,6 +100,12 @@ router.post('/royalty', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

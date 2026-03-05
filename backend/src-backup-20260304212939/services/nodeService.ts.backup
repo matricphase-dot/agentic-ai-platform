@@ -1,0 +1,95 @@
+﻿import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+export async function registerNode(userId: string, name: string, endpoint?: string) {
+  return prisma.node.create({
+    data: {
+      ownerId: userId,
+      name,
+      endpoint: endpoint || null,,
+      status: 'offline',
+    },
+  });
+}
+
+export async function heartbeat(nodeId: string, version?: string) {
+  // Update last ping and set status to online
+  return prisma.node.update({
+    where: { id: nodeId },
+    data: {
+      lastPing: new Date(),
+      status: 'online',
+      version: version || undefined,
+    },
+  });
+}
+
+export async function getNodes(ownerId?: string) {
+  const where = ownerId ? { ownerId } : {};
+  return prisma.node.findMany({
+    where,
+    include: { tasks: true },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
+export async function assignTask(nodeId: string, taskData: any) {
+  // Simple round-robin task assignment (could be enhanced)
+  return prisma.nodeTask.create({
+    data: {
+      nodeId,
+      type: taskData.type,
+      payload: taskData.payload || {},
+      status: 'pending',
+    },
+  });
+}
+
+export async function completeTask(taskId: string, result: any, reward: number) {
+  const task = await prisma.nodeTask.update({
+    where: { id: taskId },
+    data: {
+      status: 'completed',
+      result,
+      completedAt: new Date(),
+      reward,
+    },
+  });
+
+  // Update node total earnings
+  await prisma.node.update({
+    where: { id: task.nodeId },
+    data: { totalEarned: { increment: reward } },
+  });
+
+  // Create reward record
+  await prisma.nodeReward.create({
+    data: {
+      nodeId: task.nodeId,
+      amount: reward,
+      reason: 'task_completion',
+      periodStart: new Date(),
+      periodEnd: new Date(),
+      paid: true,
+    },
+  });
+
+  return task;
+}
+
+// Background job to detect offline nodes (run every 5 minutes)
+export async function checkNodeHealth() {
+  const threshold = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
+  await prisma.node.updateMany({
+    where: {
+      lastPing: { lt: threshold },
+      status: 'online',
+    },
+    data: { status: 'offline' },
+  });
+}
+
+// Run health check every 5 minutes
+setInterval(checkNodeHealth, 5 * 60 * 1000);
+

@@ -1,16 +1,16 @@
-import { PrismaClient } from '@prisma/client';
+﻿import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 export async function updatePricing() {
   // Get all agent types
-  const agent_types = await prisma.agents.groupBy({
+  const agent_types = await (prisma as any).agents.groupBy({
     by: ['agent_type'],
   });
 
   for (const { agent_type } of agent_types) {
     // Count active deployments as demand metric
-    const activeDeployments = await prisma.deployments.count({
+    const activeDeployments = await (prisma as any).deployments.count({
       where: {
         agent: { agent_type },
         status: 'running',
@@ -18,11 +18,11 @@ export async function updatePricing() {
     });
 
     // Get or create pricing rule
-    let rule = await prisma.pricing_rules.findUnique({
+    let rule = await (prisma as any).pricing_rules.findUnique({
       where: { agent_type },
     });
     if (!rule) {
-      rule = await prisma.pricing_rules.create({ data: { 
+      rule = await (prisma as any).pricing_rules.create({ data: { 
           agent_type,
           basePrice: 10.0,
           demand: 1.0,
@@ -34,7 +34,8 @@ export async function updatePricing() {
     const demand = activeDeployments / 10 || 0.1;
     const multiplier = 1 + (demand - 0.5);
 
-    await prisma.pricing_rules.update({
+// @ts-ignore
+    await (prisma as any).pricing_rules.update({
       where: { id: rule.id },
       data: {
         demand,
@@ -49,6 +50,12 @@ export async function updatePricing() {
 
 // Run every 15 minutes
 setInterval(updatePricing, 15 * 60 * 1000);
+
+
+
+
+
+
 
 
 

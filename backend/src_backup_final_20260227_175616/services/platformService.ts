@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+﻿import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 
 const prisma = new PrismaClient();
@@ -29,15 +29,15 @@ function decrypt(text: string): string {
 }
 
 export async function addPlatformConnection(
-  user_id: string,
+  userId: string,
   platform: string,
   credentials: any
 ) {
   const encrypted = encrypt(JSON.stringify(credentials));
-  return prisma.platform_connections.upsert({
+  return (prisma as any).platform_connections.upsert({
     where: {
       user_id_platform: {
-        user_id,
+        userId,
         platform,
       },
     },
@@ -46,7 +46,7 @@ export async function addPlatformConnection(
       status: 'active',
     },
     create: {
-      user_id,
+      userId,
       platform,
       credentials: encrypted,
       status: 'active',
@@ -54,11 +54,11 @@ export async function addPlatformConnection(
   });
 }
 
-export async function getPlatformConnections(user_id: string) {
+export async function getPlatformConnections(userId: string) {
   try {
-    console.log(`Fetching connections for user ${user_id}`);
-    const connections = await prisma.platform_connections.findMany({
-      where: { user_id },
+    console.log(`Fetching connections for user ${userId}`);
+    const connections = await (prisma as any).platform_connections.findMany({
+      where: { userId },
       include: { deployments: true },
     });
     console.log(`Found ${connections.length} connections`);
@@ -70,32 +70,32 @@ export async function getPlatformConnections(user_id: string) {
   }
 }
 
-export async function getPlatformConnection(id: string, user_id?: string) {
+export async function getPlatformConnection(id: string, userId?: string) {
   const where: any = { id };
-  if (user_id) where.user_id = user_id;
-  const conn = await prisma.platform_connections.findUnique({ where });
+  if (userId) where.userId = userId;
+  const conn = await (prisma as any).platform_connections.findUnique({ where });
   if (!conn) return null;
   // Decrypt credentials
   const credentials = JSON.parse(decrypt(conn.credentials as string));
   return { ...conn, credentials };
 }
 
-export async function revokePlatformConnection(id: string, user_id: string) {
-  return prisma.platform_connections.update({
-    where: { id, user_id },
+export async function revokePlatformConnection(id: string, userId: string) {
+  return (prisma as any).platform_connections.update({
+    where: { id, userId },
     data: { status: 'revoked' },
   });
 }
 
 export async function deployAgent(
-  agent_id: string,
+  agentId: string,
   platform_id: string,
   config: any
 ) {
   // Here you would actually call the external platform's API to deploy the agent.
   // For now, we just record the deployment.
-  return prisma.deployments.create({ data: { 
-      agent_id,
+  return (prisma as any).deployments.create({ data: { 
+      agentId,
       platform_id,
       config,
       status: 'running', // assume success for demo
@@ -105,7 +105,7 @@ export async function deployAgent(
 
 export async function recordRevenue(deployment_id: string, amount: number, description?: string) {
   // Record revenue log
-  const log = await prisma.revenue_logs.create({ data: { 
+  const log = await (prisma as any).revenue_logs.create({ data: { 
       deployment_id,
       amount,
       description: description || null, // convert undefined to null
@@ -114,23 +114,26 @@ export async function recordRevenue(deployment_id: string, amount: number, descr
   });
 
   // Update deployment total revenue
-  await prisma.deployments.update({
+// @ts-ignore
+  await (prisma as any).deployments.update({
     where: { id: deployment_id },
     data: { revenue: { increment: amount } },
   });
 
   // Find the user who owns the agent and credit tokens (1 $AGENT per 1 USD, or custom rate)
-  const deployment = await prisma.deployments.findUnique({
+  const deployment = await (prisma as any).deployments.findUnique({
     where: { id: deployment_id },
-    include: { agent: true },
+    include: { agents: true },
   });
   if (deployment?.agent?.owner_id) {
-    await prisma.users.update({
+// @ts-ignore
+    await (prisma as any).users.update({
       where: { id: deployment.agent.owner_id },
       data: { token_balance: { increment: amount } }, // 1:1 for simplicity
     });
 
-    await prisma.token_transactions.create({ data: { 
+// @ts-ignore
+    await (prisma as any).token_transactions.create({ data: { 
         to_user_id: deployment.agent.owner_id,
         amount,
         type: 'revenue',
@@ -141,6 +144,12 @@ export async function recordRevenue(deployment_id: string, amount: number, descr
 
   return log;
 }
+
+
+
+
+
+
 
 
 

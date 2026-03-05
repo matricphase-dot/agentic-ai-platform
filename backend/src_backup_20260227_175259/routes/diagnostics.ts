@@ -1,11 +1,11 @@
-import express from 'express';
+﻿import express from 'express';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const router = express.Router();
 
 router.get('/', async (req, res) => {
-  const diagnostics = await prisma.system_diagnostics.findMany({
+  const diagnostics = await (prisma as any).system_diagnostics.findMany({
     orderBy: { timestamp: 'desc' },
     take: 50
   });
@@ -13,6 +13,12 @@ router.get('/', async (req, res) => {
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

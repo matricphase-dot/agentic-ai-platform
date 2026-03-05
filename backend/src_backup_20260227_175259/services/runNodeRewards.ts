@@ -1,4 +1,4 @@
-import { distributeNodeRewards } from './nodeRewards';
+﻿import { distributeNodeRewards } from './nodeRewards';
 
 distributeNodeRewards()
   .then(() => {
@@ -9,6 +9,12 @@ distributeNodeRewards()
     console.error('? Error:', err);
     process.exit(1);
   });
+
+
+
+
+
+
 
 
 

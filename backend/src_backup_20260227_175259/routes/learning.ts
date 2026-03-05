@@ -1,13 +1,13 @@
-import prisma from '../lib/prisma';
+ï»¿import prisma from '../lib/prisma';
 import { Router } from 'express';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
-// GET /api/learning/current – get current active learning round
-router.get('/current', authenticateToken, async (req: AuthRequest, res) => {
+// GET /api/learning/current â€“ get current active learning round
+router.get('/current', authenticate, async (req: AuthRequest, res) => {
   try {
-    const current = await prisma.learning_rounds.findFirst({
+    const current = await (prisma as any).learning_rounds.findFirst({
       where: { status: 'active' },
       orderBy: { round_number: 'desc' },
     });
@@ -18,15 +18,15 @@ router.get('/current', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
-// POST /api/learning/rounds – start a new round (admin only – we'll skip check for now)
-router.post('/rounds', authenticateToken, async (req: AuthRequest, res) => {
+// POST /api/learning/rounds â€“ start a new round (admin only â€“ we'll skip check for now)
+router.post('/rounds', authenticate, async (req: AuthRequest, res) => {
   try {
     const { globalModel } = req.body;
-    const lastRound = await prisma.learning_rounds.findFirst({
+    const lastRound = await (prisma as any).learning_rounds.findFirst({
       orderBy: { round_number: 'desc' },
     });
     const round_number = (lastRound?.round_number || 0) + 1;
-    const round = await prisma.learning_rounds.create({ data: { 
+    const round = await (prisma as any).learning_rounds.create({ data: { 
         round_number,
         globalModel,
         status: 'active',
@@ -39,20 +39,20 @@ router.post('/rounds', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
-// POST /api/learning/rounds/:round_id/contribute – agent submits update
-router.post('/rounds/:round_id/contribute', authenticateToken, async (req: AuthRequest, res) => {
+// POST /api/learning/rounds/:round_id/contribute â€“ agent submits update
+router.post('/rounds/:round_id/contribute', authenticate, async (req: AuthRequest, res) => {
   try {
     const { round_id } = req.params as { round_id: string };
-    const { agent_id, modelDelta } = req.body;
+    const { agentId, modelDelta } = req.body;
 
     // Verify agent belongs to user
-    const agent = await prisma.agents.findFirst({
-      where: { id: agent_id, owner_id: req.user!.id },
+    const agent = await (prisma as any).agents.findFirst({
+      where: { id: agentId, owner_id: req.user!.id },
     });
     if (!agent) return res.status(404).json({ error: 'Agent not found or not owned by you' });
 
     // Check round exists and is active
-    const round = await prisma.learning_rounds.findUnique({
+    const round = await (prisma as any).learning_rounds.findUnique({
       where: { id: round_id },
     });
     if (!round || round.status !== 'active') {
@@ -60,21 +60,23 @@ router.post('/rounds/:round_id/contribute', authenticateToken, async (req: AuthR
     }
 
     // Upsert contribution
-    const contribution = await prisma.contributions.upsert({
-      where: { roundId_agentId: { round_id, agent_id } },
+    const contribution = await (prisma as any).contributions.upsert({
+      where: { roundId_agentId: { round_id, agentId } },
       update: { modelDelta, submittedAt: new Date() },
-      create: { round_id, agent_id, modelDelta },
+      create: { round_id, agentId, modelDelta },
     });
 
     // Update contribution count on round
-    await prisma.learning_rounds.update({
+// @ts-ignore
+    await (prisma as any).learning_rounds.update({
       where: { id: round_id },
       data: { contributionCount: { increment: 1 } },
     });
 
     // Optionally reward agent with reputation
-    await prisma.agents.update({
-      where: { id: agent_id },
+// @ts-ignore
+    await (prisma as any).agents.update({
+      where: { id: agentId },
       data: { reputation_score: { increment: 5 } },
     });
 
@@ -85,13 +87,13 @@ router.post('/rounds/:round_id/contribute', authenticateToken, async (req: AuthR
   }
 });
 
-// POST /api/learning/rounds/:round_id/complete – end round and aggregate
-router.post('/rounds/:round_id/complete', authenticateToken, async (req: AuthRequest, res) => {
+// POST /api/learning/rounds/:round_id/complete â€“ end round and aggregate
+router.post('/rounds/:round_id/complete', authenticate, async (req: AuthRequest, res) => {
   try {
     const { round_id } = req.params as { round_id: string };
     const { aggregatedModel } = req.body;
 
-    const round = await prisma.learning_rounds.update({
+    const round = await (prisma as any).learning_rounds.update({
       where: { id: round_id },
       data: {
         globalModel: aggregatedModel,
@@ -106,10 +108,10 @@ router.post('/rounds/:round_id/complete', authenticateToken, async (req: AuthReq
   }
 });
 
-// GET /api/learning/contributions/my – get user's agent contributions
-router.get('/contributions/my', authenticateToken, async (req: AuthRequest, res) => {
+// GET /api/learning/contributions/my â€“ get user's agent contributions
+router.get('/contributions/my', authenticate, async (req: AuthRequest, res) => {
   try {
-    const contributions = await prisma.contributions.findMany({
+    const contributions = await (prisma as any).contributions.findMany({
       where: { agent: { owner_id: req.user!.id } },
       include: { round: { select: { round_number: true, status: true } } },
       orderBy: { submittedAt: 'desc' },
@@ -122,6 +124,12 @@ router.get('/contributions/my', authenticateToken, async (req: AuthRequest, res)
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

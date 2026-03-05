@@ -1,4 +1,4 @@
-export class FederatedLearning {
+﻿export class FederatedLearning {
   // Simple average of model deltas (assuming they are numbers)
   static aggregate(contributions: any[]): any {
     if (contributions.length === 0) return null;
@@ -14,6 +14,12 @@ export class FederatedLearning {
     return Math.random() * 100; // Placeholder
   }
 }
+
+
+
+
+
+
 
 
 

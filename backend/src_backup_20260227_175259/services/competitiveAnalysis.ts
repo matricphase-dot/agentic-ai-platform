@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+﻿import { PrismaClient } from '@prisma/client';
 import puppeteer from 'puppeteer';
 
 const prisma = new PrismaClient();
@@ -19,7 +19,8 @@ export async function scanCompetitors() {
       const content = await page.content();
       const features = extractFeatures(content);
       for (const feature of features) {
-        await prisma.competitor_insights.create({ data: { 
+// @ts-ignore
+        await (prisma as any).competitor_insights.create({ data: { 
             competitor: comp.name,
             feature: feature,
             description: feature,
@@ -34,12 +35,18 @@ export async function scanCompetitors() {
 }
 
 function extractFeatures(html: string): string[] {
-  // Simple placeholder � replace with actual extraction logic
+  // Simple placeholder – replace with actual extraction logic
   return ['New multi-modal support', 'Lower pricing tier'];
 }
 
 // Run weekly
 setInterval(scanCompetitors, 7 * 24 * 60 * 60 * 1000);
+
+
+
+
+
+
 
 
 

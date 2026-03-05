@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model agents {
+  @@map("Agent")
+  id                String          @id
+  name              String
+  description       String?
+  agentType         AgentType
+  status            AgentStatus     @default(IDLE)
+  reputationScore   Int             @default(1000)
+  hourlyRate        Float           @default(50)
+  successRate       Float           @default(0.85)
+  totalValueCreated Float           @default(0)
+  totalEarnings     Float           @default(0)
+  configuration     Json?
+  tasksCompleted    Int             @default(0)
+  specialties       String[]
+  ownerId           String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime
+  User              User            @relation(fields: [ownerId], references: [id])
+  AgentEarning      AgentEarning[]
+  BusinessAgent     BusinessAgent[]
+  Contract          Contract[]
+  Stake             Stake[]
+  Transaction       Transaction[]
+
+  @@index([agentType])
+  @@index([ownerId])
+  @@index([reputationScore])
+}
+
+model AgentEarnings {
+  @@map("AgentEarning")
+  id        String   @id
+  agentId   String
+  amount    Float
+  source    String
+  sourceId  String?
+  createdAt DateTime @default(now())
+  Agent     Agent    @relation(fields: [agentId], references: [id])
+
+  @@index([agentId])
+}
+
+model businesses {
+  @@map("Business")
+  id                      String          @id
+  name                    String
+  description             String?
+  businessType            BusinessType
+  status                  BusinessStatus  @default(ACTIVE)
+  revenue                 Float           @default(0)
+  profit                  Float           @default(0)
+  monthlyRecurringRevenue Float           @default(0)
+  configuration           Json?
+  ownerId                 String
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime
+  User                    User            @relation(fields: [ownerId], references: [id])
+  BusinessAgent           BusinessAgent[]
+  Contract                Contract[]
+  Transaction             Transaction[]
+
+  @@index([ownerId])
+}
+
+model BusinessAgents {
+  @@map("BusinessAgent")
+  id         String   @id
+  businessId String
+  agentId    String
+  role       String?
+  assignedAt DateTime @default(now())
+  Agent      Agent    @relation(fields: [agentId], references: [id])
+  Business   Business @relation(fields: [businessId], references: [id])
+
+  @@unique([businessId, agentId])
+}
+
+model Contracts {
+  @@map("Contract")
+  id           String         @id
+  businessId   String
+  agentId      String
+  terms        Json?
+  status       ContractStatus @default(ACTIVE)
+  valueCreated Float          @default(0)
+  agentCut     Float          @default(0.15)
+  createdAt    DateTime       @default(now())
+  expiresAt    DateTime?
+  Agent        Agent          @relation(fields: [agentId], references: [id])
+  Business     Business       @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, agentId])
+}
+
+model Notifications {
+  @@map("Notification")
+  id        String           @id
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+  User      User             @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+}
+
+model stakes {
+  @@map("Stake")
+  id              String   @id
+  stakeAmount     Float
+  sharePercentage Float
+  stakerId        String
+  agentId         String
+  totalReturns    Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
+  Agent           Agent    @relation(fields: [agentId], references: [id])
+  User            User     @relation(fields: [stakerId], references: [id])
+
+  @@unique([stakerId, agentId])
+  @@index([agentId])
+}
+
+model Transactions {
+  @@map("Transaction")
+  id                                String            @id
+  type                              TransactionType
+  amount                            Float
+  currency                          String            @default("USD")
+  fromUserId                        String?
+  toUserId                          String?
+  agentId                           String?
+  businessId                        String?
+  description                       String?
+  metadata                          Json?
+  status                            TransactionStatus @default(PENDING)
+  createdAt                         DateTime          @default(now())
+  completedAt                       DateTime?
+  Agent                             Agent?            @relation(fields: [agentId], references: [id])
+  Business                          Business?         @relation(fields: [businessId], references: [id])
+  User_Transaction_fromUserIdToUser User?             @relation("Transaction_fromUserIdToUser", fields: [fromUserId], references: [id])
+  User_Transaction_toUserIdToUser   User?             @relation("Transaction_toUserIdToUser", fields: [toUserId], references: [id])
+
+  @@index([fromUserId, toUserId])
+}
+
+model users {
+  @@map("User")
+  id                                       String         @id
+  email                                    String         @unique
+  passwordHash                             String
+  name                                     String?
+  avatar                                   String?
+  balance                                  Float          @default(0)
+  reputationScore                          Int            @default(1000)
+  role                                     Role           @default(USER)
+  createdAt                                DateTime       @default(now())
+  updatedAt                                DateTime
+  Agent                                    Agent[]
+  Business                                 Business[]
+  Notification                             Notification[]
+  Stake                                    Stake[]
+  Transaction_Transaction_fromUserIdToUser Transaction[]  @relation("Transaction_fromUserIdToUser")
+  Transaction_Transaction_toUserIdToUser   Transaction[]  @relation("Transaction_toUserIdToUser")
+
+  @@index([email])
+  @@index([reputationScore])
+}
+
+enum AgentStatus {
+  IDLE
+  WORKING
+  TRAINING
+  MAINTENANCE
+  TERMINATED
+}
+
+enum AgentType {
+  MARKETING
+  CODING
+  RESEARCH
+  SALES
+  SUPPORT
+  ANALYTICS
+  NEGOTIATION
+  CREATIVE
+}
+
+enum BusinessStatus {
+  ACTIVE
+  PAUSED
+  SCALING
+  TERMINATED
+}
+
+enum BusinessType {
+  ECOMMERCE
+  SAAS
+  AGENCY
+  CONTENT
+  CONSULTING
+  MARKETPLACE
+}
+
+enum ContractStatus {
+  ACTIVE
+  COMPLETED
+  TERMINATED
+  DISPUTED
+}
+
+enum NotificationType {
+  AGENT_COMPLETED_TASK
+  BUSINESS_REVENUE
+  STAKE_PAYOUT
+  SYSTEM_ALERT
+  MARKET_UPDATE
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum TransactionType {
+  AGENT_PAYMENT
+  STAKE_PURCHASE
+  DIVIDEND_PAYOUT
+  BUSINESS_REVENUE
+  WITHDRAWAL
+  DEPOSIT
+  REFERRAL_BONUS
+}

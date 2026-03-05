@@ -1,4 +1,4 @@
-
+﻿
 import bcrypt from 'bcryptjs';
 import prisma from './lib/prisma';
 
@@ -8,14 +8,14 @@ async function main() {
   const adminPassword = await bcrypt.hash('admin123', 12);
 
   // ? SAFE: Check existence first, then create (no transaction needed)
-  let admin = await prisma.users.findUnique({
+  let admin = await (prisma as any).users.findUnique({
     where: { email: 'admin@agentic.ai' },
   });
 
   if (!admin) {
-    admin = await prisma.users.create({ data: { 
+    admin = await (prisma as any).users.create({ data: { 
         email: 'admin@agentic.ai',
-        password_hash: adminPassword,
+        passwordHash: adminPassword,
         name: 'Admin User',
         role: 'ADMIN',
         balance: 10000,
@@ -27,7 +27,7 @@ async function main() {
     console.log('?? Admin user already exists, skipping.');
   }
 
-  // Agents � same safe pattern
+  // Agents – same safe pattern
   const agents = [
     {
       name: 'Marketing Pro 5000',
@@ -59,9 +59,10 @@ async function main() {
   ];
 
   for (const agent of agents) {
-    const exists = await prisma.agents.findFirst({ where: { name: agent.name } });
+    const exists = await (prisma as any).agents.findFirst({ where: { name: agent.name } });
     if (!exists) {
-      await prisma.agents.create({ data: agent });
+// @ts-ignore
+      await (prisma as any).agents.create({ data: agent });
       console.log(`?? Agent ${agent.name} created.`);
     } else {
       console.log(`?? Agent ${agent.name} already exists, skipping.`);
@@ -69,11 +70,12 @@ async function main() {
   }
 
   // Business
-  const businessExists = await prisma.businesses.findFirst({
+  const businessExists = await (prisma as any).businesses.findFirst({
     where: { name: 'AI Fashion Store' },
   });
   if (!businessExists) {
-    await prisma.businesses.create({ data: { 
+// @ts-ignore
+    await (prisma as any).businesses.create({ data: { 
         name: 'AI Fashion Store',
         description: 'Autonomous e-commerce for sustainable fashion',
         business_type: 'ECOMMERCE',
@@ -95,6 +97,12 @@ main()
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());
+
+
+
+
+
+
 
 
 

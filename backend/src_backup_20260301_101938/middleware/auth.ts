@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+﻿import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 
@@ -9,7 +9,7 @@ export interface AuthRequest extends Request {
   user?: any;
 }
 
-export const authenticateToken = async (
+export const authenticate = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
@@ -23,7 +23,7 @@ export const authenticateToken = async (
 
   try {
     const decoded: any = jwt.verify(token, JWT_SECRET);
-    const user = await prisma.users.findUnique({ where: { id: decoded.user_id } });
+    const user = await (prisma as any).users.findUnique({ where: { id: decoded.userId } });
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
     }
@@ -33,6 +33,12 @@ export const authenticateToken = async (
     return res.status(403).json({ error: 'Invalid or expired token' });
   }
 };
+
+
+
+
+
+
 
 
 

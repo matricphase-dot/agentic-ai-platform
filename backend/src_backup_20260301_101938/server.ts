@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth';
 
@@ -18,3 +18,9 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log('Database connected');
 });
+
+
+
+
+
+

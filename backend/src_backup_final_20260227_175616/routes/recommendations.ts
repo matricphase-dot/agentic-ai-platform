@@ -1,18 +1,18 @@
-import { Router } from 'express';
+ï»¿import { Router } from 'express';
 import prisma from '../lib/prisma';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticate } from "../middleware/auth";
 import { RecommendationEngine } from '../services/recommendationEngine';
 
 const router = Router();
 
-// GET /api/recommendations – get current user's recommendations
-router.get('/', authenticateToken, async (req: AuthRequest, res) => {
+// GET /api/recommendations â€“ get current user's recommendations
+router.get('/', authenticate, async (req: AuthRequest, res) => {
   try {
     // Optionally refresh recommendations on demand (can be heavy, so maybe limit)
     // await RecommendationEngine.generateForUser(req.user!.id);
 
-    const recs = await prisma.recommendations.findMany({
-      where: { user_id: req.user!.id, isRead: false },
+    const recs = await (prisma as any).recommendations.findMany({
+      where: { userId: req.user!.id, isRead: false },
       orderBy: { priority: 'desc' },
       take: 10,
     });
@@ -23,12 +23,13 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
-// PATCH /api/recommendations/:id/read – mark as read
-router.patch('/:id/read', authenticateToken, async (req: AuthRequest, res) => {
+// PATCH /api/recommendations/:id/read â€“ mark as read
+router.patch('/:id/read', authenticate, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as { id: string };
-    await prisma.recommendations.updateMany({
-      where: { id, user_id: req.user!.id },
+// @ts-ignore
+    await (prisma as any).recommendations.updateMany({
+      where: { id, userId: req.user!.id },
       data: { isRead: true },
     });
     res.json({ success: true });
@@ -38,8 +39,8 @@ router.patch('/:id/read', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
-// POST /api/recommendations/refresh – manually trigger generation (can be rate-limited)
-router.post('/refresh', authenticateToken, async (req: AuthRequest, res) => {
+// POST /api/recommendations/refresh â€“ manually trigger generation (can be rate-limited)
+router.post('/refresh', authenticate, async (req: AuthRequest, res) => {
   try {
     await RecommendationEngine.generateForUser(req.user!.id);
     res.json({ success: true });
@@ -50,7 +51,7 @@ router.post('/refresh', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Admin: generate for all users (optional)
-router.post('/generate-all', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/generate-all', authenticate, async (req: AuthRequest, res) => {
   if (req.user!.role !== 'ADMIN') return res.status(403).json({ error: 'Forbidden' });
   try {
     await RecommendationEngine.generateForAllUsers();
@@ -62,6 +63,12 @@ router.post('/generate-all', authenticateToken, async (req: AuthRequest, res) =>
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

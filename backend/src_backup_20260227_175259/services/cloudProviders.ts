@@ -1,6 +1,6 @@
-export interface CloudProvider {
+﻿export interface CloudProvider {
   deploy(
-    agent_id: string,
+    agentId: string,
     codePackage: any,
     config: any
   ): Promise<{ success: boolean; external_id: string; endpoint?: string }>;
@@ -16,13 +16,13 @@ export interface CloudProvider {
 
 // Mock AWS Lambda provider
 export class AwsLambdaProvider implements CloudProvider {
-  async deploy(agent_id: string, codePackage: any, config: any) {
-    console.log(`[AWS] Deploying agent ${agent_id} with config:`, config);
+  async deploy(agentId: string, codePackage: any, config: any) {
+    console.log(`[AWS] Deploying agent ${agentId} with config:`, config);
     // Simulate deployment
     return {
       success: true,
-      external_id: `aws-lambda-${agent_id}-${Date.now()}`,
-      endpoint: `https://lambda.aws.com/function/${agent_id}`,
+      external_id: `aws-lambda-${agentId}-${Date.now()}`,
+      endpoint: `https://lambda.aws.com/function/${agentId}`,
     };
   }
 
@@ -43,12 +43,12 @@ export class AwsLambdaProvider implements CloudProvider {
 
 // Mock Azure Functions provider
 export class AzureFunctionsProvider implements CloudProvider {
-  async deploy(agent_id: string, codePackage: any, config: any) {
-    console.log(`[Azure] Deploying agent ${agent_id} with config:`, config);
+  async deploy(agentId: string, codePackage: any, config: any) {
+    console.log(`[Azure] Deploying agent ${agentId} with config:`, config);
     return {
       success: true,
-      external_id: `azure-func-${agent_id}-${Date.now()}`,
-      endpoint: `https://azure.com/api/${agent_id}`,
+      external_id: `azure-func-${agentId}-${Date.now()}`,
+      endpoint: `https://azure.com/api/${agentId}`,
     };
   }
 
@@ -69,12 +69,12 @@ export class AzureFunctionsProvider implements CloudProvider {
 
 // Mock Google Cloud Functions provider
 export class GoogleCloudFunctionsProvider implements CloudProvider {
-  async deploy(agent_id: string, codePackage: any, config: any) {
-    console.log(`[GCP] Deploying agent ${agent_id} with config:`, config);
+  async deploy(agentId: string, codePackage: any, config: any) {
+    console.log(`[GCP] Deploying agent ${agentId} with config:`, config);
     return {
       success: true,
-      external_id: `gcp-func-${agent_id}-${Date.now()}`,
-      endpoint: `https://gcp.com/function/${agent_id}`,
+      external_id: `gcp-func-${agentId}-${Date.now()}`,
+      endpoint: `https://gcp.com/function/${agentId}`,
     };
   }
 
@@ -95,12 +95,12 @@ export class GoogleCloudFunctionsProvider implements CloudProvider {
 
 // Mock OpenAI provider (for GPT functions)
 export class OpenAIProvider implements CloudProvider {
-  async deploy(agent_id: string, codePackage: any, config: any) {
-    console.log(`[OpenAI] Deploying agent ${agent_id} with config:`, config);
+  async deploy(agentId: string, codePackage: any, config: any) {
+    console.log(`[OpenAI] Deploying agent ${agentId} with config:`, config);
     return {
       success: true,
-      external_id: `openai-${agent_id}-${Date.now()}`,
-      endpoint: `https://api.openai.com/v1/functions/${agent_id}`,
+      external_id: `openai-${agentId}-${Date.now()}`,
+      endpoint: `https://api.openai.com/v1/functions/${agentId}`,
     };
   }
 
@@ -135,6 +135,12 @@ export function getCloudProvider(platform: string): CloudProvider | null {
       return null;
   }
 }
+
+
+
+
+
+
 
 
 

@@ -1,11 +1,11 @@
-import express from 'express';
+﻿import express from 'express';
 import { createProposal, voteOnProposal, getProposals, tallyProposal } from '../services/governanceService';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticate } from "../middleware/auth";
 
 const router = express.Router();
 
 // Create proposal
-router.post('/proposals', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/proposals', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -30,16 +30,16 @@ router.get('/proposals', async (req, res) => {
 });
 
 // Vote on proposal
-router.post('/proposals/:proposal_id/vote', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/proposals/:proposalId/vote', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    if (!req.params.proposal_id) {
+    if (!req.params.proposalId) {
       return res.status(400).json({ error: 'Proposal ID is required' });
     }
     const { support } = req.body;
-    const vote = await voteOnProposal(req.params.proposal_id, req.user.id, support);
+    const vote = await voteOnProposal(req.params.proposalId, req.user.id, support);
     res.json(vote);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -47,12 +47,12 @@ router.post('/proposals/:proposal_id/vote', authenticateToken, async (req: AuthR
 });
 
 // Get proposal tally
-router.get('/proposals/:proposal_id/tally', async (req, res) => {
+router.get('/proposals/:proposalId/tally', async (req, res) => {
   try {
-    if (!req.params.proposal_id) {
+    if (!req.params.proposalId) {
       return res.status(400).json({ error: 'Proposal ID is required' });
     }
-    const tally = await tallyProposal(req.params.proposal_id);
+    const tally = await tallyProposal(req.params.proposalId);
     res.json(tally);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -60,6 +60,12 @@ router.get('/proposals/:proposal_id/tally', async (req, res) => {
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

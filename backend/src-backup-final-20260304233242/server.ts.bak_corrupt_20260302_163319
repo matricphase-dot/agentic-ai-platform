@@ -1,0 +1,105 @@
+import documentsRoute from './routes/documents';
+
+const prisma = new PrismaClient();
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+import agentsRoute from './routes/agents';
+
+const prisma = new PrismaClient();
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+import templatesRoute from './routes/templates';
+
+const prisma = new PrismaClient();
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+import express from 'express';
+
+const prisma = new PrismaClient();
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+import messagesRoute from './routes/messages';
+
+const prisma = new PrismaClient();
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+import aiqRoutes from './routes/aiq';
+
+const prisma = new PrismaClient();
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+import cors from 'cors';
+
+const prisma = new PrismaClient();
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+import authRoutes from './routes/auth';
+
+const prisma = new PrismaClient();
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+import dotenv from 'dotenv';
+
+const prisma = new PrismaClient();
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+
+// Test database connection
+prisma.$connect()
+  .then(() => console.log('✅ Database connected successfully'))
+  .catch((err) => console.error('❌ Database connection failed:', err));=> console.error('? Database connection failed:', err));
+
+// Test database connection
+prisma.$connect()
+  .then(() => console.log('✅ Database connected successfully'))
+  .catch((err) => console.error('❌ Database connection failed:', err));=> console.error('? Database connection failed:', err));
+// Test database connection
+prisma.$connect()
+  .then(() => console.log('✅ Database connected successfully'))
+  .catch((err) => console.error('❌ Database connection failed:', err)););
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+app.use(cors());
+app.use(express.json());
+
+// Routes
+
+// Test route
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Test route works!' });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: `Cannot ${req.method} ${req.originalUrl}` });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log('Routes registered:');
+  console.log('- /api/auth');
+  console.log('- /api/agents');
+  console.log('- /api/messages');
+  console.log('- /api/documents');
+  console.log('- /api/test');
+});
+
+app.use('/api/auth', authRoutes);
+app.use('/api/agents', agentsRoute);
+app.use('/api/messages', messagesRoute);
+app.use('/api/documents', documentsRoute);
+app.use('/api/templates', templatesRoute);

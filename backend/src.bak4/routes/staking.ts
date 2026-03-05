@@ -1,17 +1,17 @@
-import express from 'express';
+﻿import express from 'express';
 import { stakeTokens, unstakeTokens, getUserStakes } from '../services/stakingService';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticate } from "../middleware/auth";
 
 const router = express.Router();
 
 // Stake tokens
-router.post('/stake', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/stake', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const { amount, agent_id, lockDays } = req.body;
-    const stake = await stakeTokens(req.user.id, amount, agent_id, lockDays);
+    const { amount, agentId, lockDays } = req.body;
+    const stake = await stakeTokens(req.user.id, amount, agentId, lockDays);
     res.json(stake);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -19,7 +19,7 @@ router.post('/stake', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Unstake tokens
-router.post('/unstake/:stakeId', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/unstake/:stakeId', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.params.stakeId) {
       return res.status(400).json({ error: 'Stake ID is required' });
@@ -32,7 +32,7 @@ router.post('/unstake/:stakeId', authenticateToken, async (req: AuthRequest, res
 });
 
 // Get user stakes
-router.get('/my-stakes', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/my-stakes', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -45,6 +45,12 @@ router.get('/my-stakes', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

@@ -1,6 +1,6 @@
-import prisma from '../lib/prisma';
+﻿import prisma from '../lib/prisma';
 
-// Mock sign function � in production, use actual quantum-resistant signing
+// Mock sign function – in production, use actual quantum-resistant signing
 const sign = async (message: string, private_key: string) => {
   return 'sig_' + Buffer.from(message).toString('base64').substring(0, 10);
 };
@@ -14,7 +14,7 @@ export const sendMessage = async (fromAgentId: string, toAgentId: string, conten
   // For mock purposes, we don't need a real signature
   const signature = 'mock_signature_' + Math.random().toString(36).substring(2);
 
-  return prisma.agent_messages.create({
+  return (prisma as any).agent_messages.create({
     data: {
       from_agent_id: fromAgentId,
       to_agent_id: toAgentId,
@@ -25,10 +25,10 @@ export const sendMessage = async (fromAgentId: string, toAgentId: string, conten
   });
 };
 
-export const receiveMessages = async (agent_id: string) => {
-  return prisma.agent_messages.findMany({
+export const receiveMessages = async (agentId: string) => {
+  return (prisma as any).agent_messages.findMany({
     where: { 
-      to_agent_id: agent_id, 
+      to_agent_id: agentId, 
       status: 'sent' 
     },
     orderBy: { created_at: 'asc' }
@@ -36,7 +36,7 @@ export const receiveMessages = async (agent_id: string) => {
 };
 
 export const tallyRound = async (round_id: string) => {
-  const round = await prisma.consensus_rounds.findUnique({
+  const round = await (prisma as any).consensus_rounds.findUnique({
     where: { id: round_id },
     include: { votes: true }
   });
@@ -52,6 +52,12 @@ export const tallyRound = async (round_id: string) => {
     passed: forVotes > againstVotes
   };
 };
+
+
+
+
+
+
 
 
 

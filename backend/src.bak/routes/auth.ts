@@ -1,9 +1,9 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
@@ -19,16 +19,16 @@ router.post('/register', async (req, res) => {
   try {
     const { email, password, name } = registerSchema.parse(req.body);
 
-    const existing = await prisma.users.findUnique({ where: { email } });
+    const existing = await (prisma as any).users.findUnique({ where: { email } });
     if (existing) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await prisma.users.create({ data: { 
+    const user = await (prisma as any).users.create({ data: { 
         email,
         passwordHash,
-        name: name ?? null, // ✅ Fix: undefined → null
+        name: name ?? null, // âœ… Fix: undefined â†’ null
       },
     });
 
@@ -54,7 +54,7 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await prisma.users.findUnique({ where: { email } });
+    const user = await (prisma as any).users.findUnique({ where: { email } });
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -79,14 +79,14 @@ router.post('/login', async (req, res) => {
 });
 
 // GET /api/auth/me
-router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/me', authenticate, async (req: AuthRequest, res) => {
   try {
-    const user = await prisma.users.findUnique({
+    const user = await (prisma as any).users.findUnique({
       where: { id: req.user!.id },
       include: {
         agents: true,
         businesses: true,
-        stakes: { include: { agent: true } },
+        stakes: { include: { agents: true } },
       },
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -99,6 +99,12 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

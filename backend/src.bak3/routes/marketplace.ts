@@ -1,5 +1,5 @@
-import express from 'express';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+﻿import express from 'express';
+import { authenticate } from "../middleware/auth";
 import prisma from '../lib/prisma';
 import { updateListing, deleteListing, acceptOrder, completeOrder, addExecutionLog } from '../services/marketplaceService';
 
@@ -10,10 +10,10 @@ const router = express.Router();
 // Get all listings (public)
 router.get('/listings', async (req, res) => {
   try {
-    const { category, agent_id, status } = req.query;
+    const { category, agentId, status } = req.query;
     const listings = await getListings({
       category: category as string,
-      agent_id: agent_id as string,
+      agentId: agentId as string,
       status: status as string,
     });
     res.json(listings);
@@ -34,16 +34,16 @@ router.get('/listings/:id', async (req, res) => {
 });
 
 // Create a listing (authenticated, agent owner)
-router.post('/listings', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/listings', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const { agent_id, title, description, category, price, unit } = req.body;
+    const { agentId, title, description, category, price, unit } = req.body;
 
     // Verify that the agent belongs to this user
-    const agent = await prisma.agents.findFirst({ where: { id: agent_id, owner_id: req.user.id } });
+    const agent = await (prisma as any).agents.findFirst({ where: { id: agentId, owner_id: req.user.id } });
     if (!agent) return res.status(403).json({ error: 'Agent not found or not owned by you' });
 
-    const listing = await createListing(agent_id, title, description, category, price, unit);
+    const listing = await createListing(agentId, title, description, category, price, unit);
     res.json(listing);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -51,7 +51,7 @@ router.post('/listings', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Update listing (authenticated, owner)
-router.put('/listings/:id', authenticateToken, async (req: AuthRequest, res) => {
+router.put('/listings/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const listing = await updateListing(req.params.id, req.user.id, req.body);
@@ -62,7 +62,7 @@ router.put('/listings/:id', authenticateToken, async (req: AuthRequest, res) => 
 });
 
 // Delete (soft delete) listing
-router.delete('/listings/:id', authenticateToken, async (req: AuthRequest, res) => {
+router.delete('/listings/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     await deleteListing(req.params.id, req.user.id);
@@ -75,7 +75,7 @@ router.delete('/listings/:id', authenticateToken, async (req: AuthRequest, res) 
 // Orders
 
 // Create an order (hire an agent)
-router.post('/orders', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/orders', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const { listing_id, description, price } = req.body;
@@ -87,7 +87,7 @@ router.post('/orders', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Get orders for current user (as buyer or agent owner)
-router.get('/orders', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/orders', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const { role } = req.query; // 'buyer', 'agent', or 'all'
@@ -99,7 +99,7 @@ router.get('/orders', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Accept an order (agent owner)
-router.post('/orders/:id/accept', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/orders/:id/accept', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const order = await acceptOrder(req.params.id, req.user.id);
@@ -110,7 +110,7 @@ router.post('/orders/:id/accept', authenticateToken, async (req: AuthRequest, re
 });
 
 // Complete an order and process payment
-router.post('/orders/:id/complete', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/orders/:id/complete', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const order = await completeOrder(req.params.id, req.user.id);
@@ -121,7 +121,7 @@ router.post('/orders/:id/complete', authenticateToken, async (req: AuthRequest, 
 });
 
 // Add execution log (agent owner)
-router.post('/orders/:id/logs', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/orders/:id/logs', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const { message, result } = req.body;
@@ -133,6 +133,12 @@ router.post('/orders/:id/logs', authenticateToken, async (req: AuthRequest, res)
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

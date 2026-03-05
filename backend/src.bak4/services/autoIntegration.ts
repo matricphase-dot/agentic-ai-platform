@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+﻿import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import * as fs from 'fs';
@@ -16,7 +16,8 @@ export async function generateConnector(apiName: string, docsUrl: string) {
 
     const generatedCode = await callLLMToGenerateConnector(apiName, text);
 
-    await prisma.integration_templates.upsert({
+// @ts-ignore
+    await (prisma as any).integration_templates.upsert({
       where: { apiName },
       update: { generatedCode, apiDocsUrl: docsUrl },
       create: {
@@ -47,6 +48,12 @@ async function callLLMToGenerateConnector(apiName: string, docsText: string): Pr
 
   return response.choices?.[0]?.message?.content || '';
 }
+
+
+
+
+
+
 
 
 

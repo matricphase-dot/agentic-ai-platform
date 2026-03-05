@@ -1,0 +1,245 @@
+generator client {
+
+
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+// ============================================================
+// USERS & AGENTS
+// ============================================================
+
+
+
+model users {
+
+model agents {
+  ownerId        String
+  name           String
+  description    String?
+  systemPrompt   String?
+  capabilities   String?
+  status         String   @default("inactive")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  receivedMessages Message[]   @relation("ReceivedMessages")
+  teamAgents       TeamAgent[]
+  tasks            NodeTask[]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+model competitor_insights {
+
+model connectors {
+
+model agent_service_bindings {
+agent_id      String
+connection_id String
+created_at    DateTime @default(now())
+updated_at    DateTime @updatedAt
+
+agents      agents           @relation(fields: [agent_id], references: [id])
+connection user_connections @relation(fields: [connection_id], references: [id])
+}
+
+model business_agents {
+
+model businesses {
+
+model consensus_rounds {
+round_number Int      @unique
+status       String   @default("active")
+created_at   DateTime @default(now())
+updated_at   DateTime @updatedAt
+
+votes consensus_votes[]
+}
+
+model consensus_votes {
+
+model contracts {
+
+model contributions {
+
+model deployment_logs {
+
+model deployments {
+
+model derivative_contracts {
+
+model due_diligence_reports {
+
+model franchises {
+
+model integration_logs {
+
+model integration_templates {
+
+model investment_proposals {
+
+model investments {
+
+model learning_rounds {
+
+model Message {
+
+model nation_proposals {
+
+model nation_votes {
+
+model nations {
+
+model Node {
+
+model node_rewards {
+
+model node_tasks {
+
+model NodeReward {
+
+model nodes {
+
+model NodeTask {
+
+model notifications {
+
+model platform_connections {
+
+model positions {
+
+model pricing_rules {
+
+model Proposal {
+
+model proposals {
+
+model quantum_keys {
+
+model recommendations {
+
+model Recording {
+
+model revenue_logs {
+
+model Reward {
+
+model royalty_payments {
+
+model service_execution_logs {
+
+model service_listings {
+
+model service_orders {
+
+model settlement_logs {
+
+model Stake {
+
+model stakes {
+
+model startups {
+
+model system_diagnostics {
+
+model Team {
+
+model TeamAgent {
+
+model token_transactions {
+
+model user_connections {
+
+model votes {
+
+model agent_hire_agreements {
+
+model agent_blueprints {
+
+model agent_messages {
+
+model Vote {
+
+model agent_clones {
+
+
+
+model citizens {
+  id        String   @id @default(cuid())
+  nation_id String
+  user_id   String
+  role      String?
+  joined_at DateTime @default(now())
+
+  nation nations @relation(fields: [nation_id], references: [id])
+  user   users   @relation(fields: [user_id], references: [id])
+
+  proposed_proposals nation_proposals[] @relation("proposer")
+  votes              nation_votes[]     @relation("voter")
+
+  @@unique([user_id, nation_id])
+}

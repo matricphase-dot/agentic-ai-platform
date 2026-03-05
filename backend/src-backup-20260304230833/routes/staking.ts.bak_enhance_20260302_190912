@@ -1,0 +1,110 @@
+﻿import express from 'express';
+import { authenticate } from '../middleware/auth';
+import { PrismaClient } from '@prisma/client';
+
+const router = express.Router();
+const prisma = new PrismaClient();
+
+router.use(authenticate);
+
+// Stake tokens on an agent
+router.post('/stake', async (req, res) => {
+  try {
+    const { agentId, amount } = req.body;
+    if (!agentId || !amount || amount <= 0) {
+      return res.status(400).json({ error: 'Agent ID and positive amount required' });
+    }
+
+    // Verify agent exists and belongs to user? No, anyone can stake on any agent.
+    const agent = await prisma.agent.findUnique({ where: { id: agentId } });
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+
+    // Check if already active stake
+    const existing = await prisma.stake.findFirst({
+      where: { userId: req.user!.id, agentId, status: 'active' }
+    });
+    if (existing) {
+      // Update existing stake
+      const updated = await prisma.stake.update({
+        where: { id: existing.id },
+        data: { amount: existing.amount + amount }
+      });
+      return res.json(updated);
+    }
+
+    // Create new stake
+    const stake = await prisma.stake.create({
+      data: {
+        userId: req.user!.id,
+        agentId,
+        amount,
+        status: 'active'
+      }
+    });
+    res.json(stake);
+  } catch (error) {
+    console.error('Stake error:', error);
+    res.status(500).json({ error: 'Failed to stake' });
+  }
+});
+
+// Unstake (withdraw) from an agent
+router.post('/unstake/:agentId', async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    const stake = await prisma.stake.findFirst({
+      where: { userId: req.user!.id, agentId, status: 'active' }
+    });
+    if (!stake) return res.status(404).json({ error: 'No active stake found' });
+
+    // Mark as unstaked (actual withdrawal logic could be more complex)
+    const updated = await prisma.stake.update({
+      where: { id: stake.id },
+      data: { status: 'unstaked' }
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error('Unstake error:', error);
+    res.status(500).json({ error: 'Failed to unstake' });
+  }
+});
+
+// Get user's stakes
+router.get('/my-stakes', async (req, res) => {
+  try {
+    const stakes = await prisma.stake.findMany({
+      where: { userId: req.user!.id },
+      include: { agent: true }
+    });
+    res.json(stakes);
+  } catch (error) {
+    console.error('Fetch stakes error:', error);
+    res.status(500).json({ error: 'Failed to fetch stakes' });
+  }
+});
+
+// Get all stakes (leaderboard)
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const stakes = await prisma.stake.groupBy({
+      by: ['agentId'],
+      _sum: { amount: true },
+      where: { status: 'active' },
+      orderBy: { _sum: { amount: 'desc' } },
+      take: 10
+    });
+    // Fetch agent details for each
+    const leaderboard = await Promise.all(
+      stakes.map(async (s) => {
+        const agent = await prisma.agent.findUnique({ where: { id: s.agentId } });
+        return { agent, totalStaked: s._sum.amount };
+      })
+    );
+    res.json(leaderboard);
+  } catch (error) {
+    console.error('Leaderboard error:', error);
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
+});
+
+export default router;

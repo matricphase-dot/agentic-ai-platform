@@ -1,0 +1,394 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model agents {
+  id                String           @id
+  name              String
+  description       String?
+  agentType         AgentType
+  status            AgentStatus      @default(IDLE)
+  reputationScore   Int              @default(1000)
+  hourlyRate        Float            @default(50)
+  successRate       Float            @default(0.85)
+  totalValueCreated Float            @default(0)
+  totalEarnings     Float            @default(0)
+  configuration     Json?
+  tasksCompleted    Int              @default(0)
+  specialties       String[]
+  ownerId           String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime
+  users             users            @relation(fields: [ownerId], references: [id])
+  AgentEarnings     AgentEarnings[]
+  BusinessAgents    BusinessAgents[]
+  Contracts         Contracts[]
+  stakes            stakes[]
+  Transactions      Transactions[]
+  sentMessages      Message[]        @relation("SentMessages")
+  receivedMessages  Message[]        @relation("ReceivedMessages")
+
+  teamAgents     TeamAgent[]
+  capabilities   String?
+  systemPrompt   String?     @map("system_prompt")
+  modelProvider  String?     @default("ollama-local") @map("model_provider")
+  modelName      String?     @default("llama2") @map("model_name")
+  ollamaEndpoint String?     @map("ollama_endpoint")
+  apiEndpoint    String?     @map("api_endpoint")
+  endpoint       String?     @map("endpoint")
+  nodeTasks      NodeTask[]
+
+  @@index([agentType])
+  @@index([ownerId])
+  @@index([reputationScore])
+  @@map("agents")
+}
+
+model AgentEarnings {
+  id        String   @id
+  agentId   String
+  amount    Float
+  source    String
+  sourceId  String?
+  createdAt DateTime @default(now())
+  agents    agents   @relation(fields: [agentId], references: [id])
+
+  @@index([agentId])
+  @@map("AgentEarnings")
+}
+
+model businesses {
+  id                      String           @id
+  name                    String
+  description             String?
+  businessType            BusinessType
+  status                  BusinessStatus   @default(ACTIVE)
+  revenue                 Float            @default(0)
+  profit                  Float            @default(0)
+  monthlyRecurringRevenue Float            @default(0)
+  configuration           Json?
+  ownerId                 String
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime
+  users                   users            @relation(fields: [ownerId], references: [id])
+  BusinessAgents          BusinessAgents[]
+  Contracts               Contracts[]
+  Transactions            Transactions[]
+
+  @@index([ownerId])
+  @@map("businesses")
+}
+
+model BusinessAgents {
+  id         String     @id
+  businessId String
+  agentId    String
+  role       String?
+  assignedAt DateTime   @default(now())
+  agents     agents     @relation(fields: [agentId], references: [id])
+  businesses businesses @relation(fields: [businessId], references: [id])
+
+  @@unique([businessId, agentId])
+  @@map("BusinessAgents")
+}
+
+model Contracts {
+  id           String         @id
+  businessId   String
+  agentId      String
+  terms        Json?
+  status       ContractStatus @default(ACTIVE)
+  valueCreated Float          @default(0)
+  agentCut     Float          @default(0.15)
+  createdAt    DateTime       @default(now())
+  expiresAt    DateTime?
+  agents       agents         @relation(fields: [agentId], references: [id])
+  businesses   businesses     @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, agentId])
+  @@map("Contracts")
+}
+
+model Notifications {
+  id        String           @id
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+  users     users            @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+  @@map("Notifications")
+}
+
+model stakes {
+  id              String   @id
+  stakeAmount     Float
+  sharePercentage Float
+  stakerId        String
+  agentId         String
+  totalReturns    Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
+  agents          agents   @relation(fields: [agentId], references: [id])
+  users           users    @relation(fields: [stakerId], references: [id])
+  rewards         Reward[]
+
+  @@unique([stakerId, agentId])
+  @@index([agentId])
+  @@map("stakes")
+}
+
+model Transactions {
+  id                                 String            @id
+  type                               TransactionType
+  amount                             Float
+  currency                           String            @default("USD")
+  fromUserId                         String?
+  toUserId                           String?
+  agentId                            String?
+  businessId                         String?
+  description                        String?
+  metadata                           Json?
+  status                             TransactionStatus @default(PENDING)
+  createdAt                          DateTime          @default(now())
+  completedAt                        DateTime?
+  agents                             agents?           @relation(fields: [agentId], references: [id])
+  businesses                         businesses?       @relation(fields: [businessId], references: [id])
+  users_Transaction_fromUserIdToUser users?            @relation("Transaction_fromUserIdToUser", fields: [fromUserId], references: [id])
+  users_Transaction_toUserIdToUser   users?            @relation("Transaction_toUserIdToUser", fields: [toUserId], references: [id])
+
+  @@index([fromUserId, toUserId])
+  @@map("Transactions")
+}
+
+model users {
+  id                                       String          @id
+  email                                    String          @unique
+  passwordHash                             String
+  name                                     String?
+  avatar                                   String?
+  balance                                  Float           @default(0)
+  reputationScore                          Int             @default(1000)
+  role                                     Role            @default(users)
+  createdAt                                DateTime        @default(now())
+  updatedAt                                DateTime
+  agents                                   agents[]
+  businesses                               businesses[]
+  Notifications                            Notifications[]
+  stakes                                   stakes[]
+  Transaction_Transaction_fromUserIdToUser Transactions[]  @relation("Transaction_fromUserIdToUser")
+  Transaction_Transaction_toUserIdToUser   Transactions[]  @relation("Transaction_toUserIdToUser")
+  teams                                    Team[]
+  recordings                               Recording[]
+  nodes                                    Node[]
+
+  nodeTasks NodeTask[]
+
+  @@index([email])
+  @@index([reputationScore])
+  @@map("users")
+}
+
+enum AgentStatus {
+  IDLE
+  WORKING
+  TRAINING
+  MAINTENANCE
+  TERMINATED
+}
+
+enum AgentType {
+  MARKETING
+  CODING
+  RESEARCH
+  SALES
+  SUPPORT
+  ANALYTICS
+  NEGOTIATION
+  CREATIVE
+}
+
+enum BusinessStatus {
+  ACTIVE
+  PAUSED
+  SCALING
+  TERMINATED
+}
+
+enum BusinessType {
+  ECOMMERCE
+  SAAS
+  AGENCY
+  CONTENT
+  CONSULTING
+  MARKETPLACE
+}
+
+enum ContractStatus {
+  ACTIVE
+  COMPLETED
+  TERMINATED
+  DISPUTED
+}
+
+enum NotificationType {
+  AGENT_COMPLETED_TASK
+  BUSINESS_REVENUE
+  STAKE_PAYOUT
+  SYSTEM_ALERT
+  MARKET_UPDATE
+}
+
+enum Role {
+  users
+  ADMIN
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum TransactionType {
+  AGENT_PAYMENT
+  STAKE_PURCHASE
+  DIVIDEND_PAYOUT
+  BUSINESS_REVENUE
+  WITHDRAWAL
+  DEPOSIT
+  REFERRAL_BONUS
+}
+
+// ---------- Added full models from original design ----------
+model Reward {
+  id        String   @id @default(cuid())
+  stakeId   String
+  stake     stakes   @relation(fields: [stakeId], references: [id], onDelete: Cascade)
+  amount    Float
+  createdAt DateTime @default(now())
+
+  @@map("rewards")
+}
+
+model Team {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  user        users       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agents      TeamAgent[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([name, userId])
+  @@index([userId])
+  @@map("teams")
+}
+
+model TeamAgent {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  agentId   String
+  agent     agents   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([teamId, agentId])
+  @@index([teamId])
+  @@index([agentId])
+  @@map("team_agents")
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  senderId    String
+  sender      agents    @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId  String
+  receiver    agents    @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content     String
+  status      String    @default("sent")
+  createdAt   DateTime  @default(now())
+  deliveredAt DateTime?
+
+  @@map("messages")
+}
+
+model Recording {
+  id         String   @id @default(cuid())
+  userId     String
+  user       users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  filename   String
+  filepath   String
+  duration   Int?
+  transcript String?
+  analysis   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("recordings")
+}
+
+// ---------- Added Node models ----------
+model Node {
+  id          String       @id @default(cuid())
+  ownerId     String
+  owner       users        @relation(fields: [ownerId], references: [id])
+  name        String
+  description String?
+  status      String       @default("offline")
+  specs       Json
+  location    String?
+  version     String
+  lastPing    DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  tasks       NodeTask[]
+  rewards     NodeReward[]
+
+  @@map("nodes")
+}
+
+model NodeTask {
+  id          String       @id @default(cuid())
+  nodeId      String
+  node        Node         @relation(fields: [nodeId], references: [id])
+  agentId     String
+  agent       agents       @relation(fields: [agentId], references: [id])
+  userId      String
+  user        users        @relation(fields: [userId], references: [id])
+  type        String
+  input       Json?
+  output      Json?
+  status      String       @default("pending")
+  startedAt   DateTime?
+  completedAt DateTime?
+  reward      Float?
+  createdAt   DateTime     @default(now())
+  nodeRewards NodeReward[]
+
+  @@map("node_tasks")
+}
+
+model NodeReward {
+  id        String    @id @default(cuid())
+  nodeId    String
+  node      Node      @relation(fields: [nodeId], references: [id])
+  amount    Float
+  reason    String?
+  taskId    String?
+  task      NodeTask? @relation(fields: [taskId], references: [id])
+  createdAt DateTime  @default(now())
+
+  @@map("node_rewards")
+}

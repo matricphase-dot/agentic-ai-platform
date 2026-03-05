@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import { generateConnector } from '../services/autoIntegration';
 
 const router = express.Router();
@@ -17,6 +17,12 @@ router.post('/generate', async (req, res) => {
 });
 
 export default router;
+
+
+
+
+
+
 
 
 

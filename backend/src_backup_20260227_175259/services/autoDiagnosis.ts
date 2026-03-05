@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+﻿import { PrismaClient } from '@prisma/client';
 import os from 'os';
 import axios from 'axios';
 
@@ -25,7 +25,8 @@ export async function runDiagnostics() {
 }
 
 async function handleBottleneck(metric: string, value: number, threshold: number) {
-  await prisma.system_diagnostics.create({ data: { 
+// @ts-ignore
+  await (prisma as any).system_diagnostics.create({ data: { 
       metric,
       value,
       threshold,
@@ -47,6 +48,12 @@ async function getCurrentRequestRate(): Promise<number> {
 
 // Start the diagnostic loop (every 5 minutes)
 setInterval(runDiagnostics, 5 * 60 * 1000);
+
+
+
+
+
+
 
 
 

@@ -1,0 +1,67 @@
+import express from 'express';
+import teamsRoute from './routes/teams';
+import cors from 'cors';
+import teamsRoute from './routes/teams';
+import dotenv from 'dotenv';
+import teamsRoute from './routes/teams';
+import { PrismaClient } from '@prisma/client';
+import teamsRoute from './routes/teams';
+
+import authRoutes from './routes/auth';
+import teamsRoute from './routes/teams';
+import agentsRoute from './routes/agents';
+import teamsRoute from './routes/teams';
+import messagesRoute from './routes/messages';
+import teamsRoute from './routes/teams';
+import documentsRoute from './routes/documents';
+import teamsRoute from './routes/teams';
+import recordingsRoute from './routes/recordings';
+import teamsRoute from './routes/teams';
+import testRoute from './routes/test';
+import teamsRoute from './routes/teams';
+import aiqRoutes from './routes/aiq';
+import teamsRoute from './routes/teams';
+import templatesRoute from './routes/templates';
+import teamsRoute from './routes/teams';
+
+dotenv.config();
+
+const app = express();
+const port = process.env.PORT || 5000;
+const prisma = new PrismaClient();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/agents', agentsRoute);
+app.use('/api/messages', messagesRoute);
+app.use('/api/documents', documentsRoute);
+app.use('/api/recordings', recordingsRoute);
+app.use('/api/aiq', aiqRoutes);
+app.use('/api/templates', templatesRoute);
+app.use('/api/teams', teamsRoute);
+
+
+// Database connection
+prisma.$connect()
+  .then(() => console.log('âœ… Database connected successfully'))
+  .catch((err) => console.error('âŒ Database connection failed:', err));
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+  console.log('Routes registered:');
+  console.log('- /api/auth');
+  console.log('- /api/agents');
+  console.log('- /api/messages');
+  console.log('- /api/documents');
+  console.log('- /api/recordings');
+  console.log('- /api/aiq');
+  console.log('- /api/templates');
+  console.log('- /api/test');
+});
+
+export default app;

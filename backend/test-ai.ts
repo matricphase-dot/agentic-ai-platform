@@ -1,4 +1,4 @@
-import { agentAI } from './src/services/agentIntelligence';
+﻿import { agentAI } from './src/services/agentIntelligence';
 
 async function test() {
   console.log('?? Testing AgentIntelligence with Ollama (mistral)...');
@@ -12,6 +12,12 @@ async function test() {
 }
 
 test();
+
+
+
+
+
+
 
 
 

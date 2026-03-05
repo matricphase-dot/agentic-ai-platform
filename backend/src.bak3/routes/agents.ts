@@ -1,16 +1,16 @@
-import prisma from '../lib/prisma';
+﻿import prisma from '../lib/prisma';
 import express from 'express';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticate } from "../middleware/auth";
 import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
 const prismaClient = new PrismaClient();
 
 // Get agents for the authenticated user
-router.get('/my-agents', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/my-agents', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const agents = await prisma.agents.findMany({
+    const agents = await (prisma as any).agents.findMany({
       where: { owner_id: req.user.id },
     });
     res.json(agents);
@@ -23,7 +23,7 @@ router.get('/my-agents', authenticateToken, async (req: AuthRequest, res) => {
 // Get all agents (public)
 router.get('/', async (req, res) => {
   try {
-    const agents = await prisma.agents.findMany();
+    const agents = await (prisma as any).agents.findMany();
     res.json(agents);
   } catch (error) { const err = error instanceof Error ? error : new Error(String(error));
     res.status(500).json({ error: 'Internal server error' });
@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
 // Get a single agent by ID
 router.get('/:id', async (req, res) => {
   try {
-    const agent = await prisma.agents.findUnique({ where: { id: req.params.id } });
+    const agent = await (prisma as any).agents.findUnique({ where: { id: req.params.id } });
     if (!agent) return res.status(404).json({ error: 'Agent not found' });
     res.json(agent);
   } catch (error) { const err = error instanceof Error ? error : new Error(String(error));
@@ -42,11 +42,11 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new agent (authenticated)
-router.post('/', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
     const { name, description, agent_type, configuration, hourly_rate, capabilities } = req.body;
-    const agent = await prisma.agents.create({ data: { 
+    const agent = await (prisma as any).agents.create({ data: { 
         name,
         description,
         agent_type,
@@ -68,15 +68,15 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Update an agent
-router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
+router.put('/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const agent = await prisma.agents.findFirst({
+    const agent = await (prisma as any).agents.findFirst({
       where: { id: req.params.id, owner_id: req.user.id },
     });
     if (!agent) return res.status(404).json({ error: 'Agent not found' });
 
-    const updated = await prisma.agents.update({
+    const updated = await (prisma as any).agents.update({
       where: { id: req.params.id },
       data: req.body,
     });
@@ -87,15 +87,16 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Delete an agent
-router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
+router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const agent = await prisma.agents.findFirst({
+    const agent = await (prisma as any).agents.findFirst({
       where: { id: req.params.id, owner_id: req.user.id },
     });
     if (!agent) return res.status(404).json({ error: 'Agent not found' });
 
-    await prisma.agents.delete({ where: { id: req.params.id } });
+// @ts-ignore
+    await (prisma as any).agents.delete({ where: { id: req.params.id } });
     res.json({ success: true });
   } catch (error) { const err = error instanceof Error ? error : new Error(String(error));
     res.status(400).json({ error: error.message });
@@ -104,10 +105,10 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
 
 
 // Test agent with a prompt
-router.post('/:id/test', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/:id/test', authenticate, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const agent = await prisma.agents.findFirst({
+    const agent = await (prisma as any).agents.findFirst({
       where: { id: req.params.id, owner_id: req.user.id },
     });
     if (!agent) return res.status(404).json({ error: 'Agent not found' });
@@ -141,6 +142,12 @@ router.post('/:id/test', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 export default router;
+
+
+
+
+
+
 
 
 

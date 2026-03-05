@@ -1,0 +1,125 @@
+﻿import express, { Request, Response, NextFunction } from 'express';
+import aiMarketplaceRoutes from './routes/aiMarketplace';
+import tokenRoutes from './routes/token';
+import recommendationRoutes from './routes/recommendations';
+import replicationRoutes from './routes/replication';
+import templateRoutes from './routes/templates';
+import learningRoutes from './routes/learning';
+import connectorRoutes from './routes/connectors';
+import derivativeRoutes from './routes/derivatives';
+import http from 'http';
+import cors from 'cors';
+import helmet from 'helmet';
+import dotenv from 'dotenv';
+import { Server as SocketServer } from 'socket.io';
+import jwt from 'jsonwebtoken';
+
+// Load environment variables
+dotenv.config();
+
+// Create Express app
+const app = express();
+const server = http.createServer(app);
+
+// Socket.io setup
+const io = new SocketServer(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  },
+  transports: ['websocket', 'polling'],
+});
+
+// Middleware
+app.use(helmet());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  })
+);
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Health check endpoint
+app.get('/health', (req: Request, res: Response) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
+
+// ========== SOCKET.IO AUTHENTICATION & ROOMS ==========
+io.on('connection', (socket) => {
+  console.log('🔌 Client connected:', socket.id);
+
+  // Authenticate socket with JWT token
+  const token = socket.handshake.auth.token;
+  if (token) {
+    try {
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET || 'your-secret-key'
+      ) as any;
+      socket.join(`user-${decoded.id}`);
+      console.log(`✅ User ${decoded.id} joined room user-${decoded.id}`);
+    } catch (e) {
+      console.log('❌ Invalid socket auth token');
+    }
+  }
+
+  // Join agent-specific room
+  socket.on('join-agent', (agentId: string) => {
+    socket.join(`agent-${agentId}`);
+    console.log(`📡 Socket joined agent-${agentId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('❌ Client disconnected:', socket.id);
+  });
+});
+
+// Make io accessible in routes
+app.set('io', io);
+
+// ========== ROUTES ==========
+import authRoutes from './routes/auth';
+import agentRoutes from './routes/agents';
+import marketplaceRoutes from './routes/marketplace';
+import businessRoutes from './routes/business';
+import notificationRoutes from './routes/notifications';
+import autonomousBusinessRoutes from './routes/autonomousBusiness';
+
+app.use('/api/auth', authRoutes);
+app.use('/api/ai-marketplace', aiMarketplaceRoutes);
+app.use('/api/token', tokenRoutes);
+app.use('/api/recommendations', recommendationRoutes);
+app.use('/api/replication', replicationRoutes);
+app.use('/api/templates', templateRoutes);
+app.use('/api/learning', learningRoutes);
+app.use('/api/connectors', connectorRoutes);
+app.use('/api/derivatives', derivativeRoutes);
+app.use('/api/agents', agentRoutes);
+app.use('/api/marketplace', marketplaceRoutes);
+app.use('/api/business', businessRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/business', autonomousBusinessRoutes); // ✅ Mounted correctly
+
+// ========== ERROR HANDLER ==========
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error('❌ Error:', err.stack);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
+});
+
+// ========== START SERVER ==========
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  console.log(`🚀 Backend server running on http://localhost:${PORT}`);
+  console.log(`📡 WebSocket server ready`);
+});
+
+export { app, server, io };

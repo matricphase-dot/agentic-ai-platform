@@ -1,0 +1,72 @@
+import express from 'express';
+import { authenticate } from '../middleware/auth';
+
+const router = express.Router();
+
+// All templates endpoints require authentication
+router.use(authenticate);
+
+// Pre-defined agent templates
+const templates = [
+  {
+    id: 'customer-support',
+    name: 'Customer Support Agent',
+    description: 'Handles customer inquiries, provides product information, and escalates complex issues.',
+    capabilities: ['ollama:tinyllama'],
+    systemPrompt: 'You are a helpful customer support agent. Answer questions politely and accurately. If you cannot help, ask for clarification or escalate.',
+    category: 'support',
+    popularity: 95
+  },
+  {
+    id: 'data-analyst',
+    name: 'Data Analyst',
+    description: 'Analyzes data, generates reports, and answers questions about datasets.',
+    capabilities: ['ollama:tinyllama', 'rag'],
+    systemPrompt: 'You are a data analyst. Answer questions based on the provided data. Be precise and provide insights.',
+    category: 'analytics',
+    popularity: 87
+  },
+  {
+    id: 'code-assistant',
+    name: 'Code Assistant',
+    description: 'Helps write, debug, and explain code in various programming languages.',
+    capabilities: ['ollama:tinyllama'],
+    systemPrompt: 'You are an expert programmer. Help with code, explain concepts, and suggest best practices.',
+    category: 'development',
+    popularity: 92
+  },
+  {
+    id: 'research-assistant',
+    name: 'Research Assistant',
+    description: 'Summarizes articles, answers research questions, and organizes information.',
+    capabilities: ['ollama:tinyllama', 'rag'],
+    systemPrompt: 'You are a research assistant. Help gather and synthesize information. Provide citations where possible.',
+    category: 'research',
+    popularity: 78
+  },
+  {
+    id: 'echo',
+    name: 'Echo Test Agent',
+    description: 'Simple echo agent for testing. Repeats whatever you say.',
+    capabilities: ['echo'],
+    systemPrompt: 'Echo the user\'s message exactly.',
+    category: 'utility',
+    popularity: 60
+  }
+];
+
+// GET /api/templates
+router.get('/', (req, res) => {
+  res.json(templates);
+});
+
+// GET /api/templates/:id
+router.get('/:id', (req, res) => {
+  const template = templates.find(t => t.id === req.params.id);
+  if (!template) {
+    return res.status(404).json({ error: 'Template not found' });
+  }
+  res.json(template);
+});
+
+export default router;
