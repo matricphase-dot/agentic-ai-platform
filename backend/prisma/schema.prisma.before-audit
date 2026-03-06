@@ -1,4 +1,4 @@
-﻿generator client {
+generator client {
   provider = "prisma-client-js"
 }
 
@@ -199,7 +199,6 @@ model users {
   @@index([reputationScore])
   @@map("users")
 }
-  auditLogs AuditLog[]
 
 enum AgentStatus {
   IDLE
@@ -425,20 +424,4 @@ model Vote {
 
   @@unique([proposalId, userId])
   @@map("votes")
-}
-
-model AuditLog {
-  id         String   @id @default(cuid())
-  userId     String?
-  user       users?   @relation(fields: [userId], references: [id])
-  action     String   // e.g., "CREATE_AGENT", "STAKE", "VOTE"
-  entity     String?  // e.g., "Agent", "Stake", "Proposal"
-  entityId   String?  // ID of the affected entity
-  oldData    Json?    // previous state (if update/delete)
-  newData    Json?    // new state (if create/update)
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime @default(now())
-
-  @@map("audit_logs")
 }

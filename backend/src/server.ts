@@ -1,5 +1,6 @@
 ﻿import teamsRoute from './routes/teams';
 import messagesRoute from './routes/messages';
+import agentVersionsRoute from './routes/agentVersions';
 import testRoute from './routes/test';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -52,6 +53,8 @@ app.listen(port, () => {
 });
 
 export default app;
+
+
 
 
 

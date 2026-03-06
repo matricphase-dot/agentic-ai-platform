@@ -1,10 +1,11 @@
-﻿generator client {
+generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = ""
 }
 
 model agents {
@@ -42,6 +43,7 @@ model agents {
   apiEndpoint    String?     @map("api_endpoint")
   endpoint       String?     @map("endpoint")
   nodeTasks      NodeTask[]
+  templates      Template[]
 
   @@index([agentType])
   @@index([ownerId])
@@ -194,12 +196,13 @@ model users {
   nodeTasks NodeTask[]
   proposals Proposal[]
   votes     Vote[]
+  auditLogs AuditLog[]
+  reviews   Review[]
 
   @@index([email])
   @@index([reputationScore])
   @@map("users")
 }
-  auditLogs AuditLog[]
 
 enum AgentStatus {
   IDLE
@@ -428,17 +431,50 @@ model Vote {
 }
 
 model AuditLog {
-  id         String   @id @default(cuid())
-  userId     String?
-  user       users?   @relation(fields: [userId], references: [id])
-  action     String   // e.g., "CREATE_AGENT", "STAKE", "VOTE"
-  entity     String?  // e.g., "Agent", "Stake", "Proposal"
-  entityId   String?  // ID of the affected entity
-  oldData    Json?    // previous state (if update/delete)
-  newData    Json?    // new state (if create/update)
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String?
+  user      users?   @relation(fields: [userId], references: [id])
+  action    String // e.g., "CREATE_AGENT", "STAKE", "VOTE"
+  entity    String? // e.g., "Agent", "Stake", "Proposal"
+  entityId  String? // ID of the affected entity
+  oldData   Json? // previous state (if update/delete)
+  newData   Json? // new state (if create/update)
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
 
   @@map("audit_logs")
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  rating     Int // 1-5
+  comment    String?
+  userId     String
+  user       users    @relation(fields: [userId], references: [id])
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, templateId]) // one review per user per template
+  @@map("reviews")
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String
+  price       Float
+  unit        String // e.g., "hour", "project"
+  status      String   @default("active")
+  agentId     String
+  agent       agents   @relation(fields: [agentId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reviews Review[]
+
+  @@map("templates")
 }

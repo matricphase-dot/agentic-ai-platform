@@ -1,4 +1,4 @@
-﻿generator client {
+generator client {
   provider = "prisma-client-js"
 }
 
@@ -199,7 +199,6 @@ model users {
   @@index([reputationScore])
   @@map("users")
 }
-  auditLogs AuditLog[]
 
 enum AgentStatus {
   IDLE
