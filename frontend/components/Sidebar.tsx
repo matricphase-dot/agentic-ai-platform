@@ -17,7 +17,9 @@ import {
   DocumentDuplicateIcon,
   BriefcaseIcon,
 } from '@heroicons/react/24/outline';
+import { PuzzlePieceIcon } from '@heroicons/react/24/outline';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
+import { PuzzlePieceIcon } from '@heroicons/react/24/outline';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon, requiresAuth: true },
@@ -44,6 +46,8 @@ const navigation = [
   { name: 'Team', href: '/team', icon: UserGroupIcon, requiresAuth: true },
   { name: 'Privacy', href: '/settings/privacy', icon: DocumentTextIcon, requiresAuth: true },
   { name: 'Privacy', href: '/settings/privacy', icon: DocumentTextIcon, requiresAuth: true },
+  { name: 'Integrations', href: '/integrations', icon: PuzzlePieceIcon, requiresAuth: true },
+  { name: 'Integrations', href: '/integrations', icon: PuzzlePieceIcon, requiresAuth: true },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon, requiresAuth: true },
 ];
 
@@ -93,5 +97,7 @@ export default function Sidebar() {
     </div>
   );
 }
+
+
 
 
