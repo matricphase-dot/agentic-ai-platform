@@ -202,8 +202,6 @@ model users {
   @@index([email])
   @@index([reputationScore])
   @@map("users")
-  consents Consent[]
-  dataRequests DataRequest[]
 }
 
 enum AgentStatus {
@@ -479,34 +477,4 @@ model Template {
   reviews Review[]
 
   @@map("templates")
-}
-
-model Consent {
-  id         String   @id @default(cuid())
-  userId     String
-  user       users    @relation(fields: [userId], references: [id])
-  purpose    String   // e.g., "marketing", "analytics", "data_sharing"
-  granted    Boolean  @default(false)
-  grantedAt  DateTime?
-  revokedAt  DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@unique([userId, purpose])
-  @@map("consents")
-}
-
-model DataRequest {
-  id          String   @id @default(cuid())
-  userId      String
-  user        users    @relation(fields: [userId], references: [id])
-  type        String   // "ACCESS", "DELETION", "RECTIFICATION"
-  status      String   @default("PENDING") // PENDING, COMPLETED, REJECTED
-  requestedAt DateTime @default(now())
-  completedAt DateTime?
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("data_requests")
 }
