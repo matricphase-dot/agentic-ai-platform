@@ -204,6 +204,7 @@ model users {
   @@map("users")
   consents Consent[]
   dataRequests DataRequest[]
+  integrations Integration[]
 }
 
 enum AgentStatus {
@@ -509,4 +510,36 @@ model DataRequest {
   updatedAt   DateTime @updatedAt
 
   @@map("data_requests")
+}
+
+model Connector {
+  id               String         @id @default(cuid())
+  name             String         @unique
+  description      String?
+  icon             String?        // icon name or URL
+  authType         String         // "oauth2", "apikey", "none"
+  authConfig       Json?          // OAuth client ID, scopes, etc.
+  configSchema     Json?          // JSON schema for required fields
+  isEnabled        Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  integrations     Integration[]
+  @@map("connectors")
+}
+
+model Integration {
+  id             String        @id @default(cuid())
+  userId         String
+  user           users         @relation(fields: [userId], references: [id])
+  connectorId    String
+  connector      Connector     @relation(fields: [connectorId], references: [id])
+  name           String?       // custom name for this connection
+  config         Json?         // user's specific configuration (API keys, tokens, etc.)
+  status         String        @default("active") // active, error, disabled
+  lastUsedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([userId, connectorId])
+  @@map("integrations")
 }
