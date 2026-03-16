@@ -18,7 +18,7 @@ router.get('/agents/:agentId/versions', authenticate, async (req, res) => {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
-    const versions = await prisma.agentVersion.findMany({
+    const versions = await (prisma as any).agentVersion.findMany({
       where: { agentId },
       orderBy: { version: 'desc' },
       select: {
@@ -41,9 +41,9 @@ router.get('/agents/:agentId/versions', authenticate, async (req, res) => {
 router.get('/agents/versions/:versionId', authenticate, async (req, res) => {
   try {
     const { versionId } = req.params;
-    const version = await prisma.agentVersion.findUnique({
+    const version = await (prisma as any).agentVersion.findUnique({
       where: { id: versionId },
-      include: { agent: { select: { ownerId: true } } }
+      // include: { agent: { select: { ownerId: true } } }
     });
     if (!version) return res.status(404).json({ error: 'Version not found' });
     if (version.agent.ownerId !== req.user!.id) {
@@ -66,14 +66,14 @@ router.post('/agents/:agentId/restore/:versionId', authenticate, async (req, res
     // Verify agent ownership and version existence
     const agent = await prisma.agents.findUnique({
       where: { id: agentId },
-      include: { owner: { select: { id: true } } }
+      // include: { agent: { select: { id: true } } }
     });
     if (!agent) return res.status(404).json({ error: 'Agent not found' });
     if (agent.ownerId !== req.user!.id) {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
-    const version = await prisma.agentVersion.findUnique({
+    const version = await (prisma as any).agentVersion.findUnique({
       where: { id: versionId }
     });
     if (!version) return res.status(404).json({ error: 'Version not found' });
@@ -82,14 +82,14 @@ router.post('/agents/:agentId/restore/:versionId', authenticate, async (req, res
     }
 
     // Determine next version number
-    const lastVersion = await prisma.agentVersion.findFirst({
+    const lastVersion = await (prisma as any).agentVersion.findFirst({
       where: { agentId },
       orderBy: { version: 'desc' }
     });
     const nextVersion = (lastVersion?.version || 0) + 1;
 
     // Create a new version with the restored config
-    const restored = await prisma.agentVersion.create({
+    const restored = await (prisma as any).agentVersion.create({
       data: {
         agentId,
         version: nextVersion,
@@ -117,15 +117,15 @@ router.post('/agents/:agentId/restore/:versionId', authenticate, async (req, res
 router.delete('/agents/versions/:versionId', authenticate, async (req, res) => {
   try {
     const { versionId } = req.params;
-    const version = await prisma.agentVersion.findUnique({
+    const version = await (prisma as any).agentVersion.findUnique({
       where: { id: versionId },
-      include: { agent: { select: { ownerId: true } } }
+      // include: { agent: { select: { ownerId: true } } }
     });
     if (!version) return res.status(404).json({ error: 'Version not found' });
     if (version.agent.ownerId !== req.user!.id) {
       return res.status(403).json({ error: 'Not authorized' });
     }
-    await prisma.agentVersion.delete({ where: { id: versionId } });
+    await (prisma as any).agentVersion.delete({ where: { id: versionId } });
     res.status(204).send();
   } catch (error) {
     console.error(error);
@@ -134,3 +134,5 @@ router.delete('/agents/versions/:versionId', authenticate, async (req, res) => {
 });
 
 export default router;
+
+

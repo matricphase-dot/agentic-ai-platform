@@ -43,12 +43,12 @@ app.use('/api/agent-versions', agentVersionsRoute);
 app.use('/api/test', testRoute);
 
 // Database connection
-prisma.$connect()
+prisma.()
   .then(() => console.log('Database connected successfully'))
   .catch((err) => console.error('Database connection failed:', err));
 
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(Server running on port );
   console.log('Routes registered:');
   console.log('- /api/auth');
   console.log('- /api/agents');

@@ -1,210 +1,171 @@
-'use client';
+"use client";
 
-import { useAuth } from '@/hooks/useAuth';
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
-import Link from 'next/link';
-import { Award, BarChart, Bot, Camera, Coins, Copy, Cpu, FileText, Globe, Layout, MessageCircle, Package, Server, Shield, ShoppingBag, TrendingUp, Users, Zap, BookOpen } from 'lucide-react';
-// Simple StatsCard component
-function StatsCard({ title, value, icon: Icon, color, link }: any) {
-  const CardWrapper = link ? Link : 'div';
-  const props = link ? { href: link } : {};
-  
-  return (
-    <CardWrapper {...props} className={`rounded-lg ${color} p-6 shadow-sm transition-shadow hover:shadow-md`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="mt-2 text-3xl font-semibold text-gray-900">{value}</p>
-        </div>
-        <Icon className="h-8 w-8 text-gray-600" />
-      </div>
-    </CardWrapper>
-  );
-}
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
+import { api } from "@/lib/api";
 
-interface DashboardStats {
-  // Core features
-  totalAgents: number;
-  totalStaked: number;
-  activeProposals: number;
+interface UserStats {
+  balance: number;
+  tokenBalance: number;
+  reputation: number;
+  agentsCount: number;
+  stakingAmount: number;
+  proposalsCount: number;
   marketplaceListings: number;
-  
-  // Additional features
-  activeSelfEvolving: number;
-  nodeCount: number;
-  platformCount: number;
-  ventureProposals: number;
-  franchiseCount: number;
-  nationCount: number;
-  moatCount: number;
-  totalDerivatives: number;
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalAgents: 0,
-    totalStaked: 0,
-    activeProposals: 0,
+  const { user, loading } = useAuth();
+  const [stats, setStats] = useState<UserStats>({
+    balance: 0,
+    tokenBalance: 0,
+    reputation: 0,
+    agentsCount: 0,
+    stakingAmount: 0,
+    proposalsCount: 0,
     marketplaceListings: 0,
-    activeSelfEvolving: 0,
-    nodeCount: 0,
-    platformCount: 0,
-    ventureProposals: 0,
-    franchiseCount: 0,
-    nationCount: 0,
-    moatCount: 0,
-    totalDerivatives: 0,
   });
-  const [loading, setLoading] = useState(true);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch all stats in parallel, with fallbacks for missing endpoints
-        const [
-          agentsRes,
-          stakesRes,
-          proposalsRes,
-          listingsRes,
-          selfEvolvingRes,
-          nodesRes,
-          platformsRes,
-          ventureRes,
-          franchiseRes,
-          nationsRes,
-          moatsRes,
-          derivativesRes
-        ] = await Promise.allSettled([
-          api.get('/api/agents').catch(() => ({ data: [] })),
-          api.get('/api/stakes').catch(() => ({ data: [] })),
-          api.get('/api/proposals?status=active').catch(() => ({ data: [] })),
-          api.get('/api/marketplace/listings').catch(() => ({ data: [] })),
-          api.get('/api/self-evolving/active').catch(() => ({ data: [] })),
-          api.get('/api/nodes').catch(() => ({ data: [] })),
-          api.get('/api/platforms').catch(() => ({ data: [] })),
-          api.get('/api/venture/proposals?status=active').catch(() => ({ data: [] })),
-          api.get('/api/franchise').catch(() => ({ data: [] })),
-          api.get('/api/nations').catch(() => ({ data: [] })),
-          api.get('/api/moats').catch(() => ({ data: [] })),
-          api.get('/api/derivatives').catch(() => ({ data: [] })),
-        ]);
+        // Fetch agents count
+        const agentsRes = await api.get("/agents");
+        const agentsCount = agentsRes.data.length || 0;
+
+        // For other stats, use dummy data or endpoints if available
+        // (these may 404 but we'll catch and use defaults)
+        let stakingAmount = 0, proposalsCount = 0, marketplaceListings = 0;
+        try {
+          const stakingRes = await api.get("/staking");
+          stakingAmount = stakingRes.data.total || 0;
+        } catch { /* ignore */ }
+        try {
+          const proposalsRes = await api.get("/proposals");
+          proposalsCount = proposalsRes.data.length || 0;
+        } catch { /* ignore */ }
+        try {
+          const marketplaceRes = await api.get("/marketplace");
+          marketplaceListings = marketplaceRes.data.length || 0;
+        } catch { /* ignore */ }
 
         setStats({
-          totalAgents: agentsRes.status === 'fulfilled' ? agentsRes.value.data.length : 0,
-          totalStaked: stakesRes.status === 'fulfilled' 
-            ? stakesRes.value.data.reduce((sum: number, s: any) => sum + s.amount, 0) 
-            : 0,
-          activeProposals: proposalsRes.status === 'fulfilled' ? proposalsRes.value.data.length : 0,
-          marketplaceListings: listingsRes.status === 'fulfilled' ? listingsRes.value.data.length : 0,
-          activeSelfEvolving: selfEvolvingRes.status === 'fulfilled' ? selfEvolvingRes.value.data.length : 0,
-          nodeCount: nodesRes.status === 'fulfilled' ? nodesRes.value.data.length : 0,
-          platformCount: platformsRes.status === 'fulfilled' ? platformsRes.value.data.length : 0,
-          ventureProposals: ventureRes.status === 'fulfilled' ? ventureRes.value.data.length : 0,
-          franchiseCount: franchiseRes.status === 'fulfilled' ? franchiseRes.value.data.length : 0,
-          nationCount: nationsRes.status === 'fulfilled' ? nationsRes.value.data.length : 0,
-          moatCount: moatsRes.status === 'fulfilled' ? moatsRes.value.data.length : 0,
-          totalDerivatives: derivativesRes.status === 'fulfilled' ? derivativesRes.value.data.length : 0,
+          balance: user?.balance || 0,
+          tokenBalance: user?.tokenBalance || 0,
+          reputation: user?.reputation || 0,
+          agentsCount,
+          stakingAmount,
+          proposalsCount,
+          marketplaceListings,
         });
       } catch (error) {
-        console.error('Failed to fetch stats:', error);
+        console.error("Failed to fetch stats:", error);
       } finally {
-        setLoading(false);
+        setIsLoadingStats(false);
       }
     };
 
-    if (user) fetchStats();
+    if (user) {
+      fetchStats();
+    } else {
+      setIsLoadingStats(false);
+    }
   }, [user]);
 
-  if (!user) return <div className="p-8 text-center">Please log in</div>;
-
-  // Quick actions - one per main feature
-  const quickActions = [
-    { name: 'Create Agent', href: '/agents/create', icon: Bot, color: 'bg-blue-100' },
-    { name: 'Stake Tokens', href: '/staking', icon: Coins, color: 'bg-green-100' },
-    { name: 'Browse Marketplace', href: '/marketplace', icon: ShoppingBag, color: 'bg-purple-100' },
-    { name: 'View Proposals', href: '/governance', icon: FileText, color: 'bg-yellow-100' },
-    { name: 'Self-Evolving', href: '/self-evolving', icon: Zap, color: 'bg-orange-100' },
-    { name: 'Nodes', href: '/nodes', icon: Server, color: 'bg-indigo-100' },
-    { name: 'Platforms', href: '/platforms', icon: Layout, color: 'bg-pink-100' },
-    { name: 'Venture', href: '/venture', icon: TrendingUp, color: 'bg-teal-100' },
-  
-  { name: 'Recorder', href: '/recorder', icon: Camera, color: 'bg-red-100' },
-
-  { name: 'Agent Chat', href: '/agent-chat', icon: MessageCircle, color: 'bg-purple-100' },
-
-  { name: 'Knowledge Base', href: '/knowledge', icon: BookOpen, color: 'bg-indigo-100' },
-];
+  if (loading || isLoadingStats) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-gray-600">Welcome back, {user.name || user.email}!</p>
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+
+      {/* User Info Card */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">Account Overview</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600">Balance</p>
+            <p className="text-2xl font-bold">${stats.balance.toFixed(2)}</p>
+          </div>
+          <div className="bg-green-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600">Token Balance</p>
+            <p className="text-2xl font-bold">{stats.tokenBalance} AGENT</p>
+          </div>
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600">Reputation</p>
+            <p className="text-2xl font-bold">{stats.reputation}</p>
+          </div>
         </div>
       </div>
 
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-          </div>
-        ) : (
-          <>
-            {/* Stats Grid - 4 per row */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              <StatsCard title="Total Agents" value={stats.totalAgents} icon={Bot} color="bg-blue-50" link="/agents" />
-              <StatsCard title="Total Staked" value={`${stats.totalStaked} $AGENT`} icon={Coins} color="bg-green-50" link="/staking" />
-              <StatsCard title="Active Proposals" value={stats.activeProposals} icon={FileText} color="bg-yellow-50" link="/governance" />
-              <StatsCard title="Marketplace" value={stats.marketplaceListings} icon={ShoppingBag} color="bg-purple-50" link="/marketplace" />
-              
-              <StatsCard title="Self-Evolving" value={stats.activeSelfEvolving} icon={Zap} color="bg-orange-50" link="/self-evolving" />
-              <StatsCard title="Nodes" value={stats.nodeCount} icon={Server} color="bg-indigo-50" link="/nodes" />
-              <StatsCard title="Platforms" value={stats.platformCount} icon={Layout} color="bg-pink-50" link="/platforms" />
-              <StatsCard title="Venture" value={stats.ventureProposals} icon={TrendingUp} color="bg-teal-50" link="/venture" />
-              
-              <StatsCard title="Franchise" value={stats.franchiseCount} icon={Copy} color="bg-red-50" link="/franchise" />
-              <StatsCard title="Nations" value={stats.nationCount} icon={Globe} color="bg-emerald-50" link="/nations" />
-              <StatsCard title="Moats" value={stats.moatCount} icon={Shield} color="bg-cyan-50" link="/moats" />
-              <StatsCard title="Derivatives" value={stats.totalDerivatives} icon={BarChart} color="bg-amber-50" link="/derivatives" />
-            </div>
+      {/* Stats Cards */}
+      <h2 className="text-2xl font-semibold mb-4">Platform Stats</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+          <p className="text-sm text-gray-600">Your Agents</p>
+          <p className="text-3xl font-bold">{stats.agentsCount}</p>
+          <Link href="/agent-chat" className="text-sm text-blue-600 hover:underline mt-2 inline-block">
+            Manage ?
+          </Link>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+          <p className="text-sm text-gray-600">Staking Amount</p>
+          <p className="text-3xl font-bold">{stats.stakingAmount} AGENT</p>
+          <Link href="/staking" className="text-sm text-green-600 hover:underline mt-2 inline-block">
+            Stake more ?
+          </Link>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
+          <p className="text-sm text-gray-600">Active Proposals</p>
+          <p className="text-3xl font-bold">{stats.proposalsCount}</p>
+          <Link href="/proposals" className="text-sm text-purple-600 hover:underline mt-2 inline-block">
+            View ?
+          </Link>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+          <p className="text-sm text-gray-600">Marketplace</p>
+          <p className="text-3xl font-bold">{stats.marketplaceListings}</p>
+          <Link href="/marketplace" className="text-sm text-yellow-600 hover:underline mt-2 inline-block">
+            Browse ?
+          </Link>
+        </div>
+      </div>
 
-            {/* Quick Actions */}
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold text-gray-900">Quick Actions</h2>
-              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
-                {quickActions.map((action) => (
-                  <Link key={action.name} href={action.href} className={`rounded-lg ${action.color} p-4 text-center shadow-sm transition-shadow hover:shadow-md`}>
-                    <action.icon className="mx-auto h-6 w-6 text-gray-700" />
-                    <h3 className="mt-1 text-sm font-medium text-gray-900">{action.name}</h3>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* User Info Card */}
-            <div className="mt-8 rounded-lg bg-white p-6 shadow">
-              <h2 className="text-lg font-semibold text-gray-900">Account Overview</h2>
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div>
-                  <p className="text-sm text-gray-600">Balance</p>
-                  <p className="text-xl font-semibold text-gray-900">${user.balance}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Token Balance</p>
-                  <p className="text-xl font-semibold text-gray-900">{user.tokenBalance} $AGENT</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Reputation Score</p>
-                  <p className="text-xl font-semibold text-gray-900">{user.reputationScore}</p>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </main>
+      {/* Quick Actions */}
+      <h2 className="text-2xl font-semibold mb-4">Quick Actions</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Link
+          href="/agent-chat"
+          className="bg-blue-600 text-white rounded-lg p-4 text-center hover:bg-blue-700 transition"
+        >
+          <div className="text-xl mb-2">??</div>
+          <div className="font-semibold">Agent Chat</div>
+          <div className="text-sm opacity-90">Create and chat with AI agents</div>
+        </Link>
+        <Link
+          href="/knowledge"
+          className="bg-green-600 text-white rounded-lg p-4 text-center hover:bg-green-700 transition"
+        >
+          <div className="text-xl mb-2">??</div>
+          <div className="font-semibold">Knowledge Base</div>
+          <div className="text-sm opacity-90">Upload documents and ask questions</div>
+        </Link>
+        <Link
+          href="/recorder"
+          className="bg-purple-600 text-white rounded-lg p-4 text-center hover:bg-purple-700 transition"
+        >
+          <div className="text-xl mb-2">??</div>
+          <div className="font-semibold">Screen Recorder</div>
+          <div className="text-sm opacity-90">Record and analyze screen activity</div>
+        </Link>
+      </div>
     </div>
   );
 }

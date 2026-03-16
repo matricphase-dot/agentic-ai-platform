@@ -1,0 +1,183 @@
+﻿generator client {
+}
+
+
+datasource db {
+}
+
+
+model agents {
+}
+
+
+model AgentEarnings {
+}
+
+
+model businesses {
+}
+
+
+model BusinessAgents {
+}
+
+
+model Contracts {
+}
+
+
+model Notifications {
+}
+
+
+model stakes {
+}
+
+
+model Transactions {
+}
+
+
+model users {
+}
+
+
+enum AgentStatus {
+}
+
+
+enum AgentType {
+}
+
+
+enum BusinessStatus {
+}
+
+
+enum BusinessType {
+}
+
+
+enum ContractStatus {
+}
+
+
+enum NotificationType {
+}
+
+
+enum Role {
+}
+
+
+enum TransactionStatus {
+}
+
+
+enum TransactionType {
+}
+
+
+// ---------- Added full models from original design ----------
+// ---------- Added full models from original design ----------
+model Reward {
+}
+
+
+model Team {
+}
+
+
+model TeamAgent {
+}
+
+
+model Message {
+}
+
+
+model Recording {
+}
+
+
+// ---------- Added Node models ----------
+// ---------- Added Node models ----------
+model Node {
+}
+
+
+model NodeTask {
+}
+
+
+model NodeReward {
+}
+
+
+// ---------- Added Proposal and Vote models ----------
+// ---------- Added Proposal and Vote models ----------
+model Proposal {
+}
+
+
+model Vote {
+}
+
+
+model AuditLog {
+}
+
+
+model Review {
+}
+
+
+model Template {
+}
+
+
+model Consent {
+}
+
+
+model DataRequest {
+}
+
+
+model Connector {
+}
+
+
+model Integration {
+  id             String        @id @default(cuid())
+  id             String        @id @default(cuid())
+  userId         String
+  userId         String
+  user           users         @relation(fields: [userId], references: [id])
+  user           users         @relation(fields: [userId], references: [id])
+  connectorId    String
+  connectorId    String
+  connector      Connector     @relation(fields: [connectorId], references: [id])
+  connector      Connector     @relation(fields: [connectorId], references: [id])
+  name           String?       // custom name for this connection
+  name           String?       // custom name for this connection
+  config         Json?         // user's specific configuration (API keys, tokens, etc.)
+  accessToken   String?   // encrypted OAuth access token
+  refreshToken  String?   // encrypted refresh token
+  tokenExpiresAt DateTime? // when accessToken expires
+  status         String        @default("active") // active, error, disabled
+  status         String        @default("active") // active, error, disabled
+  lastUsedAt     DateTime?
+  lastUsedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  updatedAt      DateTime      @updatedAt
+
+
+  @@unique([userId, connectorId])
+  @@unique([userId, connectorId])
+  @@map("integrations")
+  @@map("integrations")
+}
+}

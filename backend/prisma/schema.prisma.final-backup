@@ -123,6 +123,7 @@ model agents {
   @@index([reputationScore])
   revenueShare   Float?     @default(0) // percentage (0-100) of earnings to distribute to stakers
   totalEarnings  Float      @default(0) // lifetime earnings
+
 }
 
 model audit_logs {
@@ -515,3 +516,4 @@ model AgentEarning {
 
   @@map("agent_earnings")
 }
+

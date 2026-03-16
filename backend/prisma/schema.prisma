@@ -1,4 +1,4 @@
-﻿generator client {
+generator client {
   provider = "prisma-client-js"
 }
 
@@ -117,13 +117,14 @@ model agents {
   stakes                               stakes[]
   team_agents                          team_agents[]
   templates                            templates[]
+  revenueShare                         Float?           @default(0) // percentage (0-100) of earnings to distribute to stakers
+  totalEarnings                        Float            @default(0) // lifetime earnings
+  agentEarnings                        AgentEarning[]
 
   @@index([agentType])
   @@index([ownerId])
   @@index([reputationScore])
 }
-  revenueShare   Float?     @default(0) // percentage (0-100) of earnings to distribute to stakers
-  totalEarnings  Float      @default(0) // lifetime earnings
 
 model audit_logs {
   id        String   @id
@@ -515,4 +516,3 @@ model AgentEarning {
 
   @@map("agent_earnings")
 }
-

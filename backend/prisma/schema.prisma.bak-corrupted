@@ -1,0 +1,166 @@
+﻿generator client {
+model agents {
+
+}
+  @@index([fromUserId, toUserId])
+
+  users_Transactions_toUserIdTousers   users?            @relation("Transactions_toUserIdTousers", fields: [toUserId], references: [id])
+  users_Transactions_fromUserIdTousers users?            @relation("Transactions_fromUserIdTousers", fields: [fromUserId], references: [id])
+  businesses                           businesses?       @relation(fields: [businessId], references: [id])
+  agents                               agents?           @relation(fields: [agentId], references: [id])
+  completedAt                          DateTime?
+  createdAt                            DateTime          @default(now())
+  status                               TransactionStatus @default(PENDING)
+  metadata                             Json?
+  description                          String?
+  businessId                           String?
+  agentId                              String?
+  toUserId                             String?
+  fromUserId                           String?
+model agents {
+  id                                   String           @id
+  name                                 String
+  description                          String?
+  agentType                            AgentType
+  status                               AgentStatus      @default(IDLE)
+  reputationScore                      Int              @default(1000)
+  hourlyRate                           Float            @default(50)
+  successRate                          Float            @default(0.85)
+  totalValueCreated                    Float            @default(0)
+  totalEarnings                        Float            @default(0)
+  configuration                        Json?
+  tasksCompleted                       Int              @default(0)
+  specialties                          String[]
+  ownerId                              String
+  createdAt                            DateTime         @default(now())
+  updatedAt                            DateTime
+  capabilities                         String?
+  system_prompt                        String?
+  model_provider                       String?          @default("ollama-local")
+  model_name                           String?          @default("llama2")
+  ollama_endpoint                      String?
+  api_endpoint                         String?
+  endpoint                             String?
+model businesses {
+  id                      String           @id
+  name                    String
+  description             String?
+  businessType            BusinessType
+  status                  BusinessStatus   @default(ACTIVE)
+  revenue                 Float            @default(0)
+  profit                  Float            @default(0)
+  monthlyRecurringRevenue Float            @default(0)
+model connectors {
+  id           String         @id
+model consents {
+  id        String    @id
+model integrations {
+  id          String     @id
+  userId      String
+model users {
+  id                                          String          @id
+  email                                       String          @unique
+  passwordHash                                String
+  name                                        String?
+  avatar                                      String?
+  balance                                     Float           @default(0)
+  reputationScore                             Int             @default(1000)
+  role                                        Role            @default(users)
+  createdAt                                   DateTime        @default(now())
+  updatedAt                                   DateTime
+  Notifications                               Notifications[]
+  Transactions_Transactions_fromUserIdTousers Transactions[]  @relation("Transactions_fromUserIdTousers")
+  Transactions_Transactions_toUserIdTousers   Transactions[]  @relation("Transactions_toUserIdTousers")
+  agents                                      agents[]
+  audit_logs                                  audit_logs[]
+  businesses                                  businesses[]
+  consents                                    consents[]
+  data_requests                               data_requests[]
+  integrations                                integrations[]
+  node_tasks                                  node_tasks[]
+  nodes                                       nodes[]
+model votes {
+  id         String    @id
+  proposalId String
+  userId     String
+  option     String
+  weight     Float
+  createdAt  DateTime  @default(now())
+  proposals  proposals @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  users      users     @relation(fields: [userId], references: [id])
+
+  @@unique([proposalId, userId])
+}
+
+enum AgentStatus {
+  IDLE
+  WORKING
+  TRAINING
+  MAINTENANCE
+  TERMINATED
+}
+
+enum AgentType {
+  MARKETING
+  CODING
+  RESEARCH
+  SALES
+  SUPPORT
+  ANALYTICS
+  NEGOTIATION
+  CREATIVE
+}
+
+enum BusinessStatus {
+  ACTIVE
+  PAUSED
+  SCALING
+  TERMINATED
+}
+
+enum BusinessType {
+  ECOMMERCE
+  SAAS
+  AGENCY
+  CONTENT
+  CONSULTING
+  MARKETPLACE
+}
+
+enum ContractStatus {
+  ACTIVE
+  COMPLETED
+  TERMINATED
+  DISPUTED
+}
+
+enum NotificationType {
+  AGENT_COMPLETED_TASK
+  BUSINESS_REVENUE
+  STAKE_PAYOUT
+  SYSTEM_ALERT
+  MARKET_UPDATE
+}
+
+enum Role {
+  users
+  ADMIN
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum TransactionType {
+  AGENT_PAYMENT
+  STAKE_PURCHASE
+  DIVIDEND_PAYOUT
+  BUSINESS_REVENUE
+  WITHDRAWAL
+  DEPOSIT
+  REFERRAL_BONUS
+}
+

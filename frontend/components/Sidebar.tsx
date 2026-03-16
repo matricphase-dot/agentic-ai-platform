@@ -1,6 +1,6 @@
-﻿"use client";
+﻿'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,10 +16,9 @@ import {
   CurrencyDollarIcon,
   DocumentDuplicateIcon,
   BriefcaseIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
 } from '@heroicons/react/24/outline';
-import { PuzzlePieceIcon } from '@heroicons/react/24/outline';
-import { DocumentTextIcon } from '@heroicons/react/24/outline';
-import { PuzzlePieceIcon } from '@heroicons/react/24/outline';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon, requiresAuth: true },
@@ -44,23 +43,28 @@ const navigation = [
   { name: 'My Agreements', href: '/ai-marketplace/agreements', icon: UserGroupIcon, requiresAuth: true },
   { name: 'Analytics', href: '/analytics', icon: ChartBarIcon, requiresAuth: true },
   { name: 'Team', href: '/team', icon: UserGroupIcon, requiresAuth: true },
-  { name: 'Privacy', href: '/settings/privacy', icon: DocumentTextIcon, requiresAuth: true },
-  { name: 'Privacy', href: '/settings/privacy', icon: DocumentTextIcon, requiresAuth: true },
-  { name: 'Integrations', href: '/integrations', icon: PuzzlePieceIcon, requiresAuth: true },
-  { name: 'Integrations', href: '/integrations', icon: PuzzlePieceIcon, requiresAuth: true },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon, requiresAuth: true },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="flex h-full w-64 flex-col bg-gray-900 text-white">
-      <div className="flex h-16 items-center justify-center border-b border-gray-800">
-        <h1 className="text-xl font-bold">Agentic AI</h1>
+    <div
+      className={`${
+        collapsed ? 'w-20' : 'w-64'
+      } bg-gray-900 text-white transition-all duration-300 flex flex-col`}
+    >
+      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-800">
+        {!collapsed && <h1 className="text-xl font-bold">Agentic AI</h1>}
+        <button onClick={() => setCollapsed(!collapsed)} className="text-gray-400 hover:text-white">
+          {collapsed ? <ChevronDoubleRightIcon className="w-5 h-5" /> : <ChevronDoubleLeftIcon className="w-5 h-5" />}
+        </button>
       </div>
-      <nav className="flex-1 space-y-1 px-2 py-4">
+
+      <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
         {navigation.map((item) => {
           if (item.requiresAuth && !user) return null;
           const isActive = pathname === item.href;
@@ -73,19 +77,15 @@ export default function Sidebar() {
                   ? 'bg-gray-800 text-white'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               }`}
+              title={collapsed ? item.name : ''}
             >
-              <item.icon
-                className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                  isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'
-                }`}
-                aria-hidden="true"
-              />
-              {item.name}
+              <item.icon className={`mr-3 h-5 w-5 flex-shrink-0`} />
+              {!collapsed && item.name}
             </Link>
           );
         })}
 
-        {!user && (
+        {!user && !collapsed && (
           <Link
             href="/auth/login"
             className="group flex items-center rounded-md px-2 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
@@ -97,7 +97,3 @@ export default function Sidebar() {
     </div>
   );
 }
-
-
-
-

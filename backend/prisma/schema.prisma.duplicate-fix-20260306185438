@@ -1,0 +1,1091 @@
+﻿generator client {
+generator client {
+  provider = "prisma-client-js"
+  provider = "prisma-client-js"
+}
+}
+
+
+datasource db {
+datasource db {
+  provider          = "postgresql"
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = ""
+  shadowDatabaseUrl = ""
+}
+}
+
+
+model agents {
+model agents {
+  id                String           @id
+  id                String           @id
+  name              String
+  name              String
+  description       String?
+  description       String?
+  agentType         AgentType
+  agentType         AgentType
+  status            AgentStatus      @default(IDLE)
+  status            AgentStatus      @default(IDLE)
+  reputationScore   Int              @default(1000)
+  reputationScore   Int              @default(1000)
+  hourlyRate        Float            @default(50)
+  hourlyRate        Float            @default(50)
+  successRate       Float            @default(0.85)
+  successRate       Float            @default(0.85)
+  totalValueCreated Float            @default(0)
+  totalValueCreated Float            @default(0)
+  totalEarnings     Float            @default(0)
+  totalEarnings     Float            @default(0)
+  configuration     Json?
+  configuration     Json?
+  tasksCompleted    Int              @default(0)
+  tasksCompleted    Int              @default(0)
+  specialties       String[]
+  specialties       String[]
+  ownerId           String
+  ownerId           String
+  createdAt         DateTime         @default(now())
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime
+  updatedAt         DateTime
+  users             users            @relation(fields: [ownerId], references: [id])
+  users             users            @relation(fields: [ownerId], references: [id])
+  AgentEarnings     AgentEarnings[]
+  AgentEarnings     AgentEarnings[]
+  BusinessAgents    BusinessAgents[]
+  BusinessAgents    BusinessAgents[]
+  Contracts         Contracts[]
+  Contracts         Contracts[]
+  stakes            stakes[]
+  stakes            stakes[]
+  Transactions      Transactions[]
+  Transactions      Transactions[]
+  sentMessages      Message[]        @relation("SentMessages")
+  sentMessages      Message[]        @relation("SentMessages")
+  receivedMessages  Message[]        @relation("ReceivedMessages")
+  receivedMessages  Message[]        @relation("ReceivedMessages")
+
+
+  teamAgents     TeamAgent[]
+  teamAgents     TeamAgent[]
+  capabilities   String?
+  capabilities   String?
+  systemPrompt   String?     @map("system_prompt")
+  systemPrompt   String?     @map("system_prompt")
+  modelProvider  String?     @default("ollama-local") @map("model_provider")
+  modelProvider  String?     @default("ollama-local") @map("model_provider")
+  modelName      String?     @default("llama2") @map("model_name")
+  modelName      String?     @default("llama2") @map("model_name")
+  ollamaEndpoint String?     @map("ollama_endpoint")
+  ollamaEndpoint String?     @map("ollama_endpoint")
+  apiEndpoint    String?     @map("api_endpoint")
+  apiEndpoint    String?     @map("api_endpoint")
+  endpoint       String?     @map("endpoint")
+  endpoint       String?     @map("endpoint")
+  nodeTasks      NodeTask[]
+  nodeTasks      NodeTask[]
+  templates      Template[]
+  templates      Template[]
+
+
+  @@index([agentType])
+  @@index([agentType])
+  @@index([ownerId])
+  @@index([ownerId])
+  @@index([reputationScore])
+  @@index([reputationScore])
+  @@map("agents")
+  @@map("agents")
+}
+}
+
+
+model AgentEarnings {
+model AgentEarnings {
+  id        String   @id
+  id        String   @id
+  agentId   String
+  agentId   String
+  amount    Float
+  amount    Float
+  source    String
+  source    String
+  sourceId  String?
+  sourceId  String?
+  createdAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  agents    agents   @relation(fields: [agentId], references: [id])
+  agents    agents   @relation(fields: [agentId], references: [id])
+
+
+  @@index([agentId])
+  @@index([agentId])
+  @@map("AgentEarnings")
+  @@map("AgentEarnings")
+}
+}
+
+
+model businesses {
+model businesses {
+  id                      String           @id
+  id                      String           @id
+  name                    String
+  name                    String
+  description             String?
+  description             String?
+  businessType            BusinessType
+  businessType            BusinessType
+  status                  BusinessStatus   @default(ACTIVE)
+  status                  BusinessStatus   @default(ACTIVE)
+  revenue                 Float            @default(0)
+  revenue                 Float            @default(0)
+  profit                  Float            @default(0)
+  profit                  Float            @default(0)
+  monthlyRecurringRevenue Float            @default(0)
+  monthlyRecurringRevenue Float            @default(0)
+  configuration           Json?
+  configuration           Json?
+  ownerId                 String
+  ownerId                 String
+  createdAt               DateTime         @default(now())
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime
+  updatedAt               DateTime
+  users                   users            @relation(fields: [ownerId], references: [id])
+  users                   users            @relation(fields: [ownerId], references: [id])
+  BusinessAgents          BusinessAgents[]
+  BusinessAgents          BusinessAgents[]
+  Contracts               Contracts[]
+  Contracts               Contracts[]
+  Transactions            Transactions[]
+  Transactions            Transactions[]
+
+
+  @@index([ownerId])
+  @@index([ownerId])
+  @@map("businesses")
+  @@map("businesses")
+}
+}
+
+
+model BusinessAgents {
+model BusinessAgents {
+  id         String     @id
+  id         String     @id
+  businessId String
+  businessId String
+  agentId    String
+  agentId    String
+  role       String?
+  role       String?
+  assignedAt DateTime   @default(now())
+  assignedAt DateTime   @default(now())
+  agents     agents     @relation(fields: [agentId], references: [id])
+  agents     agents     @relation(fields: [agentId], references: [id])
+  businesses businesses @relation(fields: [businessId], references: [id])
+  businesses businesses @relation(fields: [businessId], references: [id])
+
+
+  @@unique([businessId, agentId])
+  @@unique([businessId, agentId])
+  @@map("BusinessAgents")
+  @@map("BusinessAgents")
+}
+}
+
+
+model Contracts {
+model Contracts {
+  id           String         @id
+  id           String         @id
+  businessId   String
+  businessId   String
+  agentId      String
+  agentId      String
+  terms        Json?
+  terms        Json?
+  status       ContractStatus @default(ACTIVE)
+  status       ContractStatus @default(ACTIVE)
+  valueCreated Float          @default(0)
+  valueCreated Float          @default(0)
+  agentCut     Float          @default(0.15)
+  agentCut     Float          @default(0.15)
+  createdAt    DateTime       @default(now())
+  createdAt    DateTime       @default(now())
+  expiresAt    DateTime?
+  expiresAt    DateTime?
+  agents       agents         @relation(fields: [agentId], references: [id])
+  agents       agents         @relation(fields: [agentId], references: [id])
+  businesses   businesses     @relation(fields: [businessId], references: [id])
+  businesses   businesses     @relation(fields: [businessId], references: [id])
+
+
+  @@index([businessId, agentId])
+  @@index([businessId, agentId])
+  @@map("Contracts")
+  @@map("Contracts")
+}
+}
+
+
+model Notifications {
+model Notifications {
+  id        String           @id
+  id        String           @id
+  userId    String
+  userId    String
+  type      NotificationType
+  type      NotificationType
+  title     String
+  title     String
+  message   String
+  message   String
+  read      Boolean          @default(false)
+  read      Boolean          @default(false)
+  data      Json?
+  data      Json?
+  createdAt DateTime         @default(now())
+  createdAt DateTime         @default(now())
+  users     users            @relation(fields: [userId], references: [id])
+  users     users            @relation(fields: [userId], references: [id])
+
+
+  @@index([userId, read])
+  @@index([userId, read])
+  @@map("Notifications")
+  @@map("Notifications")
+}
+}
+
+
+model stakes {
+model stakes {
+  id              String   @id
+  id              String   @id
+  stakeAmount     Float
+  stakeAmount     Float
+  sharePercentage Float
+  sharePercentage Float
+  stakerId        String
+  stakerId        String
+  agentId         String
+  agentId         String
+  totalReturns    Float    @default(0)
+  totalReturns    Float    @default(0)
+  createdAt       DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
+  updatedAt       DateTime
+  agents          agents   @relation(fields: [agentId], references: [id])
+  agents          agents   @relation(fields: [agentId], references: [id])
+  users           users    @relation(fields: [stakerId], references: [id])
+  users           users    @relation(fields: [stakerId], references: [id])
+  rewards         Reward[]
+  rewards         Reward[]
+
+
+  @@unique([stakerId, agentId])
+  @@unique([stakerId, agentId])
+  @@index([agentId])
+  @@index([agentId])
+  @@map("stakes")
+  @@map("stakes")
+}
+}
+
+
+model Transactions {
+model Transactions {
+  id                                 String            @id
+  id                                 String            @id
+  type                               TransactionType
+  type                               TransactionType
+  amount                             Float
+  amount                             Float
+  currency                           String            @default("USD")
+  currency                           String            @default("USD")
+  fromUserId                         String?
+  fromUserId                         String?
+  toUserId                           String?
+  toUserId                           String?
+  agentId                            String?
+  agentId                            String?
+  businessId                         String?
+  businessId                         String?
+  description                        String?
+  description                        String?
+  metadata                           Json?
+  metadata                           Json?
+  status                             TransactionStatus @default(PENDING)
+  status                             TransactionStatus @default(PENDING)
+  createdAt                          DateTime          @default(now())
+  createdAt                          DateTime          @default(now())
+  completedAt                        DateTime?
+  completedAt                        DateTime?
+  agents                             agents?           @relation(fields: [agentId], references: [id])
+  agents                             agents?           @relation(fields: [agentId], references: [id])
+  businesses                         businesses?       @relation(fields: [businessId], references: [id])
+  businesses                         businesses?       @relation(fields: [businessId], references: [id])
+  users_Transaction_fromUserIdToUser users?            @relation("Transaction_fromUserIdToUser", fields: [fromUserId], references: [id])
+  users_Transaction_fromUserIdToUser users?            @relation("Transaction_fromUserIdToUser", fields: [fromUserId], references: [id])
+  users_Transaction_toUserIdToUser   users?            @relation("Transaction_toUserIdToUser", fields: [toUserId], references: [id])
+  users_Transaction_toUserIdToUser   users?            @relation("Transaction_toUserIdToUser", fields: [toUserId], references: [id])
+
+
+  @@index([fromUserId, toUserId])
+  @@index([fromUserId, toUserId])
+  @@map("Transactions")
+  @@map("Transactions")
+}
+}
+
+
+model users {
+model users {
+  id                                       String          @id
+  id                                       String          @id
+  email                                    String          @unique
+  email                                    String          @unique
+  passwordHash                             String
+  passwordHash                             String
+  name                                     String?
+  name                                     String?
+  avatar                                   String?
+  avatar                                   String?
+  balance                                  Float           @default(0)
+  balance                                  Float           @default(0)
+  reputationScore                          Int             @default(1000)
+  reputationScore                          Int             @default(1000)
+  role                                     Role            @default(users)
+  role                                     Role            @default(users)
+  createdAt                                DateTime        @default(now())
+  createdAt                                DateTime        @default(now())
+  updatedAt                                DateTime
+  updatedAt                                DateTime
+  agents                                   agents[]
+  agents                                   agents[]
+  businesses                               businesses[]
+  businesses                               businesses[]
+  Notifications                            Notifications[]
+  Notifications                            Notifications[]
+  stakes                                   stakes[]
+  stakes                                   stakes[]
+  Transaction_Transaction_fromUserIdToUser Transactions[]  @relation("Transaction_fromUserIdToUser")
+  Transaction_Transaction_fromUserIdToUser Transactions[]  @relation("Transaction_fromUserIdToUser")
+  Transaction_Transaction_toUserIdToUser   Transactions[]  @relation("Transaction_toUserIdToUser")
+  Transaction_Transaction_toUserIdToUser   Transactions[]  @relation("Transaction_toUserIdToUser")
+  teams                                    Team[]
+  teams                                    Team[]
+  recordings                               Recording[]
+  recordings                               Recording[]
+  nodes                                    Node[]
+  nodes                                    Node[]
+
+
+  nodeTasks NodeTask[]
+  nodeTasks NodeTask[]
+  proposals Proposal[]
+  proposals Proposal[]
+  votes     Vote[]
+  votes     Vote[]
+  auditLogs AuditLog[]
+  auditLogs AuditLog[]
+  reviews   Review[]
+  reviews   Review[]
+
+
+  @@index([email])
+  @@index([email])
+  @@index([reputationScore])
+  @@index([reputationScore])
+  @@map("users")
+  @@map("users")
+  consents Consent[]
+  consents Consent[]
+  dataRequests DataRequest[]
+  dataRequests DataRequest[]
+  integrations Integration[]
+  integrations Integration[]
+}
+}
+
+
+enum AgentStatus {
+enum AgentStatus {
+  IDLE
+  IDLE
+  WORKING
+  WORKING
+  TRAINING
+  TRAINING
+  MAINTENANCE
+  MAINTENANCE
+  TERMINATED
+  TERMINATED
+}
+}
+
+
+enum AgentType {
+enum AgentType {
+  MARKETING
+  MARKETING
+  CODING
+  CODING
+  RESEARCH
+  RESEARCH
+  SALES
+  SALES
+  SUPPORT
+  SUPPORT
+  ANALYTICS
+  ANALYTICS
+  NEGOTIATION
+  NEGOTIATION
+  CREATIVE
+  CREATIVE
+}
+}
+
+
+enum BusinessStatus {
+enum BusinessStatus {
+  ACTIVE
+  ACTIVE
+  PAUSED
+  PAUSED
+  SCALING
+  SCALING
+  TERMINATED
+  TERMINATED
+}
+}
+
+
+enum BusinessType {
+enum BusinessType {
+  ECOMMERCE
+  ECOMMERCE
+  SAAS
+  SAAS
+  AGENCY
+  AGENCY
+  CONTENT
+  CONTENT
+  CONSULTING
+  CONSULTING
+  MARKETPLACE
+  MARKETPLACE
+}
+}
+
+
+enum ContractStatus {
+enum ContractStatus {
+  ACTIVE
+  ACTIVE
+  COMPLETED
+  COMPLETED
+  TERMINATED
+  TERMINATED
+  DISPUTED
+  DISPUTED
+}
+}
+
+
+enum NotificationType {
+enum NotificationType {
+  AGENT_COMPLETED_TASK
+  AGENT_COMPLETED_TASK
+  BUSINESS_REVENUE
+  BUSINESS_REVENUE
+  STAKE_PAYOUT
+  STAKE_PAYOUT
+  SYSTEM_ALERT
+  SYSTEM_ALERT
+  MARKET_UPDATE
+  MARKET_UPDATE
+}
+}
+
+
+enum Role {
+enum Role {
+  users
+  users
+  ADMIN
+  ADMIN
+}
+}
+
+
+enum TransactionStatus {
+enum TransactionStatus {
+  PENDING
+  PENDING
+  COMPLETED
+  COMPLETED
+  FAILED
+  FAILED
+  REFUNDED
+  REFUNDED
+}
+}
+
+
+enum TransactionType {
+enum TransactionType {
+  AGENT_PAYMENT
+  AGENT_PAYMENT
+  STAKE_PURCHASE
+  STAKE_PURCHASE
+  DIVIDEND_PAYOUT
+  DIVIDEND_PAYOUT
+  BUSINESS_REVENUE
+  BUSINESS_REVENUE
+  WITHDRAWAL
+  WITHDRAWAL
+  DEPOSIT
+  DEPOSIT
+  REFERRAL_BONUS
+  REFERRAL_BONUS
+}
+}
+
+
+// ---------- Added full models from original design ----------
+// ---------- Added full models from original design ----------
+model Reward {
+model Reward {
+  id        String   @id @default(cuid())
+  id        String   @id @default(cuid())
+  stakeId   String
+  stakeId   String
+  stake     stakes   @relation(fields: [stakeId], references: [id], onDelete: Cascade)
+  stake     stakes   @relation(fields: [stakeId], references: [id], onDelete: Cascade)
+  amount    Float
+  amount    Float
+  createdAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+
+  @@map("rewards")
+  @@map("rewards")
+}
+}
+
+
+model Team {
+model Team {
+  id          String      @id @default(cuid())
+  id          String      @id @default(cuid())
+  name        String
+  name        String
+  description String?
+  description String?
+  userId      String
+  userId      String
+  user        users       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        users       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agents      TeamAgent[]
+  agents      TeamAgent[]
+  createdAt   DateTime    @default(now())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  updatedAt   DateTime    @updatedAt
+
+
+  @@unique([name, userId])
+  @@unique([name, userId])
+  @@index([userId])
+  @@index([userId])
+  @@map("teams")
+  @@map("teams")
+}
+}
+
+
+model TeamAgent {
+model TeamAgent {
+  id        String   @id @default(cuid())
+  id        String   @id @default(cuid())
+  teamId    String
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  agentId   String
+  agentId   String
+  agent     agents   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agent     agents   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+
+  @@unique([teamId, agentId])
+  @@unique([teamId, agentId])
+  @@index([teamId])
+  @@index([teamId])
+  @@index([agentId])
+  @@index([agentId])
+  @@map("team_agents")
+  @@map("team_agents")
+}
+}
+
+
+model Message {
+model Message {
+  id          String    @id @default(cuid())
+  id          String    @id @default(cuid())
+  senderId    String
+  senderId    String
+  sender      agents    @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  sender      agents    @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId  String
+  receiverId  String
+  receiver    agents    @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiver    agents    @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content     String
+  content     String
+  status      String    @default("sent")
+  status      String    @default("sent")
+  createdAt   DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  deliveredAt DateTime?
+  deliveredAt DateTime?
+
+
+  @@map("messages")
+  @@map("messages")
+}
+}
+
+
+model Recording {
+model Recording {
+  id         String   @id @default(cuid())
+  id         String   @id @default(cuid())
+  userId     String
+  userId     String
+  user       users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  filename   String
+  filename   String
+  filepath   String
+  filepath   String
+  duration   Int?
+  duration   Int?
+  transcript String?
+  transcript String?
+  analysis   String?
+  analysis   String?
+  createdAt  DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime @updatedAt
+
+
+  @@map("recordings")
+  @@map("recordings")
+}
+}
+
+
+// ---------- Added Node models ----------
+// ---------- Added Node models ----------
+model Node {
+model Node {
+  id          String       @id @default(cuid())
+  id          String       @id @default(cuid())
+  ownerId     String
+  ownerId     String
+  owner       users        @relation(fields: [ownerId], references: [id])
+  owner       users        @relation(fields: [ownerId], references: [id])
+  name        String
+  name        String
+  description String?
+  description String?
+  status      String       @default("offline")
+  status      String       @default("offline")
+  specs       Json
+  specs       Json
+  location    String?
+  location    String?
+  version     String
+  version     String
+  lastPing    DateTime     @default(now())
+  lastPing    DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  updatedAt   DateTime     @updatedAt
+  tasks       NodeTask[]
+  tasks       NodeTask[]
+  rewards     NodeReward[]
+  rewards     NodeReward[]
+
+
+  @@map("nodes")
+  @@map("nodes")
+}
+}
+
+
+model NodeTask {
+model NodeTask {
+  id          String       @id @default(cuid())
+  id          String       @id @default(cuid())
+  nodeId      String
+  nodeId      String
+  node        Node         @relation(fields: [nodeId], references: [id])
+  node        Node         @relation(fields: [nodeId], references: [id])
+  agentId     String
+  agentId     String
+  agent       agents       @relation(fields: [agentId], references: [id])
+  agent       agents       @relation(fields: [agentId], references: [id])
+  userId      String
+  userId      String
+  user        users        @relation(fields: [userId], references: [id])
+  user        users        @relation(fields: [userId], references: [id])
+  type        String
+  type        String
+  input       Json?
+  input       Json?
+  output      Json?
+  output      Json?
+  status      String       @default("pending")
+  status      String       @default("pending")
+  startedAt   DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  completedAt DateTime?
+  reward      Float?
+  reward      Float?
+  createdAt   DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+  nodeRewards NodeReward[]
+  nodeRewards NodeReward[]
+
+
+  @@map("node_tasks")
+  @@map("node_tasks")
+}
+}
+
+
+model NodeReward {
+model NodeReward {
+  id        String    @id @default(cuid())
+  id        String    @id @default(cuid())
+  nodeId    String
+  nodeId    String
+  node      Node      @relation(fields: [nodeId], references: [id])
+  node      Node      @relation(fields: [nodeId], references: [id])
+  amount    Float
+  amount    Float
+  reason    String?
+  reason    String?
+  taskId    String?
+  taskId    String?
+  task      NodeTask? @relation(fields: [taskId], references: [id])
+  task      NodeTask? @relation(fields: [taskId], references: [id])
+  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now())
+
+
+  @@map("node_rewards")
+  @@map("node_rewards")
+}
+}
+
+
+// ---------- Added Proposal and Vote models ----------
+// ---------- Added Proposal and Vote models ----------
+model Proposal {
+model Proposal {
+  id          String   @id @default(cuid())
+  id          String   @id @default(cuid())
+  title       String
+  title       String
+  description String
+  description String
+  options     Json
+  options     Json
+  endDate     DateTime
+  endDate     DateTime
+  createdById String
+  createdById String
+  createdBy   users    @relation(fields: [createdById], references: [id])
+  createdBy   users    @relation(fields: [createdById], references: [id])
+  status      String   @default("active")
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @updatedAt
+  votes       Vote[]
+  votes       Vote[]
+
+
+  @@map("proposals")
+  @@map("proposals")
+}
+}
+
+
+model Vote {
+model Vote {
+  id         String   @id @default(cuid())
+  id         String   @id @default(cuid())
+  proposalId String
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  userId     String
+  userId     String
+  user       users    @relation(fields: [userId], references: [id])
+  user       users    @relation(fields: [userId], references: [id])
+  option     String
+  option     String
+  weight     Float
+  weight     Float
+  createdAt  DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+
+  @@unique([proposalId, userId])
+  @@unique([proposalId, userId])
+  @@map("votes")
+  @@map("votes")
+}
+}
+
+
+model AuditLog {
+model AuditLog {
+  id        String   @id @default(cuid())
+  id        String   @id @default(cuid())
+  userId    String?
+  userId    String?
+  user      users?   @relation(fields: [userId], references: [id])
+  user      users?   @relation(fields: [userId], references: [id])
+  action    String // e.g., "CREATE_AGENT", "STAKE", "VOTE"
+  action    String // e.g., "CREATE_AGENT", "STAKE", "VOTE"
+  entity    String? // e.g., "Agent", "Stake", "Proposal"
+  entity    String? // e.g., "Agent", "Stake", "Proposal"
+  entityId  String? // ID of the affected entity
+  entityId  String? // ID of the affected entity
+  oldData   Json? // previous state (if update/delete)
+  oldData   Json? // previous state (if update/delete)
+  newData   Json? // new state (if create/update)
+  newData   Json? // new state (if create/update)
+  ipAddress String?
+  ipAddress String?
+  userAgent String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+
+  @@map("audit_logs")
+  @@map("audit_logs")
+}
+}
+
+
+model Review {
+model Review {
+  id         String   @id @default(cuid())
+  id         String   @id @default(cuid())
+  rating     Int // 1-5
+  rating     Int // 1-5
+  comment    String?
+  comment    String?
+  userId     String
+  userId     String
+  user       users    @relation(fields: [userId], references: [id])
+  user       users    @relation(fields: [userId], references: [id])
+  templateId String
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id])
+  template   Template @relation(fields: [templateId], references: [id])
+  createdAt  DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime @updatedAt
+
+
+  @@unique([userId, templateId]) // one review per user per template
+  @@unique([userId, templateId]) // one review per user per template
+  @@map("reviews")
+  @@map("reviews")
+}
+}
+
+
+model Template {
+model Template {
+  id          String   @id @default(cuid())
+  id          String   @id @default(cuid())
+  title       String
+  title       String
+  description String?
+  description String?
+  category    String
+  category    String
+  price       Float
+  price       Float
+  unit        String // e.g., "hour", "project"
+  unit        String // e.g., "hour", "project"
+  status      String   @default("active")
+  status      String   @default("active")
+  agentId     String
+  agentId     String
+  agent       agents   @relation(fields: [agentId], references: [id])
+  agent       agents   @relation(fields: [agentId], references: [id])
+  createdAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @updatedAt
+
+
+  reviews Review[]
+  reviews Review[]
+
+
+  @@map("templates")
+  @@map("templates")
+}
+}
+
+
+model Consent {
+model Consent {
+  id         String   @id @default(cuid())
+  id         String   @id @default(cuid())
+  userId     String
+  userId     String
+  user       users    @relation(fields: [userId], references: [id])
+  user       users    @relation(fields: [userId], references: [id])
+  purpose    String   // e.g., "marketing", "analytics", "data_sharing"
+  purpose    String   // e.g., "marketing", "analytics", "data_sharing"
+  granted    Boolean  @default(false)
+  granted    Boolean  @default(false)
+  grantedAt  DateTime?
+  grantedAt  DateTime?
+  revokedAt  DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime @updatedAt
+
+
+  @@unique([userId, purpose])
+  @@unique([userId, purpose])
+  @@map("consents")
+  @@map("consents")
+}
+}
+
+
+model DataRequest {
+model DataRequest {
+  id          String   @id @default(cuid())
+  id          String   @id @default(cuid())
+  userId      String
+  userId      String
+  user        users    @relation(fields: [userId], references: [id])
+  user        users    @relation(fields: [userId], references: [id])
+  type        String   // "ACCESS", "DELETION", "RECTIFICATION"
+  type        String   // "ACCESS", "DELETION", "RECTIFICATION"
+  status      String   @default("PENDING") // PENDING, COMPLETED, REJECTED
+  status      String   @default("PENDING") // PENDING, COMPLETED, REJECTED
+  requestedAt DateTime @default(now())
+  requestedAt DateTime @default(now())
+  completedAt DateTime?
+  completedAt DateTime?
+  notes       String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @updatedAt
+
+
+  @@map("data_requests")
+  @@map("data_requests")
+}
+}
+
+
+model Connector {
+model Connector {
+  id               String         @id @default(cuid())
+  id               String         @id @default(cuid())
+  name             String         @unique
+  name             String         @unique
+  description      String?
+  description      String?
+  icon             String?        // icon name or URL
+  icon             String?        // icon name or URL
+  authType         String         // "oauth2", "apikey", "none"
+  authType         String         // "oauth2", "apikey", "none"
+  authConfig       Json?          // OAuth client ID, scopes, etc.
+  authConfig       Json?          // OAuth client ID, scopes, etc.
+  configSchema     Json?          // JSON schema for required fields
+  configSchema     Json?          // JSON schema for required fields
+  isEnabled        Boolean        @default(true)
+  isEnabled        Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  updatedAt        DateTime       @updatedAt
+  integrations     Integration[]
+  integrations     Integration[]
+  @@map("connectors")
+  @@map("connectors")
+}
+}
+
+
+model Integration {
+  id             String        @id @default(cuid())
+  id             String        @id @default(cuid())
+  userId         String
+  userId         String
+  user           users         @relation(fields: [userId], references: [id])
+  user           users         @relation(fields: [userId], references: [id])
+  connectorId    String
+  connectorId    String
+  connector      Connector     @relation(fields: [connectorId], references: [id])
+  connector      Connector     @relation(fields: [connectorId], references: [id])
+  name           String?       // custom name for this connection
+  name           String?       // custom name for this connection
+  config         Json?         // user's specific configuration (API keys, tokens, etc.)
+  accessToken   String?   // encrypted OAuth access token
+  refreshToken  String?   // encrypted refresh token
+  tokenExpiresAt DateTime? // when accessToken expires
+  status         String        @default("active") // active, error, disabled
+  status         String        @default("active") // active, error, disabled
+  lastUsedAt     DateTime?
+  lastUsedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  updatedAt      DateTime      @updatedAt
+
+
+  @@unique([userId, connectorId])
+  @@unique([userId, connectorId])
+  @@map("integrations")
+  @@map("integrations")
+}
+}

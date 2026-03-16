@@ -1,4 +1,4 @@
-﻿generator client {
+generator client {
   provider = "prisma-client-js"
 }
 
@@ -93,6 +93,7 @@ model agents {
   hourlyRate                           Float            @default(50)
   successRate                          Float            @default(0.85)
   totalValueCreated                    Float            @default(0)
+  totalEarnings                        Float            @default(0)
   configuration                        Json?
   tasksCompleted                       Int              @default(0)
   specialties                          String[]
@@ -121,8 +122,6 @@ model agents {
   @@index([agentType])
   @@index([ownerId])
   @@index([reputationScore])
-  revenueShare   Float?     @default(0) // percentage (0-100) of earnings to distribute to stakers
-  totalEarnings  Float      @default(0) // lifetime earnings
 }
 
 model audit_logs {
@@ -500,18 +499,4 @@ enum TransactionType {
   WITHDRAWAL
   DEPOSIT
   REFERRAL_BONUS
-}
-
-model AgentEarning {
-  id          String   @id @default(cuid())
-  agentId     String
-  agent       agents   @relation(fields: [agentId], references: [id])
-  amount      Float
-  source      String
-  description String?
-  distributed Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("agent_earnings")
 }

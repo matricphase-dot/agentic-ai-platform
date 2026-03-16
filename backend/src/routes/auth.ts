@@ -1,4 +1,5 @@
-﻿import { Router } from 'express';
+﻿import * as crypto from 'crypto';
+import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
@@ -25,10 +26,13 @@ router.post('/register', async (req, res) => {
     // Create user
     const user = await (prisma as any).users.create({
       data: {
+    id: crypto.randomUUID(),
         email,
         passwordHash: hashedPassword,
         name,
-        role: 'user'
+        role: 'users',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }
     });
 
@@ -182,6 +186,16 @@ router.post('/login', async (req, res) => {
   }
 });
 export default router;
+
+
+
+
+
+
+
+
+
+
 
 
 
