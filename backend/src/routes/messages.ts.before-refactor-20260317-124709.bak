@@ -1,0 +1,159 @@
+﻿import express from 'express';
+import { authenticate } from '../middleware/auth';
+import { prisma } from '../lib/prisma';
+
+const router = express.Router();
+
+// Send a message from one agent to another
+router.post('/', authenticate, async (req, res) => {
+  try {
+    const { senderId, receiverId, content } = req.body;
+    const userId = (req as any).user.id;
+
+    // Verify that the sender agent belongs to the authenticated user
+    const senderAgent = await prisma.agents.findFirst({
+      where: {
+        id: senderId,
+        ownerId: userId
+      }
+    });
+
+    if (!senderAgent) {
+      return res.status(403).json({ error: 'Sender agent not found or not owned by you' });
+    }
+
+    // Verify that the receiver agent exists (optional, could be any agent)
+    const receiverAgent = await prisma.agents.findUnique({
+      where: { id: receiverId }
+    });
+
+    if (!receiverAgent) {
+      return res.status(404).json({ error: 'Receiver agent not found' });
+    }
+
+    const message = await prisma.messages.create({
+      data: {
+        senderId,
+        receiverId,
+        content: JSON.stringify(content),
+        status: 'sent'
+      },
+      include: {
+        agents_messages_senderIdToagents: true,
+        agents_messages_receiverIdToagents: true
+      }
+    });
+
+    res.json(message);
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// Get messages for an agent (as receiver or sender)
+router.get('/:agentId', authenticate, async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    const userId = (req as any).user.id;
+
+    // Verify agent ownership
+    const agent = await prisma.agents.findFirst({
+      where: {
+        id: agentId,
+        ownerId: userId
+      }
+    });
+
+    if (!agent) {
+      return res.status(403).json({ error: 'Agent not found or not owned by you' });
+    }
+
+    const messages = await prisma.messages.findMany({
+      where: {
+        OR: [
+          { receiverId: agentId },
+          { senderId: agentId }
+        ]
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        agents_messages_senderIdToagents: true,
+        agents_messages_receiverIdToagents: true
+      }
+    });
+
+    res.json(messages);
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Get inbox for the authenticated user (messages received by user's agents)
+router.get('/inbox', authenticate, async (req, res) => {
+  try {
+    const userId = (req as any).user.id;
+
+    // Find all agents owned by the user
+    const userAgents = await prisma.agents.findMany({
+      where: { ownerId: userId },
+      select: { id: true }
+    });
+    const agentIds = userAgents.map(a => a.id);
+
+    const messages = await prisma.messages.findMany({
+      where: {
+        receiverId: { in: agentIds }
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        agents_messages_senderIdToagents: true,
+        agents_messages_receiverIdToagents: true
+      }
+    });
+
+    res.json(messages);
+  } catch (error) {
+    console.error('Error fetching inbox:', error);
+    res.status(500).json({ error: 'Failed to fetch inbox' });
+  }
+});
+
+// Update message status (e.g., mark as read)
+router.patch('/:messageId', authenticate, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { status } = req.body; // e.g., 'read', 'delivered'
+    const userId = (req as any).user.id;
+
+    // Verify that the message is for an agent owned by the user
+    const message = await prisma.messages.findFirst({
+      where: {
+        id: messageId,
+        agents_messages_receiverIdToagents: {
+          ownerId: userId
+        }
+      }
+    });
+
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found or not accessible' });
+    }
+
+    const updated = await prisma.messages.update({
+      where: { id: messageId },
+      data: {
+        status,
+        ...(status === 'delivered' ? { deliveredAt: new Date() } : {})
+      }
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Error updating message:', error);
+    res.status(500).json({ error: 'Failed to update message' });
+  }
+});
+
+export default router;

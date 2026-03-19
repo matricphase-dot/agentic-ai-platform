@@ -1,4 +1,6 @@
-﻿import teamsRoute from './routes/teams';
+﻿import { initSentry } from './sentry';
+import teamsRoute from './routes/teams';
+import inviteRoutes from './routes/invite';
 import messagesRoute from './routes/messages';
 import agentVersionsRoute from './routes/agentVersions';
 import testRoute from './routes/test';
@@ -15,21 +17,34 @@ import agentsRoute from './routes/agents';
 import governanceRoute from './routes/governance';
 import aiqRoutes from './routes/aiq';
 import { PrismaClient } from '@prisma/client';
+import auditLogsRoute from './routes/auditLogs';
+import reviewsRoute from './routes/reviews';
+import webhooksRoute from './routes/webhooks';
+import settingsRoute from './routes/settings';
 
+import webhooksRoutes from './routes/webhooks';
 dotenv.config();
 
 const app = express();
+initSentry(app);
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  credentials: true,
+}));
 const port = process.env.PORT || 5000;
 const prisma = new PrismaClient();
 
 // Middleware
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/agents', agentsRoute);
+app.use('/api/settings', settingsRoute);
+app.use('/api/webhooks', webhooksRoute);
+app.use('/api/reviews', reviewsRoute);
+app.use('/api/audit-logs', auditLogsRoute);
 app.use('/api/messages', messagesRoute);
 app.use('/api/documents', documentsRoute);
 app.use('/api/recordings', recordingsRoute);
@@ -47,6 +62,7 @@ prisma.$connect()
   .then(() => console.log('Database connected successfully'))
   .catch((err) => console.error('Database connection failed:', err));
 
+app.use('/api/webhooks', webhooksRoutes);
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
   console.log('Routes registered:');
@@ -66,3 +82,26 @@ app.listen(port, () => {
 });
 
 export default app;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Sentry error handler must be before any other error middleware
+app.use(Sentry.Handlers.errorHandler());
+
+// Optional fallthrough error handler
+app.use(function onError(err: any, req: any, res: any, next: any) {
+  console.error(err);
+  res.statusCode = 500;
+  res.end(res.sentry + "\n");
+});

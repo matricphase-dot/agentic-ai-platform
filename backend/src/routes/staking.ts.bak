@@ -1,26 +1,112 @@
 ﻿import express from 'express';
+import { prisma } from '../lib/prisma';
 import { authenticate } from '../middleware/auth';
+import { calculateRewardRate } from '../services/stakingService';
 
 const router = express.Router();
 
-router.get('/stakes', authenticate, (req, res) => {
-  res.json([{ id: '1', amount: 100, status: 'active', agent: { id: 'a1', name: 'Agent 1' } }]);
+// Get user's stakes
+router.get('/', authenticate, async (req, res) => {
+  try {
+    const userId = (req as any).user.id;
+    const stakes = await prisma.stakes.findMany({
+      where: { stakerId: userId },
+      include: { agent: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(stakes);
+  } catch (error) {
+    console.error('Error fetching stakes:', error);
+    res.status(500).json({ error: 'Failed to fetch stakes' });
+  }
 });
 
-router.post('/stake', authenticate, (req, res) => {
-  res.status(201).json({ id: 'new-stake', amount: req.body.amount, status: 'active' });
+// Get single stake
+router.get('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = (req as any).user.id;
+    const stake = await prisma.stakes.findFirst({
+      where: { id, stakerId: userId },
+      include: { agent: true }
+    });
+    if (!stake) {
+      return res.status(404).json({ error: 'Stake not found' });
+    }
+    res.json(stake);
+  } catch (error) {
+    console.error('Error fetching stake:', error);
+    res.status(500).json({ error: 'Failed to fetch stake' });
+  }
 });
 
-router.post('/unstake/:stakeId', authenticate, (req, res) => {
-  res.json({ id: req.params.stakeId, status: 'unstaked' });
+// Create a stake
+router.post('/', authenticate, async (req, res) => {
+  try {
+    const { agentId, amount, sharePercentage } = req.body;
+    const userId = (req as any).user.id;
+
+    // Verify agent exists
+    const agent = await prisma.agents.findFirst({
+      where: { id: agentId, ownerId: userId }
+    });
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found or not owned by you' });
+    }
+
+    const stake = await prisma.stakes.create({
+      data: {
+        amount,
+        sharePercentage: sharePercentage || 0,
+        staker: { connect: { id: userId } },
+        agent: { connect: { id: agentId } }
+      }
+    });
+    res.status(201).json(stake);
+  } catch (error) {
+    console.error('Error creating stake:', error);
+    res.status(500).json({ error: 'Failed to create stake' });
+  }
 });
 
-router.get('/leaderboard', (req, res) => {
-  res.json([{ agent: { id: 'a1', name: 'Agent 1' }, _sum: { amount: 500 } }]);
-});
+// Claim rewards for a stake
+router.post('/:id/claim', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = (req as any).user.id;
 
-router.post('/claim', authenticate, (req, res) => {
-  res.status(501).json({ error: 'Reward claiming is temporarily disabled' });
+    const stake = await prisma.stakes.findFirst({
+      where: { id, stakerId: userId },
+      include: { agent: true }
+    });
+    if (!stake) {
+      return res.status(404).json({ error: 'Stake not found' });
+    }
+
+    // Simple reward calculation – you can adjust this logic
+    const rate = calculateRewardRate(stake.agent);
+    const rewardAmount = stake.amount * rate;
+
+    // Create reward record
+    const reward = await prisma.rewards.create({
+      data: {
+        stake: { connect: { id: stake.id } },
+        amount: rewardAmount
+      }
+    });
+
+    // Update stake total returns
+    await prisma.stakes.update({
+      where: { id: stake.id },
+      data: { totalReturns: { increment: rewardAmount } }
+    });
+
+    res.json(reward);
+  } catch (error) {
+    console.error('Error claiming reward:', error);
+    res.status(500).json({ error: 'Failed to claim reward' });
+  }
 });
 
 export default router;
+

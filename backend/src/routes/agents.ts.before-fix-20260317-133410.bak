@@ -1,0 +1,115 @@
+import { Router } from 'express';
+import { prisma } from '../lib/prisma';
+import { authenticate } from '../middleware/auth';
+import * as crypto from 'crypto';
+
+const router = Router();
+
+// Get all agents for current user
+router.get('/', authenticate, async (req, res) => {
+  try {
+    const agents = await (prisma as any).agents.findMany({
+      where: { owner_id: (req as any).user.id },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(agents);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch agents' });
+  }
+});
+
+// Get single agent
+router.get('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const agent = await (prisma as any).agents.findUnique({
+      where: { id }
+    });
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+    if (agent.owner_id !== (req as any).user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    res.json(agent);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch agent' });
+  }
+});
+
+// Create a new agent
+router.post('/', authenticate, async (req, res) => {
+  try {
+    const { name, description, capabilities, systemPrompt, modelProvider, modelName, status } = req.body;
+    const agent = await (prisma as any).agents.create({
+      data: {
+        id: crypto.randomUUID(),
+        owner_id: (req as any).user.id,
+        name,
+        description,
+        capabilities: capabilities ? String(capabilities) : null,
+        system_prompt: systemPrompt,
+        model_provider: modelProvider || 'ollama-local',
+        model_name: modelName || 'llama2',
+        status: status || 'active',
+        agentType: 'SUPPORT',
+        reputation_score: 1000,
+        hourly_rate: 50,
+        success_rate: 0.85,
+        total_value_created: 0,
+        tasks_completed: 0,
+        specialties: [],
+        configuration: {},
+        revenue_share: 0,
+        total_earnings: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+    });
+    res.status(201).json(agent);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to create agent' });
+  }
+});
+
+// Update an agent
+router.put('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const agent = await (prisma as any).agents.findUnique({ where: { id } });
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+    if (agent.owner_id !== (req as any).user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    const updated = await (prisma as any).agents.update({
+      where: { id },
+      data: req.body
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update agent' });
+  }
+});
+
+// Delete an agent
+router.delete('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const agent = await (prisma as any).agents.findUnique({ where: { id } });
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+    if (agent.owner_id !== (req as any).user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    await (prisma as any).agents.delete({ where: { id } });
+    res.status(204).send();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to delete agent' });
+  }
+});
+
+export default router;
+
+

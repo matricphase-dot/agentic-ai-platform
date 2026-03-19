@@ -54,12 +54,12 @@ router.post('/proposals', async (req, res) => {
         description,
         options,
         endDate: new Date(endDate),
-        createdById: req.user!.id,
+        createdById: (req as any).user!.id,
         status: 'active'
       }
     });
     res.json(proposal);
-  } catch (error) {
+  } catch (error) { console.error("Error in governance route:", error);
     console.error('Create proposal error:', error);
     res.status(500).json({ error: 'Failed to create proposal' });
   }
@@ -71,14 +71,14 @@ router.get('/proposals', async (req, res) => {
     let proposals = await (prisma as any).proposals.findMany({
       include: {
         _count: { select: { votes: true } },
-        createdBy: { select: { email: true } }
+        creator: { select: { email: true } }
       },
-      orderBy: { created_at: 'desc' }
+      orderBy: { createdAt: "desc" }
     });
     // Finalize any expired proposals
     proposals = await Promise.all(proposals.map(p => finalizeProposalIfNeeded(p)));
     res.json(proposals);
-  } catch (error) {
+  } catch (error) { console.error("Error in governance route:", error);
     console.error('Fetch proposals error:', error);
     res.status(500).json({ error: 'Failed to fetch proposals' });
   }
@@ -92,9 +92,9 @@ router.get('/proposals/:id', async (req, res) => {
       include: {
         votes: {
           include: { user: { select: { email: true } } },
-          orderBy: { created_at: 'desc' }
+          orderBy: { createdAt: "desc" }
         },
-        createdBy: { select: { email: true } }
+        creator: { select: { email: true } }
       }
     });
     if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
@@ -110,7 +110,7 @@ router.get('/proposals/:id', async (req, res) => {
     const totalWeight = (proposal as any).votes.reduce((sum, v) => sum + v.weight, 0);
 
     res.json({ ...proposal, results, totalWeight });
-  } catch (error) {
+  } catch (error) { console.error("Error in governance route:", error);
     console.error('Fetch proposal error:', error);
     res.status(500).json({ error: 'Failed to fetch proposal' });
   }
@@ -138,7 +138,7 @@ router.post('/proposals/:id/vote', async (req, res) => {
       where: {
         proposalId_userId: {
           proposalId: proposal.id,
-          userId: req.user!.id
+          userId: (req as any).user!.id
         }
       }
     });
@@ -151,7 +151,7 @@ router.post('/proposals/:id/vote', async (req, res) => {
 
     // Calculate vote weight based on user's total active stake
     const stakes = await (prisma as any).stakes.aggregate({
-      where: { userId: req.user!.id, status: 'active' },
+      where: { userId: (req as any).user!.id, status: 'active' },
       _sum: { amount: true }
     });
     const weight = stakes._sum.amount || 0;
@@ -159,13 +159,13 @@ router.post('/proposals/:id/vote', async (req, res) => {
     const vote = await (prisma as any).votes.create({
       data: {
         proposalId: proposal.id,
-        userId: req.user!.id,
+        userId: (req as any).user!.id,
         option,
         weight
       }
     });
     res.json(vote);
-  } catch (error) {
+  } catch (error) { console.error("Error in governance route:", error);
     console.error('Vote error:', error);
     res.status(500).json({ error: 'Failed to vote' });
   }
@@ -183,13 +183,16 @@ router.post('/proposals/:id/finalize', async (req, res) => {
     }
     proposal = await finalizeProposalIfNeeded(proposal);
     res.json(proposal);
-  } catch (error) {
+  } catch (error) { console.error("Error in governance route:", error);
     console.error('Finalize error:', error);
     res.status(500).json({ error: 'Failed to finalize proposal' });
   }
 });
 
 export default router;
+
+
+
 
 
 

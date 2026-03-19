@@ -1,0 +1,39 @@
+generator client {model agents {  id        String   @id @default(cuid())  revenueShare Float? @default(0)}  @@index([fromUserId, toUserId])  users_Transactions_toUserIdTousers   users?            @relation("Transactions_toUserIdTousers", fields: [toUserId], references: [id])  users_Transactions_fromUserIdTousers users?            @relation("Transactions_fromUserIdTousers", fields: [fromUserId], references: [id])  businesses                           businesses?       @relation(fields: [businessId], references: [id])  agents                               agents?           @relation(fields: [agentId], references: [id])  completedAt                          DateTime?  createdAt                            DateTime          @default(now())  status                               TransactionStatus @default(PENDING)  metadata                             Json?  description                          String?  businessId                           String?  agentId                              String?  toUserId                             String?  fromUserId                           String?  currency                             String            @default("USD")model agents {  id                                   String           @id  name                                 String  description                          String?  agentType                            AgentType  status                               AgentStatus      @default(IDLE)  reputationScore                      Int              @default(1000)  hourlyRate                           Float            @default(50)  successRate                          Float            @default(0.85)  totalValueCreated                    Float            @default(0)  totalEarnings                        Float            @default(0)  configuration                        Json?  tasksCompleted                       Int              @default(0)  specialties                          String[]  ownerId                              String  createdAt                            DateTime         @default(now())  updatedAt                            DateTime  capabilities                         String?  system_prompt                        String?  model_provider                       String?          @default("ollama-local")  model_name                           String?          @default("llama2")  ollama_endpoint                      String?  api_endpoint                         String?  endpoint                             String?  AgentEarnings                        AgentEarnings[]model businesses {  id                      String           @id  name                    String  description             String?  businessType            BusinessType  status                  BusinessStatus   @default(ACTIVE)  revenue                 Float            @default(0)  profit                  Float            @default(0)  monthlyRecurringRevenue Float            @default(0)model connectors {  id           String         @idmodel consents {  id        String    @idmodel integrations {  id          String     @id  userId      Stringmodel node_tasks {  id           String         @id  nodeId       String  agentId      Stringmodel nodes {  id           String         @idmodel users {  id                                          String          @id  email                                       String          @unique  passwordHash                                String  name                                        String?  avatar                                      String?  balance                                     Float           @default(0)  reputationScore                             Int             @default(1000)  role                                        Role            @default(users)  createdAt                                   DateTime        @default(now())  updatedAt                                   DateTime  Notifications                               Notifications[]  Transactions_Transactions_fromUserIdTousers Transactions[]  @relation("Transactions_fromUserIdTousers")  Transactions_Transactions_toUserIdTousers   Transactions[]  @relation("Transactions_toUserIdTousers")  agents                                      agents[]  audit_logs                                  audit_logs[]  businesses                                  businesses[]  consents                                    consents[]  data_requests                               data_requests[]  integrations                                integrations[]  node_tasks                                  node_tasks[]  nodes                                       nodes[]model votes {  id         String    @id  proposalId String  userId     String  option     String  weight     Float  createdAt  DateTime  @default(now())  proposals  proposals @relation(fields: [proposalId], references: [id], onDelete: Cascade)  users      users     @relation(fields: [userId], references: [id])  @@unique([proposalId, userId])}enum AgentStatus {  IDLE  WORKING  TRAINING  MAINTENANCE  TERMINATED}enum AgentType {  MARKETING  CODING  RESEARCH  SALES  SUPPORT  ANALYTICS  NEGOTIATION  CREATIVE}enum BusinessStatus {  ACTIVE  PAUSED  SCALING  TERMINATED}enum BusinessType {  ECOMMERCE  SAAS  AGENCY  CONTENT  CONSULTING  MARKETPLACE}enum ContractStatus {  ACTIVE  COMPLETED  TERMINATED  DISPUTED}enum NotificationType {  AGENT_COMPLETED_TASK  BUSINESS_REVENUE  STAKE_PAYOUT  SYSTEM_ALERT  MARKET_UPDATE}enum Role {  users  ADMIN}enum TransactionStatus {  PENDING  COMPLETED  FAILED  REFUNDEDmodel AgentEarning {  id          String   @id @default(cuid())  agentId     String  agent       agents   @relation(fields: [agentId], references: [id])  amount      Float  source      String  description String?  distributed Boolean  @default(false)  createdAt   DateTime @default(now())  updatedAt   DateTime @updatedAt  @@map("agent_earnings")}
+model citizens {
+  id        String   @id @default(cuid())
+  nation_id String
+  user_id   String
+  role      String?
+  joined_at DateTime @default(now())
+
+  nation nations @relation(fields: [nation_id], references: [id])
+  user   users   @relation(fields: [user_id], references: [id])
+
+  proposed_proposals nation_proposals[] @relation("proposer")
+  votes              nation_votes[]     @relation("voter")
+
+  @@unique([user_id, nation_id])
+}
+model agent_service_bindings {
+  agent_id      String
+  connection_id String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  agents      agents           @relation(fields: [agent_id], references: [id])
+  connection user_connections @relation(fields: [connection_id], references: [id])
+
+  @@id([agent_id, connection_id])
+}  settings UserSettings?
+model UserSettings {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         users    @relation(fields: [userId], references: [id])
+  primaryColor String?  // e.g., "#6366f1"
+  logoUrl      String?  // custom logo URL
+  theme        String?  @default("light") // light, dark, or custom
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("user_settings")
+}
