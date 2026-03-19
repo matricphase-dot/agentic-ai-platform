@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import axios from '../../../lib/axios';
@@ -9,7 +9,7 @@ export default function CreateAgentPage() {
   const [form, setForm] = useState({
     name: '',
     description: '',
-    agentType: 'generic',
+    agent_type: 'generic',
     model: 'llama3.2:3b',
     systemPrompt: 'You are a helpful assistant.',
     temperature: 0.7,
@@ -20,22 +20,58 @@ export default function CreateAgentPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsLoading(true);
+    setError('');
+
     try {
-      // Build configuration object for Ollama
-      const configuration = {
-        provider: 'ollama',
-        model: form.model,
-        systemPrompt: form.systemPrompt,
-        temperature: form.temperature,
-        url: process.env.NEXT_PUBLIC_OLLAMA_URL || 'http://localhost:11434/api/generate',
-      };
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Not authenticated');
+        }
+
+        // Build payload exactly as the backend expects (same as our working test)
+        const payload = {
+            name: agentName || 'New Agent',
+            description: description || 'Created via UI',
+            capabilities: capabilities || 'ollama:tinyllama',
+            systemPrompt: systemPrompt || 'You are a helpful assistant.',
+            modelProvider: modelProvider || 'ollama-local',
+            modelName: modelName || 'llama2',
+            status: 'active',
+            agentType: agentType || 'CUSTOM'
+        };
+
+        const response = await fetch('/api/agents', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to create agent');
+        }
+
+        const agent = await response.json();
+        toast.success('Agent created successfully!');
+        router.push('/agents');
+    } catch (err: any) {
+        console.error('Agent creation error:', err);
+        setError(err.message);
+        toast.error(err.message);
+    } finally {
+        setIsLoading(false);
+    }
+};
       const capabilitiesArray = form.capabilities.split(',').map(s => s.trim()).filter(Boolean);
 
       const res = await axios.post('/agents', {
         name: form.name,
         description: form.description,
-        agentType: form.agentType,
+        agent_type: form.agentType,
         configuration,
         hourlyRate: form.hourlyRate,
         capabilities: capabilitiesArray,
@@ -77,7 +113,7 @@ export default function CreateAgentPage() {
           <label className="block mb-1">Agent Type</label>
           <select
             value={form.agentType}
-            onChange={(e) => setForm({ ...form, agentType: e.target.value })}
+            onChange={(e) => setForm({ ...form, agent_type: e.target.value })}
             className="border p-2 w-full"
           >
             <option value="generic">Generic</option>
@@ -152,3 +188,4 @@ export default function CreateAgentPage() {
     </div>
   );
 }
+

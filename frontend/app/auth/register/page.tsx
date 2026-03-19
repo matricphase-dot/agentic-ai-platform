@@ -1,120 +1,102 @@
-﻿'use client';
+﻿"use client";
 
 import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import api from '@/lib/api';
 
 export default function RegisterPage() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+    setLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        // Auto-login after registration
-        await login(email, password);
-        router.push('/dashboard');
-      } else {
-        setError(data.error || 'Registration failed');
+      // Validate invite code first
+      const validateRes = await api.post('/invite/validate', { code: inviteCode });
+      if (!validateRes.data.valid) {
+        throw new Error(validateRes.data.reason || 'Invalid invite code');
+      }
+
+      // Proceed with registration
+      const res = await api.post('/auth/register', { name, email, password, inviteCode });
+      if (res.status === 201) {
+        // Auto-login or redirect to login
+        router.push('/auth/login?registered=true');
       }
     } catch (err: any) {
-      setError(err.message || 'Network error');
+      setError(err.response?.data?.error || err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
-        <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900">Create Account</h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500">
-              sign in to existing account
-            </Link>
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Name (optional)
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                minLength={8}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <p className="mt-1 text-xs text-gray-500">At least 8 characters</p>
-            </div>
-          </div>
-
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          )}
-
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+        <h2 className="text-2xl font-bold text-center">Create Account</h2>
+        {error && <div className="bg-red-100 text-red-700 p-3 rounded">{error}</div>}
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative flex w-full justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-              {loading ? 'Creating account...' : 'Sign up'}
-            </button>
+            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Invite Code</label>
+            <input
+              type="text"
+              required
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="XXXX-XXXX"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+          >
+            {loading ? 'Creating account...' : 'Sign up'}
+          </button>
         </form>
+        <p className="text-center text-sm text-gray-600">
+          Already have an account? <Link href="/auth/login" className="text-blue-600 hover:underline">Sign in</Link>
+        </p>
       </div>
     </div>
   );

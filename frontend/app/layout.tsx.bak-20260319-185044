@@ -1,0 +1,40 @@
+﻿import type { Metadata } from 'next';
+import OnboardingTour from '@/components/OnboardingTour';
+import { Inter } from 'next/font/google';
+import OnboardingTour from '@/components/OnboardingTour';
+import './globals.css';
+import OnboardingTour from '@/components/OnboardingTour';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import OnboardingTour from '@/components/OnboardingTour';
+import { AuthProvider } from './auth-provider';
+import OnboardingTour from '@/components/OnboardingTour';
+import Layout from '@/components/Layout';
+import OnboardingTour from '@/components/OnboardingTour';
+
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata: Metadata = {
+  title: 'Agentic AI Platform',
+  description: 'The AWS for AI Agents',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>
+        <ThemeProvider>
+          <AuthProvider>
+            <Layout>{children}</Layout>
+          </AuthProvider>
+        </ThemeProvider>
+      <OnboardingTour />`n</body>
+    </html>
+  );
+}
+
+
+

@@ -1,0 +1,18 @@
+﻿export default function Home() {
+  return (
+    <div className="p-8">
+      <h1 className="text-3xl font-bold mb-4">Welcome to Your App</h1>
+      <p className="text-gray-600 mb-6">
+        This is the home page of your application.
+      </p>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold mb-4">Getting Started</h2>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>Edit this page in <code className="bg-gray-100 px-1 rounded">app/page.tsx</code></li>
+          <li>Modify the layout in <code className="bg-gray-100 px-1 rounded">app/layout.tsx</code></li>
+          <li>Add pages in the <code className="bg-gray-100 px-1 rounded">app</code> directory</li>
+        </ul>
+      </div>
+    </div>
+  );
+}

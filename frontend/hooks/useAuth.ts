@@ -1,63 +1,42 @@
-import { useEffect, useState } from 'react';
+﻿import { useState, useEffect } from 'react';
+import api from '@/lib/api';
+import { useAnalytics } from './useAnalytics';
 import { useRouter } from 'next/navigation';
-import { authApi } from '@/lib/api';
-
-// Helper to convert snake_case to camelCase
-function toCamel(obj: any): any {
-  if (Array.isArray(obj)) {
-    return obj.map(v => toCamel(v));
-  } else if (obj !== null && obj !== undefined && obj.constructor === Object) {
-    return Object.keys(obj).reduce((result, key) => {
-      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-      result[camelKey] = toCamel(obj[key]);
-      return result;
-    }, {} as any);
-  }
-  return obj;
-}
 
 export function useAuth() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
+    if (token) {
+      api.get('/auth/me')
+        .then(res => setUser(res.data))
+        .catch(() => {
+          localStorage.removeItem('token');
+          setUser(null);
+        })
+        .finally(() => setLoading(false));
+    } else {
       setLoading(false);
-      return;
     }
-
-    authApi.getCurrentUser()
-      .then((res) => {
-        // Transform snake_case to camelCase
-        const transformedUser = toCamel(res.data.user);
-        setUser(transformedUser);
-      })
-      .catch((err) => {
-        console.error('Auth error:', err);
-        localStorage.removeItem('token');
-      })
-      .finally(() => setLoading(false));
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      const res = await authApi.login(email, password);
-      const { user, token } = res.data;
-      // Transform user data
-      const transformedUser = toCamel(user);
+      const res = await api.post('/auth/login', { email, password });
+      const { token, user } = res.data;
       localStorage.setItem('token', token);
-      setUser(transformedUser);
-      return { success: true };
+      setUser(user);
+      return user;
     } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.error || error.message || 'Login failed'
-      };
+      console.error('Login error:', error.response?.data || error.message);
+      throw error;
     }
-  };
+    const { trackEvent } = useAnalytics();
+    trackEvent('login', { email });
+  }
 
   const logout = () => {
     localStorage.removeItem('token');
@@ -65,5 +44,6 @@ export function useAuth() {
     router.push('/auth/login');
   };
 
-  return { user, loading, error, login, logout };
+  return { user, loading, login, logout };
 }
+

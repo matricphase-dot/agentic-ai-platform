@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { api } from "@/lib/api";
+import api from '@/lib/api';
 import { Server, Plus, Activity, DollarSign, Loader2, Cpu, HardDrive, Wifi } from "lucide-react";
 
 interface Node {
@@ -258,3 +258,4 @@ export default function NodesPage() {
     </div>
   );
 }
+

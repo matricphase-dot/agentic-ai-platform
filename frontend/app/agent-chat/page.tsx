@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { api } from "@/lib/api";
+import api from '@/lib/api';
 import { Bot, Send, User, Clock, Info, Zap, Code, BookOpen, Loader2 } from "lucide-react";
 
 
@@ -290,5 +290,6 @@ export default function AgentChatPage() {
     </div>
   );
 }
+
 
 

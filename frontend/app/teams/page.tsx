@@ -1,187 +1,148 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { api } from "@/lib/api";
-import { useRouter } from "next/navigation";
-import { Users, Plus, Trash2, Send, Bot, X, Loader2 } from "lucide-react";
-
-interface Agent {
-  id: string;
-  name: string;
-  capabilities: string[];
-}
+import { useState, useEffect } from 'react';
+import api from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
+import Link from 'next/link';
 
 interface Team {
   id: string;
   name: string;
-  description?: string;
-  agents: { agent: Agent }[];
+  description: string | null;
+  userId: string;
   createdAt: string;
+  updatedAt: string;
+  team_agents?: {
+    agent: {
+      id: string;
+      name: string;
+      agentType: string;
+    };
+  }[];
 }
 
 export default function TeamsPage() {
   const { user } = useAuth();
-  const router = useRouter();
   const [teams, setTeams] = useState<Team[]>([]);
-  const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newTeamName, setNewTeamName] = useState("");
-  const [newTeamDesc, setNewTeamDesc] = useState("");
-  const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
-  const [sendingTeamMessage, setSendingTeamMessage] = useState<string | null>(null);
-  const [messageContent, setMessageContent] = useState("");
+  const [newTeam, setNewTeam] = useState({ name: '', description: '' });
+  const [availableAgents, setAvailableAgents] = useState<any[]>([]);
+  const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchData();
+    fetchTeams();
+    fetchAgents();
   }, []);
 
-  const fetchData = async () => {
+  const fetchTeams = async () => {
     try {
-      const [teamsRes, agentsRes] = await Promise.all([
-        api.get('/teams'),
-        api.get('/agents')
-      ]);
-      setTeams(teamsRes.data);
-      setAgents(agentsRes.data);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
+      setLoading(true);
+      const res = await api.get('/teams');
+      setTeams(res.data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load teams');
     } finally {
       setLoading(false);
     }
   };
 
-  const createTeam = async () => {
-    if (!newTeamName.trim() || selectedAgentIds.length === 0) return;
+  const fetchAgents = async () => {
     try {
-      const response = await api.post('/teams', {
-        name: newTeamName,
-        description: newTeamDesc,
-        agentIds: selectedAgentIds
+      const res = await api.get('/agents');
+      setAvailableAgents(res.data);
+    } catch (err) {
+      console.error('Failed to fetch agents', err);
+    }
+  };
+
+  const handleCreateTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.post('/teams', {
+        name: newTeam.name,
+        description: newTeam.description,
+        agentIds: selectedAgents
       });
-      setTeams(prev => [response.data, ...prev]);
       setShowCreateModal(false);
-      setNewTeamName("");
-      setNewTeamDesc("");
-      setSelectedAgentIds([]);
-    } catch (error) {
-      console.error('Failed to create team:', error);
-      alert('Failed to create team');
+      setNewTeam({ name: '', description: '' });
+      setSelectedAgents([]);
+      fetchTeams();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to create team');
     }
   };
 
-  const deleteTeam = async (teamId: string) => {
-    if (!confirm('Are you sure you want to delete this team?')) return;
-    try {
-      await api.delete(`/teams/${teamId}`);
-      setTeams(prev => prev.filter(t => t.id !== teamId));
-    } catch (error) {
-      console.error('Failed to delete team:', error);
-    }
-  };
-
-  const sendToTeam = async (teamId: string) => {
-    if (!messageContent.trim()) return;
-    setSendingTeamMessage(teamId);
-    try {
-      await api.post(`/teams/${teamId}/messages`, { content: messageContent });
-      setMessageContent("");
-      alert('Message sent to all agents in the team!');
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      alert('Failed to send message');
-    } finally {
-      setSendingTeamMessage(null);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
+  const toggleAgentSelection = (agentId: string) => {
+    setSelectedAgents(prev =>
+      prev.includes(agentId)
+        ? prev.filter(id => id !== agentId)
+        : [...prev, agentId]
     );
-  }
+  };
+
+  if (loading) return <div className="p-8 text-center">Loading teams...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="max-w-6xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Agent Teams</h1>
+        <h1 className="text-3xl font-bold">Teams</h1>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          <Plus className="w-4 h-4" /> New Team
+          Create Team
         </button>
       </div>
 
       {teams.length === 0 ? (
-        <div className="text-center py-12 text-gray-500 border rounded-lg bg-gray-50">
-          <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-xl font-semibold mb-2">No Teams Yet</h3>
-          <p className="mb-4">Create a team to group agents and send messages to all at once.</p>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" /> Create Your First Team
-          </button>
-        </div>
+        <p className="text-gray-500 text-center py-8">No teams yet. Create one!</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {teams.map(team => (
-            <div key={team.id} className="border rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="text-xl font-semibold">{team.name}</h3>
-                  {team.description && (
-                    <p className="text-sm text-gray-600">{team.description}</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => deleteTeam(team.id)}
-                  className="text-gray-400 hover:text-red-500"
-                  title="Delete team"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-
+            <div key={team.id} className="border rounded-lg p-6 hover:shadow-lg transition">
+              <h2 className="text-xl font-semibold mb-2">{team.name}</h2>
+              <p className="text-gray-600 mb-4">{team.description || 'No description'}</p>
               <div className="mb-4">
-                <div className="text-sm font-medium text-gray-500 mb-2">Agents ({team.agents.length})</div>
+                <div className="text-sm font-medium text-gray-500 mb-2">
+                  Agents ({team.team_agents?.length || 0})
+                </div>
                 <div className="flex flex-wrap gap-2">
-                  {team.agents.map(tag => (
-                    <div key={tag.agent.id} className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                      <Bot className="w-3 h-3" />
+                  {team.team_agents?.map(tag => (
+                    <div
+                      key={tag.agent.id}
+                      className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full flex items-center gap-1"
+                    >
+                      <span>🤖</span>
                       {tag.agent.name}
                     </div>
                   ))}
                 </div>
               </div>
-
-              <div className="border-t pt-4">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Message to all agents..."
-                    className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={messageContent}
-                    onChange={(e) => setMessageContent(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && sendToTeam(team.id)}
-                  />
-                  <button
-                    onClick={() => sendToTeam(team.id)}
-                    disabled={sendingTeamMessage === team.id || !messageContent.trim()}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 flex items-center gap-1"
-                  >
-                    {sendingTeamMessage === team.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Send className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
+              <div className="flex gap-2">
+                <Link
+                  href={`/teams/${team.id}`}
+                  className="text-blue-600 hover:underline text-sm"
+                >
+                  View Details
+                </Link>
+                <button
+                  onClick={async () => {
+                    if (confirm('Delete this team?')) {
+                      try {
+                        await api.delete(`/teams/${team.id}`);
+                        fetchTeams();
+                      } catch (err) {
+                        alert('Failed to delete team');
+                      }
+                    }
+                  }}
+                  className="text-red-600 hover:underline text-sm"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           ))}
@@ -190,81 +151,60 @@ export default function TeamsPage() {
 
       {/* Create Team Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Create New Team</h2>
-              <button onClick={() => setShowCreateModal(false)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Team Name *</label>
-              <input
-                type="text"
-                value={newTeamName}
-                onChange={(e) => setNewTeamName(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., Support Team"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
-              <textarea
-                value={newTeamDesc}
-                onChange={(e) => setNewTeamDesc(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={2}
-                placeholder="What is this team for?"
-              />
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Select Agents *</label>
-              <div className="max-h-48 overflow-y-auto border rounded-lg p-2">
-                {agents.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">No agents available. Create some first.</p>
-                ) : (
-                  agents.map(agent => (
-                    <label key={agent.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Create New Team</h2>
+            <form onSubmit={handleCreateTeam}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">Team Name</label>
+                <input
+                  type="text"
+                  value={newTeam.name}
+                  onChange={(e) => setNewTeam({ ...newTeam, name: e.target.value })}
+                  className="w-full border rounded px-3 py-2"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <textarea
+                  value={newTeam.description}
+                  onChange={(e) => setNewTeam({ ...newTeam, description: e.target.value })}
+                  className="w-full border rounded px-3 py-2"
+                  rows={3}
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Select Agents</label>
+                <div className="max-h-48 overflow-y-auto border rounded p-2">
+                  {availableAgents.map(agent => (
+                    <label key={agent.id} className="flex items-center gap-2 p-1 hover:bg-gray-50">
                       <input
                         type="checkbox"
-                        checked={selectedAgentIds.includes(agent.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedAgentIds([...selectedAgentIds, agent.id]);
-                          } else {
-                            setSelectedAgentIds(selectedAgentIds.filter(id => id !== agent.id));
-                          }
-                        }}
-                        className="rounded text-blue-600"
+                        checked={selectedAgents.includes(agent.id)}
+                        onChange={() => toggleAgentSelection(agent.id)}
                       />
-                      <Bot className="w-4 h-4 text-gray-500" />
-                      <span>{agent.name}</span>
-                      <span className="text-xs text-gray-400 ml-auto">{agent.capabilities?.join(', ')}</span>
+                      <span>{agent.name} ({agent.agentType})</span>
                     </label>
-                  ))
-                )}
+                  ))}
+                </div>
               </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={createTeam}
-                disabled={!newTeamName.trim() || selectedAgentIds.length === 0}
-                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-300"
-              >
-                Create Team
-              </button>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-            </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 border rounded hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Create
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

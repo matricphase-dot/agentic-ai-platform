@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { api } from '@/lib/api';
+import api from '@/lib/api';
 import { Upload, Send, Loader2, FileText } from 'lucide-react';
 
 export default function KnowledgePage() {
@@ -23,10 +23,10 @@ export default function KnowledgePage() {
       const res = await api.post('/documents', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      setUploadResult(`✅ Indexed ${res.data.chunks} chunks.`);
+      setUploadResult(`âœ… Indexed ${res.data.chunks} chunks.`);
     } catch (err) {
       console.error(err);
-      setUploadResult('❌ Upload failed.');
+      setUploadResult('âŒ Upload failed.');
     } finally {
       setUploading(false);
     }
@@ -41,7 +41,7 @@ export default function KnowledgePage() {
       setAnswer(res.data.answer);
     } catch (err) {
       console.error(err);
-      setAnswer('❌ Query failed.');
+      setAnswer('âŒ Query failed.');
     } finally {
       setQuerying(false);
     }

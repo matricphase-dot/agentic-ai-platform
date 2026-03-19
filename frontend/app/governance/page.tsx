@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { api } from "@/lib/api";
+import api from '@/lib/api';
 import { Vote, Plus, Clock, Users, Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 
 interface Proposal {

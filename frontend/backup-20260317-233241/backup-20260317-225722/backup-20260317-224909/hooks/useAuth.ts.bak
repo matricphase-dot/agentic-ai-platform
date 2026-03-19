@@ -1,0 +1,51 @@
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { authApi } from '@/lib/api';
+
+export function useAuth() {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    authApi.getCurrentUser()
+      .then((res) => {
+        setUser(res.data.user);
+      })
+      .catch((err) => {
+        console.error('Auth error:', err);
+        localStorage.removeItem('token');
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    try {
+      const res = await authApi.login(email, password);
+      const { user, token } = res.data;
+      localStorage.setItem('token', token);
+      setUser(user);
+      return { success: true };
+    } catch (error: any) {
+      return { 
+        success: false, 
+        error: error.response?.data?.error || error.message || 'Login failed' 
+      };
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    router.push('/auth/login');
+  };
+
+  return { user, loading, error, login, logout };
+}
