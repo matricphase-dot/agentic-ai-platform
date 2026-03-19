@@ -1,4 +1,5 @@
-﻿import { useState, useRef } from 'react';
+﻿"use client";
+import { useState, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-hot-toast';
 
@@ -108,3 +109,4 @@ export default function Recorder() {
     </div>
   );
 }
+

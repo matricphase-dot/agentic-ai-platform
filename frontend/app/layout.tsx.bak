@@ -1,10 +1,12 @@
-﻿import type { Metadata } from 'next';
+﻿"use client";
+
+import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { AuthProvider } from './auth-provider';
 import Layout from '@/components/Layout';
-import ClientWrapper from '@/components/ClientWrapper';
+import dynamic from 'next/dynamic';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -12,6 +14,11 @@ export const metadata: Metadata = {
   title: 'Agentic AI',
   description: 'Build and deploy AI agents',
 };
+
+const OnboardingTour = dynamic(
+  () => import('@/components/OnboardingTour'),
+  { ssr: false }
+);
 
 export default function RootLayout({
   children,
@@ -24,7 +31,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <Layout>{children}</Layout>
-            <ClientWrapper />
+            <OnboardingTour />
           </AuthProvider>
         </ThemeProvider>
       </body>
