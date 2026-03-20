@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { agentsApi, businessApi } from '@/lib/api';
+import api from @/lib/api;
 import {
   LineChart,
   Line,
@@ -43,8 +43,8 @@ export default function AnalyticsPage() {
   const fetchData = async () => {
     try {
       const [agentsRes, businessesRes] = await Promise.all([
-        agentsApi.getAll(),
-        businessApi.getAll()
+        api.getAll(),
+        api.getAll()
       ]);
       setAgents(agentsRes.data.agents);
       setBusinesses(businessesRes.data.businesses);
@@ -272,4 +272,5 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+
 

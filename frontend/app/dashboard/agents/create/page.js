@@ -1,7 +1,7 @@
 ﻿'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createAgent } from '@/lib/api';
+import api from @/lib/api;
 import Button from '@/components/ui/Button';
 export default function CreateAgentPage() {
   const router = useRouter();
@@ -22,7 +22,7 @@ export default function CreateAgentPage() {
     setLoading(true);
     setError('');
     try {
-      const response = await createAgent(formData);
+      const response = await api.agents.create(formData);
       if (response.id) router.push('/dashboard/agents');
     } catch (err) {
       setError(err.message || 'Failed to create agent');
@@ -93,3 +93,5 @@ export default function CreateAgentPage() {
     </div>
   );
 }
+
+

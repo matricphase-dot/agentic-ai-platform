@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { businessApi } from '@/lib/api';
+import api from @/lib/api;
 import Link from 'next/link';
 import { 
   BuildingOfficeIcon, 
@@ -28,7 +28,7 @@ export default function BusinessesPage() {
 
   const fetchBusinesses = async () => {
     try {
-      const res = await businessApi.getAll();
+      const res = await api.getAll();
       setBusinesses(res.data.businesses);
     } catch (error) {
       console.error('Failed to fetch businesses:', error);
@@ -40,7 +40,7 @@ export default function BusinessesPage() {
   const handleRecordRevenue = async () => {
     if (!selectedBusiness) return;
     try {
-      await businessApi.recordRevenue(selectedBusiness.id, revenueAmount, 'Manual entry');
+      await api.recordRevenue(selectedBusiness.id, revenueAmount, 'Manual entry');
       alert(`Recorded $${revenueAmount} revenue for ${selectedBusiness.name}`);
       setShowRevenueModal(false);
       fetchBusinesses(); // refresh
@@ -163,3 +163,5 @@ export default function BusinessesPage() {
     </div>
   );
 }
+
+
