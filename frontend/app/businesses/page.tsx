@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import api from @/lib/api;
+import api from '@/lib/api';
 import Link from 'next/link';
 import { 
   BuildingOfficeIcon, 
@@ -163,5 +163,6 @@ export default function BusinessesPage() {
     </div>
   );
 }
+
 
 

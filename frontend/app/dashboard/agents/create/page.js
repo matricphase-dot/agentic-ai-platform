@@ -1,7 +1,7 @@
 ﻿'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from @/lib/api;
+import api from '@/lib/api';
 import Button from '@/components/ui/Button';
 export default function CreateAgentPage() {
   const router = useRouter();
@@ -93,5 +93,6 @@ export default function CreateAgentPage() {
     </div>
   );
 }
+
 
 
