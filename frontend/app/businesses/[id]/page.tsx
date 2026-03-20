@@ -57,7 +57,7 @@ export default function BusinessDetailPage() {
 
   const handleRecordRevenue = async () => {
     try {
-      await api.recordRevenue(businessId, revenueAmount, 'Manual entry');
+      await api.post(`/businesses/${businessId}/revenue`, { amount: revenueAmount, description: "Manual entry" });
       alert(`Recorded $${revenueAmount} revenue`);
       setShowRevenueModal(false);
       fetchBusinessDetail();
