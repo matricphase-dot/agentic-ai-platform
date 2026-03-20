@@ -1,5 +1,5 @@
-﻿// import * as Sentry from '@sentry/node';
-// import { initSentry } from './sentry';
+﻿// // import * as Sentry from '@sentry/node';
+// // import { initSentry } from './sentry';
 import teamsRoute from './routes/teams';
 import inviteRoutes from './routes/invite';
 import messagesRoute from './routes/messages';
@@ -27,7 +27,7 @@ import webhooksRoutes from './routes/webhooks';
 dotenv.config();
 
 const app = express();
-// initSentry(app);
+// // initSentry(app);
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
@@ -106,6 +106,7 @@ app.use(function onError(err: any, req: any, res: any, next: any) {
   res.statusCode = 500;
   res.end(res.sentry + "\n");
 });
+
 
 
 

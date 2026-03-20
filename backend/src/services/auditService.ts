@@ -13,7 +13,7 @@ interface AuditLogData {
 
 export async function createAuditLog(data: AuditLogData) {
   try {
-    await prisma.auditLog.create({
+    await prisma.audit_logs.create({
       data: {
         userId: data.userId,
         action: data.action,
@@ -30,3 +30,5 @@ export async function createAuditLog(data: AuditLogData) {
     // Don't throw – audit logging should not break the main flow
   }
 }
+
+
