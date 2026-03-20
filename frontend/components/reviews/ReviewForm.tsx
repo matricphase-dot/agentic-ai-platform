@@ -47,7 +47,7 @@ export default function ReviewForm({ templateId, onSuccess, existingReview }: Re
               onClick={() => setRating(star)}
               className="focus:outline-none"
             >
-              <Star className={w-6 h-6 } />
+              <Star className="w-6 h-6" />
             </button>
           ))}
         </div>
