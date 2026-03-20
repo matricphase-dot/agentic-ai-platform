@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,8 +28,8 @@ export default function BusinessesPage() {
 
   const fetchBusinesses = async () => {
     try {
-      const res = await api.getAll();
-      setBusinesses(res.data.businesses);
+      const res = await api.get(`/businesses`);
+      setBusinesses(res.data);
     } catch (error) {
       console.error('Failed to fetch businesses:', error);
     } finally {
@@ -40,7 +40,7 @@ export default function BusinessesPage() {
   const handleRecordRevenue = async () => {
     if (!selectedBusiness) return;
     try {
-      await api.recordRevenue(selectedBusiness.id, revenueAmount, 'Manual entry');
+      await api.post(`/businesses/${businessId}/revenue`, { amount: revenueAmount, description: "Manual entry" });
       alert(`Recorded $${revenueAmount} revenue for ${selectedBusiness.name}`);
       setShowRevenueModal(false);
       fetchBusinesses(); // refresh
@@ -163,6 +163,7 @@ export default function BusinessesPage() {
     </div>
   );
 }
+
 
 
 
