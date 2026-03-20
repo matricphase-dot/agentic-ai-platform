@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import axios from '@/lib/axios';
@@ -43,7 +43,7 @@ export default function VersionHistory({ agentId, onRestore }: VersionHistoryPro
     if (!confirm('Restore this version? The current agent will be overwritten.')) return;
     setRestoring(versionId);
     try {
-      await axios.post(/api/agents//restore/);
+      await axios.post(`/api/agents/restore`);
       alert('Agent restored successfully');
       onRestore?.(versionId);
       fetchVersions(); // refresh list
