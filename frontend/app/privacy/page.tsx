@@ -1,4 +1,5 @@
-﻿export default function PrivacyPage() {
+import Link from 'next/link';
+export default function PrivacyPage() {
   return (
     <div className="container mx-auto px-4 py-8 prose max-w-4xl">
       <h1>Privacy Policy</h1>
@@ -12,7 +13,7 @@
         <li>Account information (email, name, profile picture)</li>
         <li>Agent data you create</li>
         <li>Usage logs and interactions</li>
-        <li>Payment information (if any – processed by third parties)</li>
+        <li>Payment information (if any � processed by third parties)</li>
       </ul>
 
       <h2>3. How We Use Your Data</h2>
