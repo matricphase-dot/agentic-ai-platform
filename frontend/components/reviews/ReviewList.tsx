@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { Star, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -32,7 +32,7 @@ export default function ReviewList({ reviews, averageRating, count, onEdit, onDe
         <div>
           <div className="flex gap-0.5">
             {[1,2,3,4,5].map((star) => (
-              <Star key={star} className={w-5 h-5 } />
+              <Star key={star} className="w-5 h-5" />
             ))}
           </div>
           <p className="text-sm text-gray-600">Based on {count} review{count !== 1 ? 's' : ''}</p>
