@@ -1,9 +1,9 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { businessApi, agentsApi } from '@/lib/api';
+import api from '@/lib/api';
 import Link from 'next/link';
 import { 
   ArrowLeftIcon,
@@ -34,13 +34,13 @@ export default function BusinessDetailPage() {
 
   const fetchBusinessDetail = async () => {
     try {
-      const res = await businessApi.getAll();
+      const res = await api.getAll();
       const found = res.data.businesses.find((b: any) => b.id === businessId);
       if (found) {
         setBusiness(found);
         const agentIds = found.agents?.map((a: any) => a.agentId) || [];
         if (agentIds.length > 0) {
-          const agentsRes = await agentsApi.getAll();
+          const agentsRes = await api.getAll();
           const hiredAgents = agentsRes.data.agents.filter((a: any) => agentIds.includes(a.id));
           setAgents(hiredAgents);
         }
@@ -57,7 +57,7 @@ export default function BusinessDetailPage() {
 
   const handleRecordRevenue = async () => {
     try {
-      await businessApi.recordRevenue(businessId, revenueAmount, 'Manual entry');
+      await api.recordRevenue(businessId, revenueAmount, 'Manual entry');
       alert(`Recorded $${revenueAmount} revenue`);
       setShowRevenueModal(false);
       fetchBusinessDetail();
