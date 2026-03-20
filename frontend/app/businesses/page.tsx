@@ -40,7 +40,7 @@ export default function BusinessesPage() {
   const handleRecordRevenue = async () => {
     if (!selectedBusiness) return;
     try {
-      await api.post(`/businesses/${businessId}/revenue`, { amount: revenueAmount, description: "Manual entry" });
+      await api.post(`/businesses/${selectedBusiness.id}/revenue`, { amount: revenueAmount, description: "Manual entry" });
       alert(`Recorded $${revenueAmount} revenue for ${selectedBusiness.name}`);
       setShowRevenueModal(false);
       fetchBusinesses(); // refresh
