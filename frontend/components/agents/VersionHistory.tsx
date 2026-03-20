@@ -30,7 +30,7 @@ export default function VersionHistory({ agentId, onRestore }: VersionHistoryPro
 
   const fetchVersions = async () => {
     try {
-      const res = await axios.get(/api/agents//versions);
+      const res = await axios.get(`/api/agents/versions`);
       setVersions(res.data);
     } catch (error) {
       console.error('Failed to fetch versions', error);
@@ -109,3 +109,4 @@ export default function VersionHistory({ agentId, onRestore }: VersionHistoryPro
     </div>
   );
 }
+
