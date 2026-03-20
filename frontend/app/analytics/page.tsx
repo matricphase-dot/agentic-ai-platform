@@ -42,10 +42,7 @@ export default function AnalyticsPage() {
 
   const fetchData = async () => {
     try {
-      const [agentsRes, businessesRes] = await Promise.all([
-        api.getAll(),
-        api.getAll()
-      ]);
+      const agentsRes = await api.get("/agents"); const businessesRes = await api.get("/businesses");
       setAgents(agentsRes.data.agents);
       setBusinesses(businessesRes.data.businesses);
 
@@ -272,6 +269,7 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+
 
 
 
