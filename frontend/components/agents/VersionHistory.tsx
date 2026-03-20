@@ -57,7 +57,7 @@ export default function VersionHistory({ agentId, onRestore }: VersionHistoryPro
   const handleDelete = async (versionId: string) => {
     if (!confirm('Delete this version permanently?')) return;
     try {
-      await axios.delete(/api/agents/versions/);
+      await axios.delete(`/api/agents/versions/${versionId}`);
       fetchVersions();
     } catch (error: any) {
       alert(error.response?.data?.error || 'Delete failed');
