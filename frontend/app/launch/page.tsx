@@ -1,7 +1,7 @@
 ﻿"use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-hot-toast';
 
 export default function LaunchPage() {
@@ -130,4 +130,5 @@ export default function LaunchPage() {
     </div>
   );
 }
+
 

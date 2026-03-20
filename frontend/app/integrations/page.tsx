@@ -139,10 +139,10 @@ export default function IntegrationsPage() {
       // Redirect to OAuth authorization URL
       const authUrl = connector.authConfig.authorizationUrl;
       const clientId = process.env.NEXT_PUBLIC_OAUTH_CLIENT_ID?.[connector.name] || '';
-      const redirectUri = ${window.location.origin}/integrations/oauth/callback;
+      const redirectUri = `${window.location.origin}`/integrations/oauth/callback;
       const state = Math.random().toString(36).substring(7);
       localStorage.setItem('oauth_state', state);
-      const fullUrl = `${authUrl}?client_id=&redirect_uri=&response_type=code&state=&scope=`;
+      const fullUrl = ``${authUrl}`?client_id=&redirect_uri=&response_type=code&state=&scope=`;
       window.location.href = fullUrl;
     } else {
       // API key based
@@ -276,4 +276,5 @@ export default function IntegrationsPage() {
     </div>
   );
 }
+
 

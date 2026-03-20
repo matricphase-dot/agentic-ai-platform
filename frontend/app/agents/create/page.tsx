@@ -1,84 +1,46 @@
 ﻿"use client";
-'use client';
 
 import { useState } from 'react';
-import axios from '../../../lib/axios';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
+import axios from 'axios';
 
 export default function CreateAgentPage() {
+  const { user } = useAuth();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: '',
     description: '',
-    agent_type: 'generic',
-    model: 'llama3.2:3b',
-    systemPrompt: 'You are a helpful assistant.',
-    temperature: 0.7,
     capabilities: '',
-    hourlyRate: 10,
+    systemPrompt: '',
+    modelProvider: 'ollama-local',
+    modelName: 'llama2',
+    agentType: 'CUSTOM',
   });
-  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
+    setLoading(true);
     try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            throw new Error('Not authenticated');
-        }
-
-        // Build payload exactly as the backend expects (same as our working test)
-        const payload = {
-            name: agentName || 'New Agent',
-            description: description || 'Created via UI',
-            capabilities: capabilities || 'ollama:tinyllama',
-            systemPrompt: systemPrompt || 'You are a helpful assistant.',
-            modelProvider: modelProvider || 'ollama-local',
-            modelName: modelName || 'llama2',
-            status: 'active',
-            agentType: agentType || 'CUSTOM'
-        };
-
-        const response = await fetch('/api/agents', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to create agent');
-        }
-
-        const agent = await response.json();
-        toast.success('Agent created successfully!');
-        router.push('/agents');
-    } catch (err: any) {
-        console.error('Agent creation error:', err);
-        setError(err.message);
-        toast.error(err.message);
-    } finally {
-        setIsLoading(false);
-    }
-};
-      const capabilitiesArray = form.capabilities.split(',').map(s => s.trim()).filter(Boolean);
-
-      const res = await axios.post('/agents', {
+      const res = await axios.post('/api/agents', {
         name: form.name,
         description: form.description,
-        agent_type: form.agentType,
-        configuration,
-        hourlyRate: form.hourlyRate,
-        capabilities: capabilitiesArray,
+        capabilities: form.capabilities,
+        systemPrompt: form.systemPrompt,
+        modelProvider: form.modelProvider,
+        modelName: form.modelName,
+        status: 'active',
+        agentType: form.agentType,
       });
-      alert('Agent created successfully!');
-      router.push('/agents');
+      if (res.status === 201) {
+        alert('Agent created successfully!');
+        router.push('/agents');
+      }
     } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to create agent');
     } finally {
@@ -88,100 +50,73 @@ export default function CreateAgentPage() {
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Create a New AI Agent</h1>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block mb-1">Agent Name</label>
+      <h1 className="text-2xl font-bold mb-6">Create Agent</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium">Name</label>
           <input
             type="text"
+            name="name"
             value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="border p-2 w-full"
+            onChange={handleChange}
             required
+            className="w-full border rounded p-2"
           />
         </div>
-        <div className="mb-4">
-          <label className="block mb-1">Description</label>
+        <div>
+          <label className="block text-sm font-medium">Description</label>
           <textarea
+            name="description"
             value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            onChange={handleChange}
             rows={3}
-            className="border p-2 w-full"
-            required
+            className="w-full border rounded p-2"
           />
         </div>
-        <div className="mb-4">
-          <label className="block mb-1">Agent Type</label>
-          <select
-            value={form.agentType}
-            onChange={(e) => setForm({ ...form, agent_type: e.target.value })}
-            className="border p-2 w-full"
-          >
-            <option value="generic">Generic</option>
-            <option value="data-analysis">Data Analysis</option>
-            <option value="content">Content Creation</option>
-            <option value="coding">Coding</option>
-            <option value="research">Research</option>
-          </select>
-        </div>
-        <div className="mb-4">
-          <label className="block mb-1">Ollama Model</label>
+        <div>
+          <label className="block text-sm font-medium">Capabilities (comma separated)</label>
           <input
             type="text"
-            value={form.model}
-            onChange={(e) => setForm({ ...form, model: e.target.value })}
-            className="border p-2 w-full"
-            placeholder="e.g., llama3.2:3b"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block mb-1">System Prompt</label>
-          <textarea
-            value={form.systemPrompt}
-            onChange={(e) => setForm({ ...form, systemPrompt: e.target.value })}
-            rows={2}
-            className="border p-2 w-full"
-            placeholder="Instructions for the agent's behavior"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block mb-1">Temperature (0.0 - 2.0)</label>
-          <input
-            type="number"
-            step="0.1"
-            min="0"
-            max="2"
-            value={form.temperature}
-            onChange={(e) => setForm({ ...form, temperature: parseFloat(e.target.value) })}
-            className="border p-2 w-full"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block mb-1">Capabilities (comma separated)</label>
-          <input
-            type="text"
+            name="capabilities"
             value={form.capabilities}
-            onChange={(e) => setForm({ ...form, capabilities: e.target.value })}
-            className="border p-2 w-full"
-            placeholder="e.g., text-generation, summarization"
+            onChange={handleChange}
+            className="w-full border rounded p-2"
           />
         </div>
-        <div className="mb-4">
-          <label className="block mb-1">Hourly Rate ($AGENT)</label>
+        <div>
+          <label className="block text-sm font-medium">System Prompt</label>
+          <textarea
+            name="systemPrompt"
+            value={form.systemPrompt}
+            onChange={handleChange}
+            rows={3}
+            className="w-full border rounded p-2"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Model Provider</label>
           <input
-            type="number"
-            step="0.01"
-            value={form.hourlyRate}
-            onChange={(e) => setForm({ ...form, hourlyRate: parseFloat(e.target.value) })}
-            className="border p-2 w-full"
-            required
+            type="text"
+            name="modelProvider"
+            value={form.modelProvider}
+            onChange={handleChange}
+            className="w-full border rounded p-2"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Model Name</label>
+          <input
+            type="text"
+            name="modelName"
+            value={form.modelName}
+            onChange={handleChange}
+            className="w-full border rounded p-2"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
         >
           {loading ? 'Creating...' : 'Create Agent'}
         </button>
@@ -189,6 +124,3 @@ export default function CreateAgentPage() {
     </div>
   );
 }
-
-
-

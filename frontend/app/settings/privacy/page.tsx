@@ -1,4 +1,4 @@
-﻿'use client';
+﻿"use client";\n'use client';
 
 import { useEffect, useState } from 'react';
 import axios from '@/lib/axios';
@@ -110,3 +110,4 @@ export default function PrivacySettings() {
     </div>
   );
 }
+
