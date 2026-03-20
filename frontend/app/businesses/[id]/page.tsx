@@ -34,13 +34,13 @@ export default function BusinessDetailPage() {
 
   const fetchBusinessDetail = async () => {
     try {
-      const res = await api.getAll();
-      const found = res.data.businesses.find((b: any) => b.id === businessId);
+      const res = await api.get(`/businesses/${businessId}`);
+      const found = res.data;
       if (found) {
         setBusiness(found);
         const agentIds = found.agents?.map((a: any) => a.agentId) || [];
         if (agentIds.length > 0) {
-          const agentsRes = await api.getAll();
+          const agentsRes = await api.get(`/businesses/${businessId}`);
           const hiredAgents = agentsRes.data.agents.filter((a: any) => agentIds.includes(a.id));
           setAgents(hiredAgents);
         }
