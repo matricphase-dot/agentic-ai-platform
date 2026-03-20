@@ -22,7 +22,7 @@ export default function ReviewForm({ templateId, onSuccess, existingReview }: Re
     setError('');
     try {
       if (existingReview) {
-        await axios.put(`/api/reviews/${existingReview.id}`, { rating, comment });
+        await axios.put(`/api/reviews/${(existingReview as any).id}`, { rating, comment });
       } else {
         await axios.post('/api/reviews', { templateId, rating, comment });
       }
