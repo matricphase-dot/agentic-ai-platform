@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { agentsApi } from '@/lib/api';
+import api from "@/lib/api";
 
 const defaultSteps = [
   { id: 1, agentRole: 'researcher', instruction: 'Research the topic and gather data' },
@@ -47,7 +47,7 @@ export default function WorkflowBuilder() {
         }))
       };
       
-      // const response = await agentsApi.createWorkflow(workflowData); // createWorkflow disabled for build
+      // const response = await api.createWorkflow(workflowData); // createWorkflow disabled for build
       const response = { data: { id: "mock-" + Date.now() } };
       setResult({
         success: true,
