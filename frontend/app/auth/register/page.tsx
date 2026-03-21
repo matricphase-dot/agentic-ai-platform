@@ -20,16 +20,15 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Validate invite code first
-      const validateRes = await await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invite/validate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: inviteCode }) });
-      if (!validateData.valid) {
-        throw new Error(validateData.reason || 'Invalid invite code');
+      // Validate invite code
+      const validateRes = await api.post('/invite/validate', { code: inviteCode });
+      if (!validateRes.data.valid) {
+        throw new Error(validateRes.data.reason || 'Invalid invite code');
       }
 
       // Proceed with registration
       const res = await api.post('/auth/register', { name, email, password, inviteCode });
       if (res.status === 201) {
-        // Auto-login or redirect to login
         router.push('/auth/login?registered=true');
       }
     } catch (err: any) {
