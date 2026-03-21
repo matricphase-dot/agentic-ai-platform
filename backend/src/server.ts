@@ -27,6 +27,10 @@ import webhooksRoutes from './routes/webhooks';
 dotenv.config();
 
 const app = express();
+// Simple health check for Render
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 // // initSentry(app);
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:3001', 'https://agentic-ai-platform-rouge.vercel.app'],
