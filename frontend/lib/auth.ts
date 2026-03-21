@@ -1,6 +1,3 @@
-﻿import { NextAuthOptions } from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
-
 // Simple in-memory user store for demo
 const users = [
   {
