@@ -61,7 +61,7 @@ export default function ReviewList({ reviews, averageRating, count, onEdit, onDe
           {review.comment && <p className="mt-2 text-sm text-gray-700">{review.comment}</p>}
           <div className="mt-1 flex items-center justify-between">
             <span className="text-xs text-gray-400">{formatDistanceToNow(new Date(review.createdAt))} ago</span>
-            {userId === review.user.id && (
+            {userId === review.userId && (
               <div className="flex gap-2">
                 <button onClick={() => onEdit?.(review)} className="text-xs text-blue-600 hover:underline">Edit</button>
                 <button onClick={() => onDelete?.(review.id)} className="text-xs text-red-600 hover:underline">Delete</button>
