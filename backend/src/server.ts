@@ -1,4 +1,4 @@
-﻿// // import * as Sentry from '@sentry/node';
+// // import * as Sentry from '@sentry/node';
 // // import { initSentry } from './sentry';
 import teamsRoute from './routes/teams';
 import inviteRoutes from './routes/invite';
@@ -29,7 +29,7 @@ dotenv.config();
 const app = express();
 // // initSentry(app);
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://agentic-ai-platform-rouge.vercel.app'],
   credentials: true,
 }));
 const port = process.env.PORT || 5000;
