@@ -15,11 +15,11 @@ router.get('/', async (req, res) => {
     const settings = await prisma.userSettings.findUnique({
       where: { userId }
     });
-    res.json(settings || { primaryColor: '#6366f1', logoUrl: '', theme: 'light' });
+    res.json(settings || { primaryColor: '#6366f1', logoUrl: '', theme: 'light' } as any);
   } catch (error) {
     console.error('Error fetching settings:', error);
     // Return default on error
-    res.json({ primaryColor: '#6366f1', logoUrl: '', theme: 'light' });
+    res.json({ primaryColor: '#6366f1', logoUrl: '', theme: 'light' } as any);
   }
 });
 
@@ -31,7 +31,7 @@ router.get('/appearance', authenticate, async (req, res) => {
       where: { userId }
     });
     if (!settings) {
-      settings = { primaryColor: '#6366f1', logoUrl: '', theme: 'light' }; as any
+      settings = { primaryColor: '#6366f1', logoUrl: '', theme: 'light' } as any;
     }
     res.json(settings);
   } catch (error) {
