@@ -54,7 +54,7 @@ export default function ReviewList({ reviews, averageRating, count, onEdit, onDe
             </div>
             <div className="flex gap-0.5">
               {[1,2,3,4,5].map((star) => (
-                <Star key={star} className={w-4 h-4 } />
+                <Star key={star} className="w-4 h-4" />
               ))}
             </div>
           </div>
