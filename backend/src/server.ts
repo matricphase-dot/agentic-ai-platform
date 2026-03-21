@@ -1,7 +1,7 @@
 // // import * as Sentry from '@sentry/node';
 // // import { initSentry } from './sentry';
 import teamsRoute from './routes/teams';
-import inviteRoutes from './routes/invite';
+
 import messagesRoute from './routes/messages';
 import agentVersionsRoute from './routes/agentVersions';
 import testRoute from './routes/test';
