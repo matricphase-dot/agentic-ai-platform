@@ -4,17 +4,22 @@ import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 
-// Get current user's settings
-router.get("/", async (req, res) => {
+// Get current user's settings (public, returns default if none)
+router.get('/', async (req, res) => {
   try {
-    const userId = (req as any).user.id;
+    // If no user, return default settings
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.json({ primaryColor: '#6366f1', logoUrl: '', theme: 'light' });
+    }
     const settings = await prisma.userSettings.findUnique({
       where: { userId }
     });
-    res.json(settings || {});
+    res.json(settings || { primaryColor: '#6366f1', logoUrl: '', theme: 'light' });
   } catch (error) {
     console.error('Error fetching settings:', error);
-    res.status(500).json({ error: 'Failed to fetch settings' });
+    // Return default on error
+    res.json({ primaryColor: '#6366f1', logoUrl: '', theme: 'light' });
   }
 });
 
@@ -26,7 +31,7 @@ router.get('/appearance', authenticate, async (req, res) => {
       where: { userId }
     });
     if (!settings) {
-            settings = { primaryColor: '#6366f1', logoUrl: '', theme: 'light' } as any;
+      settings = { primaryColor: '#6366f1', logoUrl: '', theme: 'light' };
     }
     res.json(settings);
   } catch (error) {
@@ -36,4 +41,3 @@ router.get('/appearance', authenticate, async (req, res) => {
 });
 
 export default router;
-
