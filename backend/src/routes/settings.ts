@@ -31,7 +31,7 @@ router.get('/appearance', authenticate, async (req, res) => {
       where: { userId }
     });
     if (!settings) {
-      settings = { primaryColor: '#6366f1', logoUrl: '', theme: 'light' };
+      settings = { primaryColor: '#6366f1', logoUrl: '', theme: 'light' }; as any
     }
     res.json(settings);
   } catch (error) {
