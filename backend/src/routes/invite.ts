@@ -1,11 +1,15 @@
-﻿import express from 'express';
+import express from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticate } from '../middleware/auth';
 import crypto from 'crypto';
 
 const router = express.Router();
+// Test endpoint to verify router is mounted
+router.get('/ping', (req, res) => {
+  res.json({ status: 'ok', message: 'Invite router is alive' });
+});
 
-// Generate invite codes (admin only – you can add role check)
+// Generate invite codes (admin only � you can add role check)
 router.post('/generate', authenticate, async (req, res) => {
   try {
     const userId = (req as any).user.id;
