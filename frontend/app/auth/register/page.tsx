@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -21,7 +21,7 @@ export default function RegisterPage() {
 
     try {
       // Validate invite code first
-      const validateRes = await api.post('/invite/validate', { code: inviteCode });
+      const validateRes = await api.post('/api/invite/validate', { code: inviteCode });
       if (!validateRes.data.valid) {
         throw new Error(validateRes.data.reason || 'Invalid invite code');
       }
