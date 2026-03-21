@@ -1,11 +1,11 @@
-﻿import express from 'express';
+import express from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 
 // Get current user's settings
-router.get('/', authenticate, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const userId = (req as any).user.id;
     const settings = await prisma.userSettings.findUnique({
