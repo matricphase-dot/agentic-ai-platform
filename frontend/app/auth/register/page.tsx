@@ -22,8 +22,8 @@ export default function RegisterPage() {
     try {
       // Validate invite code first
       const validateRes = await await fetch(`${process.env.NEXT_PUBLIC_API_URL}/invite/validate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: inviteCode }) });
-      if (!validateRes.data.valid) {
-        throw new Error(validateRes.data.reason || 'Invalid invite code');
+      if (!validateData.valid) {
+        throw new Error(validateData.reason || 'Invalid invite code');
       }
 
       // Proceed with registration
