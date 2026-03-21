@@ -1,5 +1,7 @@
-'use client'; 
- 
-export function AuthProvider({ children }: { children: React.ReactNode }) { 
-  return {children}; 
-} 
+"use client";
+
+import { ReactNode } from 'react';
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  return <>{children}</>;
+}
