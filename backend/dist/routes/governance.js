@@ -62,6 +62,7 @@ router.post('/proposals', async (req, res) => {
         res.json(proposal);
     }
     catch (error) {
+        console.error("Error in governance route:", error);
         console.error('Create proposal error:', error);
         res.status(500).json({ error: 'Failed to create proposal' });
     }
@@ -72,15 +73,16 @@ router.get('/proposals', async (req, res) => {
         let proposals = await prisma.proposals.findMany({
             include: {
                 _count: { select: { votes: true } },
-                createdBy: { select: { email: true } }
+                creator: { select: { email: true } }
             },
-            orderBy: { created_at: 'desc' }
+            orderBy: { createdAt: "desc" }
         });
         // Finalize any expired proposals
         proposals = await Promise.all(proposals.map(p => finalizeProposalIfNeeded(p)));
         res.json(proposals);
     }
     catch (error) {
+        console.error("Error in governance route:", error);
         console.error('Fetch proposals error:', error);
         res.status(500).json({ error: 'Failed to fetch proposals' });
     }
@@ -93,9 +95,9 @@ router.get('/proposals/:id', async (req, res) => {
             include: {
                 votes: {
                     include: { user: { select: { email: true } } },
-                    orderBy: { created_at: 'desc' }
+                    orderBy: { createdAt: "desc" }
                 },
-                createdBy: { select: { email: true } }
+                creator: { select: { email: true } }
             }
         });
         if (!proposal)
@@ -111,6 +113,7 @@ router.get('/proposals/:id', async (req, res) => {
         res.json({ ...proposal, results, totalWeight });
     }
     catch (error) {
+        console.error("Error in governance route:", error);
         console.error('Fetch proposal error:', error);
         res.status(500).json({ error: 'Failed to fetch proposal' });
     }
@@ -163,6 +166,7 @@ router.post('/proposals/:id/vote', async (req, res) => {
         res.json(vote);
     }
     catch (error) {
+        console.error("Error in governance route:", error);
         console.error('Vote error:', error);
         res.status(500).json({ error: 'Failed to vote' });
     }
@@ -182,6 +186,7 @@ router.post('/proposals/:id/finalize', async (req, res) => {
         res.json(proposal);
     }
     catch (error) {
+        console.error("Error in governance route:", error);
         console.error('Finalize error:', error);
         res.status(500).json({ error: 'Failed to finalize proposal' });
     }

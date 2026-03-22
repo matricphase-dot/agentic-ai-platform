@@ -5,159 +5,158 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const auth_1 = require("../middleware/auth");
-const client_1 = require("@prisma/client");
+const prisma_1 = require("../lib/prisma");
 const router = express_1.default.Router();
-const prisma = new client_1.PrismaClient();
-// All team routes require authentication
-router.use(auth_1.authenticate);
-// Create a team
-router.post('/', async (req, res) => {
+// Get all teams for the authenticated user
+router.get('/', auth_1.authenticate, async (req, res) => {
     try {
-        const { name, description, agentIds } = req.body;
-        if (!name || !agentIds || !Array.isArray(agentIds) || agentIds.length === 0) {
-            return res.status(400).json({ error: 'Name and at least one agent ID required' });
-        }
-        // Verify agents belong to user
-        const agents = await prisma.agents.findMany({
-            where: {
-                id: { in: agentIds },
-                owner_id: req.user.id
-            }
-        });
-        if (agents.length !== agentIds.length) {
-            return res.status(400).json({ error: 'Some agents not found or not owned by you' });
-        }
-        const team = await prisma.team.create({
-            data: {
-                name,
-                description,
-                userId: req.user.id,
-                agents: {
-                    create: agentIds.map((agentId) => ({ agentId }))
+        const userId = req.user.id;
+        const teams = await prisma_1.prisma.teams.findMany({
+            where: { userId },
+            include: {
+                team_agents: {
+                    include: { agent: true }
                 }
-            },
-            include: { agents: { include: { agents: true } } }
-        });
-        res.json(team);
-    }
-    catch (error) {
-        console.error('Team creation error:', error);
-        res.status(500).json({ error: 'Failed to create team' });
-    }
-});
-// Get all teams for user
-router.get('/', async (req, res) => {
-    try {
-        const teams = await prisma.team.findMany({
-            where: { userId: req.user.id },
-            include: { agents: { include: { agents: true } } },
-            orderBy: { created_at: 'desc' }
+            }
         });
         res.json(teams);
     }
     catch (error) {
-        console.error('Fetch teams error:', error);
+        console.error('Error fetching teams:', error);
         res.status(500).json({ error: 'Failed to fetch teams' });
     }
 });
-// Get single team
-router.get('/:id', async (req, res) => {
+// Get a specific team by ID
+router.get('/:id', auth_1.authenticate, async (req, res) => {
     try {
-        const team = await prisma.team.findFirst({
-            where: { id: req.params.id, userId: req.user.id },
-            include: { agents: { include: { agents: true } } }
+        const { id } = req.params;
+        const userId = req.user.id;
+        const team = await prisma_1.prisma.teams.findFirst({
+            where: { id, userId },
+            include: {
+                team_agents: {
+                    include: { agent: true }
+                }
+            }
         });
-        if (!team)
+        if (!team) {
             return res.status(404).json({ error: 'Team not found' });
+        }
         res.json(team);
     }
     catch (error) {
-        console.error('Fetch team error:', error);
+        console.error('Error fetching team:', error);
         res.status(500).json({ error: 'Failed to fetch team' });
     }
 });
-// Update team
-router.put('/:id', async (req, res) => {
+// Create a new team
+router.post('/', auth_1.authenticate, async (req, res) => {
     try {
         const { name, description, agentIds } = req.body;
-        const team = await prisma.team.findFirst({
-            where: { id: req.params.id, userId: req.user.id }
-        });
-        if (!team)
-            return res.status(404).json({ error: 'Team not found' });
-        const updateData = {};
-        if (name !== undefined)
-            updateData.name = name;
-        if (description !== undefined)
-            updateData.description = description;
-        if (agentIds !== undefined) {
-            if (!Array.isArray(agentIds) || agentIds.length === 0) {
-                return res.status(400).json({ error: 'agentIds must be a non-empty array' });
-            }
-            const agents = await prisma.agents.findMany({
-                where: { id: { in: agentIds }, owner_id: req.user.id }
+        const userId = req.user.id;
+        // Validate that all agents exist and belong to the user
+        if (agentIds && agentIds.length > 0) {
+            const agents = await prisma_1.prisma.agents.findMany({
+                where: {
+                    id: { in: agentIds },
+                    ownerId: userId
+                }
             });
             if (agents.length !== agentIds.length) {
                 return res.status(400).json({ error: 'Some agents not found or not owned by you' });
             }
-            updateData.agents = {
-                deleteMany: {},
-                create: agentIds.map((agentId) => ({ agentId }))
-            };
         }
-        const updated = await prisma.team.update({
-            where: { id: req.params.id },
-            data: updateData,
-            include: { agents: { include: { agents: true } } }
+        const team = await prisma_1.prisma.teams.create({
+            data: {
+                name,
+                description,
+                userId,
+                team_agents: agentIds ? {
+                    create: agentIds.map((agentId) => ({ agentId }))
+                } : undefined
+            },
+            include: {
+                team_agents: {
+                    include: { agent: true }
+                }
+            }
         });
-        res.json(updated);
+        res.status(201).json(team);
     }
     catch (error) {
-        console.error('Team update error:', error);
+        console.error('Error creating team:', error);
+        res.status(500).json({ error: 'Failed to create team' });
+    }
+});
+// Update a team
+router.put('/:id', auth_1.authenticate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, agentIds } = req.body;
+        const userId = req.user.id;
+        // Verify team ownership
+        const existingTeam = await prisma_1.prisma.teams.findFirst({
+            where: { id, userId }
+        });
+        if (!existingTeam) {
+            return res.status(404).json({ error: 'Team not found' });
+        }
+        // Validate agents if provided
+        if (agentIds) {
+            const agents = await prisma_1.prisma.agents.findMany({
+                where: {
+                    id: { in: agentIds },
+                    ownerId: userId
+                }
+            });
+            if (agents.length !== agentIds.length) {
+                return res.status(400).json({ error: 'Some agents not found or not owned by you' });
+            }
+        }
+        // Update team and its agents
+        const updatedTeam = await prisma_1.prisma.teams.update({
+            where: { id },
+            data: {
+                name,
+                description,
+                team_agents: agentIds ? {
+                    deleteMany: {},
+                    create: agentIds.map((agentId) => ({ agentId }))
+                } : undefined
+            },
+            include: {
+                team_agents: {
+                    include: { agent: true }
+                }
+            }
+        });
+        res.json(updatedTeam);
+    }
+    catch (error) {
+        console.error('Error updating team:', error);
         res.status(500).json({ error: 'Failed to update team' });
     }
 });
-// Delete team
-router.delete('/:id', async (req, res) => {
+// Delete a team
+router.delete('/:id', auth_1.authenticate, async (req, res) => {
     try {
-        // @ts-ignore
-        await prisma.team.deleteMany({
-            where: { id: req.params.id, userId: req.user.id }
+        const { id } = req.params;
+        const userId = req.user.id;
+        // Verify team ownership
+        const existingTeam = await prisma_1.prisma.teams.findFirst({
+            where: { id, userId }
         });
-        res.json({ success: true });
-    }
-    catch (error) {
-        console.error('Team delete error:', error);
-        res.status(500).json({ error: 'Failed to delete team' });
-    }
-});
-// Send message to team
-router.post('/:id/messages', async (req, res) => {
-    try {
-        const { content } = req.body;
-        if (!content)
-            return res.status(400).json({ error: 'Message content required' });
-        const team = await prisma.team.findFirst({
-            where: { id: req.params.id, userId: req.user.id },
-            include: { agents: { include: { agents: true } } }
-        });
-        if (!team)
+        if (!existingTeam) {
             return res.status(404).json({ error: 'Team not found' });
-        const messages = await prisma.$transaction(team.agents.map((tag) => 
-        // @ts-ignore
-        prisma.message.create({
-            data: {
-                content,
-                senderId: req.user.id,
-                receiverId: tag.agentId,
-                status: 'sent'
-            }
-        })));
-        res.json({ messages, teamId: team.id, count: messages.length });
+        }
+        await prisma_1.prisma.teams.delete({
+            where: { id }
+        });
+        res.json({ message: 'Team deleted successfully' });
     }
     catch (error) {
-        console.error('Team message error:', error);
-        res.status(500).json({ error: 'Failed to send message to team' });
+        console.error('Error deleting team:', error);
+        res.status(500).json({ error: 'Failed to delete team' });
     }
 });
 exports.default = router;

@@ -11,12 +11,11 @@ const router = express_1.default.Router();
 router.get('/template/:templateId', async (req, res) => {
     try {
         const { templateId } = req.params;
-        const reviews = await prisma_1.prisma.review.findMany({
+        const reviews = await prisma_1.prisma.reviews.findMany({
             where: { templateId },
             include: { user: { select: { name: true, avatar: true } } },
             orderBy: { createdAt: 'desc' }
         });
-        // Calculate average rating
         const avg = reviews.length
             ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
             : 0;
@@ -34,8 +33,7 @@ router.post('/', auth_1.authenticate, async (req, res) => {
         if (rating < 1 || rating > 5) {
             return res.status(400).json({ error: 'Rating must be between 1 and 5' });
         }
-        // Check if user already reviewed this template
-        const existing = await prisma_1.prisma.review.findUnique({
+        const existing = await prisma_1.prisma.reviews.findUnique({
             where: {
                 userId_templateId: {
                     userId: req.user.id,
@@ -46,7 +44,7 @@ router.post('/', auth_1.authenticate, async (req, res) => {
         if (existing) {
             return res.status(400).json({ error: 'You have already reviewed this template' });
         }
-        const review = await prisma_1.prisma.review.create({
+        const review = await prisma_1.prisma.reviews.create({
             data: {
                 rating,
                 comment,
@@ -61,21 +59,17 @@ router.post('/', auth_1.authenticate, async (req, res) => {
         res.status(500).json({ error: 'Failed to create review' });
     }
 });
-// Update a review (authenticated, owner only)
+// Update a review (authenticated)
 router.put('/:id', auth_1.authenticate, async (req, res) => {
     try {
         const { id } = req.params;
         const { rating, comment } = req.body;
-        if (rating && (rating < 1 || rating > 5)) {
-            return res.status(400).json({ error: 'Rating must be between 1 and 5' });
-        }
-        const review = await prisma_1.prisma.review.findUnique({ where: { id } });
+        const review = await prisma_1.prisma.reviews.findUnique({ where: { id } });
         if (!review)
             return res.status(404).json({ error: 'Review not found' });
-        if (review.userId !== req.user.id) {
+        if (review.userId !== req.user.id)
             return res.status(403).json({ error: 'Not authorized' });
-        }
-        const updated = await prisma_1.prisma.review.update({
+        const updated = await prisma_1.prisma.reviews.update({
             where: { id },
             data: { rating, comment }
         });
@@ -86,22 +80,36 @@ router.put('/:id', auth_1.authenticate, async (req, res) => {
         res.status(500).json({ error: 'Failed to update review' });
     }
 });
-// Delete a review (authenticated, owner only)
+// Delete a review (authenticated)
 router.delete('/:id', auth_1.authenticate, async (req, res) => {
     try {
         const { id } = req.params;
-        const review = await prisma_1.prisma.review.findUnique({ where: { id } });
+        const review = await prisma_1.prisma.reviews.findUnique({ where: { id } });
         if (!review)
             return res.status(404).json({ error: 'Review not found' });
-        if (review.userId !== req.user.id) {
+        if (review.userId !== req.user.id)
             return res.status(403).json({ error: 'Not authorized' });
-        }
-        await prisma_1.prisma.review.delete({ where: { id } });
+        await prisma_1.prisma.reviews.delete({ where: { id } });
         res.status(204).send();
     }
     catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to delete review' });
+    }
+});
+// Get current user's reviews
+router.get('/user', auth_1.authenticate, async (req, res) => {
+    try {
+        const reviews = await prisma_1.prisma.reviews.findMany({
+            where: { userId: req.user.id },
+            include: { template: { select: { id: true, name: true } } },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(reviews);
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch reviews' });
     }
 });
 exports.default = router;

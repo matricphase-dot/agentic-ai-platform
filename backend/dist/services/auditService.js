@@ -4,7 +4,7 @@ exports.createAuditLog = createAuditLog;
 const prisma_1 = require("../lib/prisma");
 async function createAuditLog(data) {
     try {
-        await prisma_1.prisma.auditLog.create({
+        await prisma_1.prisma.audit_logs.create({
             data: {
                 userId: data.userId,
                 action: data.action,

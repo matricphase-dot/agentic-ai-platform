@@ -5,121 +5,171 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const auth_1 = require("../middleware/auth");
-const client_1 = require("@prisma/client");
+const prisma_1 = require("../lib/prisma");
 const router = express_1.default.Router();
-const prisma = new client_1.PrismaClient();
-router.use(auth_1.authenticate);
-// Register a new node
-router.post('/register', async (req, res) => {
+// Register a new compute node
+router.post('/register', auth_1.authenticate, async (req, res) => {
     try {
-        const { name, description, specs, location, version } = req.body;
-        if (!name || !specs) {
-            return res.status(400).json({ error: 'Name and specs required' });
-        }
-        const node = await prisma.nodes.create({
+        const { name, endpoint, specs, location, version } = req.body;
+        const userId = req.user.id;
+        const node = await prisma_1.prisma.nodes.create({
             data: {
-                owner_id: req.user.id,
                 name,
-                description,
-                specs,
+                endpoint,
+                specs: specs || {},
                 location,
-                version,
-                status: 'offline'
+                version: version || '1.0.0',
+                ownerId: userId,
+                status: 'offline',
+                lastPing: new Date()
             }
         });
         res.json(node);
     }
     catch (error) {
-        console.error('Node registration error:', error);
+        console.error('Error registering node:', error);
         res.status(500).json({ error: 'Failed to register node' });
     }
 });
 // Get all nodes for the authenticated user
-router.get('/my-nodes', async (req, res) => {
+router.get('/', auth_1.authenticate, async (req, res) => {
     try {
-        const nodes = await prisma.nodes.findMany({
-            where: { owner_id: req.user.id },
-            include: {
-                _count: { select: { tasks: true, rewards: true } }
-            },
-            orderBy: { created_at: 'desc' }
+        const userId = req.user.id;
+        const nodes = await prisma_1.prisma.nodes.findMany({
+            where: { ownerId: userId },
+            include: { node_tasks: true, node_rewards: true },
+            orderBy: { createdAt: 'desc' }
         });
         res.json(nodes);
     }
     catch (error) {
-        console.error('Fetch nodes error:', error);
+        console.error('Error fetching nodes:', error);
         res.status(500).json({ error: 'Failed to fetch nodes' });
     }
 });
-// Update node status (called by node software)
-router.post('/:nodeId/heartbeat', async (req, res) => {
+// Get a specific node by ID
+router.get('/:nodeId', auth_1.authenticate, async (req, res) => {
     try {
         const { nodeId } = req.params;
-        const { status, version } = req.body;
-        const node = await prisma.nodes.findFirst({
-            where: { id: nodeId, owner_id: req.user.id }
+        const userId = req.user.id;
+        const node = await prisma_1.prisma.nodes.findFirst({
+            where: { id: nodeId, ownerId: userId },
+            include: { node_tasks: true, node_rewards: true }
         });
-        if (!node)
+        if (!node) {
             return res.status(404).json({ error: 'Node not found' });
-        const updateData = { lastPing: new Date() };
-        if (status)
+        }
+        res.json(node);
+    }
+    catch (error) {
+        console.error('Error fetching node:', error);
+        res.status(500).json({ error: 'Failed to fetch node' });
+    }
+});
+// Update node information
+router.put('/:nodeId', auth_1.authenticate, async (req, res) => {
+    try {
+        const { nodeId } = req.params;
+        const { name, endpoint, status, specs, location, version } = req.body;
+        const userId = req.user.id;
+        // Verify ownership
+        const existing = await prisma_1.prisma.nodes.findFirst({
+            where: { id: nodeId, ownerId: userId }
+        });
+        if (!existing) {
+            return res.status(404).json({ error: 'Node not found' });
+        }
+        const updateData = {};
+        if (name !== undefined)
+            updateData.name = name;
+        if (endpoint !== undefined)
+            updateData.endpoint = endpoint;
+        if (status !== undefined)
             updateData.status = status;
-        if (version)
+        if (specs !== undefined)
+            updateData.specs = specs;
+        if (location !== undefined)
+            updateData.location = location;
+        if (version !== undefined)
             updateData.version = version;
-        const updated = await prisma.nodes.update({
+        const updated = await prisma_1.prisma.nodes.update({
             where: { id: nodeId },
             data: updateData
         });
         res.json(updated);
     }
     catch (error) {
-        console.error('Heartbeat error:', error);
+        console.error('Error updating node:', error);
         res.status(500).json({ error: 'Failed to update node' });
     }
 });
-// Get available tasks for a node (polling endpoint)
-router.get('/:nodeId/tasks/available', async (req, res) => {
+// Update node heartbeat (ping)
+router.post('/:nodeId/ping', auth_1.authenticate, async (req, res) => {
     try {
         const { nodeId } = req.params;
-        const node = await prisma.nodes.findFirst({
-            where: { id: nodeId, owner_id: req.user.id }
+        const userId = req.user.id;
+        const node = await prisma_1.prisma.nodes.findFirst({
+            where: { id: nodeId, ownerId: userId }
         });
-        if (!node)
+        if (!node) {
             return res.status(404).json({ error: 'Node not found' });
-        // Find pending tasks not assigned to any node yet
-        const tasks = await prisma.node_tasks.findMany({
-            where: { status: 'pending' },
-            take: 5,
-            orderBy: { created_at: 'asc' }
+        }
+        const updated = await prisma_1.prisma.nodes.update({
+            where: { id: nodeId },
+            data: { lastPing: new Date() }
+        });
+        res.json(updated);
+    }
+    catch (error) {
+        console.error('Error updating node ping:', error);
+        res.status(500).json({ error: 'Failed to update node ping' });
+    }
+});
+// Get tasks assigned to a node
+router.get('/:nodeId/tasks', auth_1.authenticate, async (req, res) => {
+    try {
+        const { nodeId } = req.params;
+        const userId = req.user.id;
+        const node = await prisma_1.prisma.nodes.findFirst({
+            where: { id: nodeId, ownerId: userId }
+        });
+        if (!node) {
+            return res.status(404).json({ error: 'Node not found' });
+        }
+        const tasks = await prisma_1.prisma.node_tasks.findMany({
+            where: { nodeId },
+            orderBy: { createdAt: 'desc' }
         });
         res.json(tasks);
     }
     catch (error) {
-        console.error('Fetch available tasks error:', error);
+        console.error('Error fetching node tasks:', error);
         res.status(500).json({ error: 'Failed to fetch tasks' });
     }
 });
-// Claim a task (node accepts it)
-router.post('/tasks/:taskId/claim', async (req, res) => {
+// Claim a task (assign to this node)
+router.post('/:nodeId/tasks/:taskId/claim', auth_1.authenticate, async (req, res) => {
     try {
-        const { taskId } = req.params;
-        const { nodeId } = req.body;
-        if (!nodeId)
-            return res.status(400).json({ error: 'nodeId required' });
-        const node = await prisma.nodes.findFirst({
-            where: { id: nodeId, owner_id: req.user.id }
+        const { nodeId, taskId } = req.params;
+        const userId = req.user.id;
+        // Verify node ownership
+        const node = await prisma_1.prisma.nodes.findFirst({
+            where: { id: nodeId, ownerId: userId }
         });
-        if (!node)
+        if (!node) {
             return res.status(404).json({ error: 'Node not found' });
-        const task = await prisma.node_tasks.findUnique({
+        }
+        // Check task exists and not already claimed
+        const task = await prisma_1.prisma.node_tasks.findUnique({
             where: { id: taskId }
         });
-        if (!task)
+        if (!task) {
             return res.status(404).json({ error: 'Task not found' });
-        if (task.status !== 'pending') {
+        }
+        if (task.nodeId) {
             return res.status(400).json({ error: 'Task already assigned' });
         }
-        const updated = await prisma.node_tasks.update({
+        const updated = await prisma_1.prisma.node_tasks.update({
             where: { id: taskId },
             data: {
                 nodeId,
@@ -127,76 +177,81 @@ router.post('/tasks/:taskId/claim', async (req, res) => {
                 startedAt: new Date()
             }
         });
-        // Update node status to busy
-        // @ts-ignore
-        await prisma.nodes.update({
-            where: { id: nodeId },
-            data: { status: 'busy' }
-        });
         res.json(updated);
     }
     catch (error) {
-        console.error('Claim task error:', error);
+        console.error('Error claiming task:', error);
         res.status(500).json({ error: 'Failed to claim task' });
     }
 });
-// Submit task result
-router.post('/tasks/:taskId/complete', async (req, res) => {
+// Complete a task (submit result)
+router.post('/tasks/:taskId/complete', auth_1.authenticate, async (req, res) => {
     try {
         const { taskId } = req.params;
-        const { output, reward } = req.body; // reward in AGIX
-        const task = await prisma.node_tasks.findFirst({
-            where: { id: taskId, node: { owner_id: req.user.id } }
+        const { output, reward } = req.body;
+        const userId = req.user.id;
+        // Verify node ownership through the node associated with the task
+        const task = await prisma_1.prisma.node_tasks.findFirst({
+            where: {
+                id: taskId,
+                node: { ownerId: userId }
+            },
+            include: { node: true }
         });
-        if (!task)
+        if (!task) {
             return res.status(404).json({ error: 'Task not found or not assigned to your node' });
-        const completed = await prisma.node_tasks.update({
+        }
+        if (task.status === 'completed') {
+            return res.status(400).json({ error: 'Task already completed' });
+        }
+        // Update task
+        const completed = await prisma_1.prisma.node_tasks.update({
             where: { id: taskId },
             data: {
-                status: 'completed',
                 output,
+                status: 'completed',
                 completedAt: new Date(),
-                reward
+                reward: reward || 0
             }
         });
         // Create reward record
-        if (reward) {
-            // @ts-ignore
-            await prisma.node_rewards.create({
+        if (reward && reward > 0) {
+            await prisma_1.prisma.node_rewards.create({
                 data: {
                     nodeId: task.nodeId,
                     amount: reward,
-                    reason: 'task_completion',
-                    taskId
+                    reason: 'Task completion',
+                    taskId: task.id
                 }
             });
         }
-        // Mark node as online again
-        // @ts-ignore
-        await prisma.nodes.update({
-            where: { id: task.nodeId },
-            data: { status: 'online' }
-        });
         res.json(completed);
     }
     catch (error) {
-        console.error('Complete task error:', error);
+        console.error('Error completing task:', error);
         res.status(500).json({ error: 'Failed to complete task' });
     }
 });
-// Get node earnings
-router.get('/earnings', async (req, res) => {
+// Get earnings (rewards) for a node
+router.get('/:nodeId/earnings', auth_1.authenticate, async (req, res) => {
     try {
-        const rewards = await prisma.node_rewards.findMany({
-            where: { node: { owner_id: req.user.id } },
-            include: { node: true, task: true },
-            orderBy: { created_at: 'desc' }
+        const { nodeId } = req.params;
+        const userId = req.user.id;
+        const node = await prisma_1.prisma.nodes.findFirst({
+            where: { id: nodeId, ownerId: userId }
+        });
+        if (!node) {
+            return res.status(404).json({ error: 'Node not found' });
+        }
+        const rewards = await prisma_1.prisma.node_rewards.findMany({
+            where: { nodeId },
+            orderBy: { createdAt: 'desc' }
         });
         const total = rewards.reduce((sum, r) => sum + r.amount, 0);
         res.json({ rewards, total });
     }
     catch (error) {
-        console.error('Fetch earnings error:', error);
+        console.error('Error fetching earnings:', error);
         res.status(500).json({ error: 'Failed to fetch earnings' });
     }
 });
