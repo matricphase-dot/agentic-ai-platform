@@ -1,9 +1,9 @@
-{
+﻿{
   "name": "agentic-ai-backend",
   "version": "1.0.0",
-  "description": "Agentic AI Platform – Backend",
+  "description": "Agentic AI Platform â€“ Backend",
   "main": "dist/server.js",
-  "scripts": {
+  "scripts": {\n    "prebuild": "echo \\"Starting TypeScript compilation...\\"",
     "dev": "nodemon src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
@@ -57,3 +57,4 @@
     "typescript": "^5.3.3"
   }
 }
+
