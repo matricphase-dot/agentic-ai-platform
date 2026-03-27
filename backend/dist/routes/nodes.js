@@ -137,7 +137,7 @@ router.get('/:nodeId/tasks', auth_1.authenticate, async (req, res) => {
             return res.status(404).json({ error: 'Node not found' });
         }
         const tasks = await prisma_1.prisma.node_tasks.findMany({
-            where: { nodeId },
+            where: { nodeId: nodeId },
             orderBy: { createdAt: 'desc' }
         });
         res.json(tasks);
@@ -171,11 +171,9 @@ router.post('/:nodeId/tasks/:taskId/claim', auth_1.authenticate, async (req, res
         }
         const updated = await prisma_1.prisma.node_tasks.update({
             where: { id: taskId },
-            data: {
-                nodeId,
+            data: { nodeId: nodeId,
                 status: 'assigned',
-                startedAt: new Date()
-            }
+                startedAt: new Date() }
         });
         res.json(updated);
     }
@@ -192,10 +190,8 @@ router.post('/tasks/:taskId/complete', auth_1.authenticate, async (req, res) => 
         const userId = req.user.id;
         // Verify node ownership through the node associated with the task
         const task = await prisma_1.prisma.node_tasks.findFirst({
-            where: {
-                id: taskId,
-                node: { ownerId: userId }
-            },
+            where: { id: taskId,
+                node: { ownerId: userId } },
             include: { node: true }
         });
         if (!task) {
@@ -244,7 +240,7 @@ router.get('/:nodeId/earnings', auth_1.authenticate, async (req, res) => {
             return res.status(404).json({ error: 'Node not found' });
         }
         const rewards = await prisma_1.prisma.node_rewards.findMany({
-            where: { nodeId },
+            where: { nodeId: nodeId },
             orderBy: { createdAt: 'desc' }
         });
         const total = rewards.reduce((sum, r) => sum + r.amount, 0);

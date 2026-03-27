@@ -1,14 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const auth_1 = require("../middleware/auth");
+const express_1 = require("express");
 const client_1 = require("@prisma/client");
-const router = express_1.default.Router();
+const router = (0, express_1.Router)();
 const prisma = new client_1.PrismaClient();
-router.use(auth_1.authenticate);
 // Helper to finalize expired proposals
 const finalizeProposalIfNeeded = async (proposal) => {
     if (proposal.status !== 'active')
@@ -22,7 +17,6 @@ const finalizeProposalIfNeeded = async (proposal) => {
             return acc;
         }, {});
         const totalWeight = votes.reduce((sum, v) => sum + v.weight, 0);
-        // Find winning option (simple majority)
         let winningOption = null;
         let maxWeight = 0;
         for (const opt in results) {
@@ -39,8 +33,27 @@ const finalizeProposalIfNeeded = async (proposal) => {
     }
     return proposal;
 };
-// Create a proposal
-router.post('/proposals', async (req, res) => {
+// GET /api/governance – return all proposals
+router.get('/', async (req, res) => {
+    try {
+        let proposals = await prisma.proposals.findMany({
+            include: {
+                votes: true,
+                creator: { select: { email: true } }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        // Auto-finalize expired ones
+        proposals = await Promise.all(proposals.map(p => finalizeProposalIfNeeded(p)));
+        res.json(proposals);
+    }
+    catch (error) {
+        console.error('Fetch proposals error:', error);
+        res.status(500).json({ error: 'Failed to fetch proposals' });
+    }
+});
+// POST /api/governance – create a proposal (admin only)
+router.post('/', async (req, res) => {
     try {
         const { title, description, options, endDate } = req.body;
         if (!title || !description || !options || !Array.isArray(options) || options.length < 2) {
@@ -62,49 +75,26 @@ router.post('/proposals', async (req, res) => {
         res.json(proposal);
     }
     catch (error) {
-        console.error("Error in governance route:", error);
         console.error('Create proposal error:', error);
         res.status(500).json({ error: 'Failed to create proposal' });
     }
 });
-// Get all proposals (auto-finalize expired ones)
-router.get('/proposals', async (req, res) => {
-    try {
-        let proposals = await prisma.proposals.findMany({
-            include: {
-                _count: { select: { votes: true } },
-                creator: { select: { email: true } }
-            },
-            orderBy: { createdAt: "desc" }
-        });
-        // Finalize any expired proposals
-        proposals = await Promise.all(proposals.map(p => finalizeProposalIfNeeded(p)));
-        res.json(proposals);
-    }
-    catch (error) {
-        console.error("Error in governance route:", error);
-        console.error('Fetch proposals error:', error);
-        res.status(500).json({ error: 'Failed to fetch proposals' });
-    }
-});
-// Get single proposal with votes and results
-router.get('/proposals/:id', async (req, res) => {
+// GET /api/governance/:id – single proposal
+router.get('/:id', async (req, res) => {
     try {
         let proposal = await prisma.proposals.findUnique({
             where: { id: req.params.id },
             include: {
                 votes: {
                     include: { user: { select: { email: true } } },
-                    orderBy: { createdAt: "desc" }
+                    orderBy: { createdAt: 'desc' }
                 },
                 creator: { select: { email: true } }
             }
         });
         if (!proposal)
             return res.status(404).json({ error: 'Proposal not found' });
-        // Finalize if needed
         proposal = await finalizeProposalIfNeeded(proposal);
-        // Calculate results
         const results = proposal.options.reduce((acc, opt) => {
             acc[opt] = proposal.votes.filter(v => v.option === opt).reduce((sum, v) => sum + v.weight, 0);
             return acc;
@@ -113,13 +103,12 @@ router.get('/proposals/:id', async (req, res) => {
         res.json({ ...proposal, results, totalWeight });
     }
     catch (error) {
-        console.error("Error in governance route:", error);
         console.error('Fetch proposal error:', error);
         res.status(500).json({ error: 'Failed to fetch proposal' });
     }
 });
-// Vote on a proposal
-router.post('/proposals/:id/vote', async (req, res) => {
+// POST /api/governance/:id/vote – vote on a proposal
+router.post('/:id/vote', async (req, res) => {
     try {
         const { option } = req.body;
         if (!option)
@@ -129,7 +118,6 @@ router.post('/proposals/:id/vote', async (req, res) => {
         });
         if (!proposal)
             return res.status(404).json({ error: 'Proposal not found' });
-        // Auto-finalize if expired
         proposal = await finalizeProposalIfNeeded(proposal);
         if (proposal.status !== 'active') {
             return res.status(400).json({ error: 'Voting period has ended' });
@@ -151,7 +139,7 @@ router.post('/proposals/:id/vote', async (req, res) => {
         }
         // Calculate vote weight based on user's total active stake
         const stakes = await prisma.stakes.aggregate({
-            where: { userId: req.user.id, status: 'active' },
+            where: { stakerId: req.user.id },
             _sum: { amount: true }
         });
         const weight = stakes._sum.amount || 0;
@@ -166,29 +154,8 @@ router.post('/proposals/:id/vote', async (req, res) => {
         res.json(vote);
     }
     catch (error) {
-        console.error("Error in governance route:", error);
         console.error('Vote error:', error);
         res.status(500).json({ error: 'Failed to vote' });
-    }
-});
-// Manually finalize a proposal (optional)
-router.post('/proposals/:id/finalize', async (req, res) => {
-    try {
-        let proposal = await prisma.proposals.findUnique({
-            where: { id: req.params.id }
-        });
-        if (!proposal)
-            return res.status(404).json({ error: 'Proposal not found' });
-        if (proposal.status !== 'active') {
-            return res.status(400).json({ error: 'Proposal already finalized' });
-        }
-        proposal = await finalizeProposalIfNeeded(proposal);
-        res.json(proposal);
-    }
-    catch (error) {
-        console.error("Error in governance route:", error);
-        console.error('Finalize error:', error);
-        res.status(500).json({ error: 'Failed to finalize proposal' });
     }
 });
 exports.default = router;

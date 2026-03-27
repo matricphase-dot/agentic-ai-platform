@@ -54,7 +54,7 @@ router.get('/:id', auth_1.authenticate, async (req, res) => {
         const { id } = req.params;
         const userId = req.user.id;
         const agent = await prisma_1.prisma.agents.findFirst({
-            where: { id, ownerId: userId }
+            where: { id: id, ownerId: userId }
         });
         if (!agent) {
             return res.status(404).json({ error: 'Agent not found' });
@@ -68,6 +68,7 @@ router.get('/:id', auth_1.authenticate, async (req, res) => {
 });
 // Create new agent
 router.post('/', auth_1.authenticate, async (req, res) => {
+    console.log('Agent creation request:', req.body);
     try {
         const { name, description, capabilities, systemPrompt, modelProvider, modelName, status } = req.body;
         const userId = req.user.id;
@@ -103,13 +104,13 @@ router.put('/:id', auth_1.authenticate, async (req, res) => {
         const { id } = req.params;
         const userId = req.user.id;
         const existing = await prisma_1.prisma.agents.findFirst({
-            where: { id, ownerId: userId }
+            where: { id: id, ownerId: userId }
         });
         if (!existing) {
             return res.status(404).json({ error: 'Agent not found or not owned by you' });
         }
         const updated = await prisma_1.prisma.agents.update({
-            where: { id },
+            where: { id: id },
             data: req.body
         });
         res.json(updated);
@@ -125,13 +126,13 @@ router.delete('/:id', auth_1.authenticate, async (req, res) => {
         const { id } = req.params;
         const userId = req.user.id;
         const existing = await prisma_1.prisma.agents.findFirst({
-            where: { id, ownerId: userId }
+            where: { id: id, ownerId: userId }
         });
         if (!existing) {
             return res.status(404).json({ error: 'Agent not found or not owned by you' });
         }
         await prisma_1.prisma.agents.delete({
-            where: { id }
+            where: { id: id }
         });
         res.status(204).send();
     }
