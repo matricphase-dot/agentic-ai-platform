@@ -52,7 +52,7 @@ router.get('/:nodeId', authenticate, async (req, res) => {
     const userId = (req as any).user.id;
 
     const node = await prisma.nodes.findFirst({
-      where: { id: nodeId, ownerId: userId },
+      where: { id: nodeId as string, ownerId: userId },
       include: { node_tasks: true, node_rewards: true }
     });
     if (!node) {
@@ -74,7 +74,7 @@ router.put('/:nodeId', authenticate, async (req, res) => {
 
     // Verify ownership
     const existing = await prisma.nodes.findFirst({
-      where: { id: nodeId, ownerId: userId }
+      where: { id: nodeId as string, ownerId: userId }
     });
     if (!existing) {
       return res.status(404).json({ error: 'Node not found' });
@@ -89,7 +89,7 @@ router.put('/:nodeId', authenticate, async (req, res) => {
     if (version !== undefined) updateData.version = version;
 
     const updated = await prisma.nodes.update({
-      where: { id: nodeId },
+      where: { id: nodeId as string },
       data: updateData
     });
     res.json(updated);
@@ -106,14 +106,14 @@ router.post('/:nodeId/ping', authenticate, async (req, res) => {
     const userId = (req as any).user.id;
 
     const node = await prisma.nodes.findFirst({
-      where: { id: nodeId, ownerId: userId }
+      where: { id: nodeId as string, ownerId: userId }
     });
     if (!node) {
       return res.status(404).json({ error: 'Node not found' });
     }
 
     const updated = await prisma.nodes.update({
-      where: { id: nodeId },
+      where: { id: nodeId as string },
       data: { lastPing: new Date() }
     });
     res.json(updated);
@@ -130,14 +130,14 @@ router.get('/:nodeId/tasks', authenticate, async (req, res) => {
     const userId = (req as any).user.id;
 
     const node = await prisma.nodes.findFirst({
-      where: { id: nodeId, ownerId: userId }
+      where: { id: nodeId as string, ownerId: userId }
     });
     if (!node) {
       return res.status(404).json({ error: 'Node not found' });
     }
 
     const tasks = await prisma.node_tasks.findMany({
-      where: { nodeId },
+      where: { nodeId: nodeId as string },
       orderBy: { createdAt: 'desc' }
     });
     res.json(tasks);
@@ -155,7 +155,7 @@ router.post('/:nodeId/tasks/:taskId/claim', authenticate, async (req, res) => {
 
     // Verify node ownership
     const node = await prisma.nodes.findFirst({
-      where: { id: nodeId, ownerId: userId }
+      where: { id: nodeId as string, ownerId: userId }
     });
     if (!node) {
       return res.status(404).json({ error: 'Node not found' });
@@ -163,7 +163,7 @@ router.post('/:nodeId/tasks/:taskId/claim', authenticate, async (req, res) => {
 
     // Check task exists and not already claimed
     const task = await prisma.node_tasks.findUnique({
-      where: { id: taskId }
+      where: { id: taskId as string }
     });
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
@@ -173,9 +173,8 @@ router.post('/:nodeId/tasks/:taskId/claim', authenticate, async (req, res) => {
     }
 
     const updated = await prisma.node_tasks.update({
-      where: { id: taskId },
-      data: {
-        nodeId,
+      where: { id: taskId as string },
+      data: { nodeId: nodeId as string,
         status: 'assigned',
         startedAt: new Date()
       }
@@ -196,8 +195,7 @@ router.post('/tasks/:taskId/complete', authenticate, async (req, res) => {
 
     // Verify node ownership through the node associated with the task
     const task = await prisma.node_tasks.findFirst({
-      where: {
-        id: taskId,
+      where: { id: taskId as string,
         node: { ownerId: userId }
       },
       include: { node: true }
@@ -211,7 +209,7 @@ router.post('/tasks/:taskId/complete', authenticate, async (req, res) => {
 
     // Update task
     const completed = await prisma.node_tasks.update({
-      where: { id: taskId },
+      where: { id: taskId as string },
       data: {
         output,
         status: 'completed',
@@ -246,14 +244,14 @@ router.get('/:nodeId/earnings', authenticate, async (req, res) => {
     const userId = (req as any).user.id;
 
     const node = await prisma.nodes.findFirst({
-      where: { id: nodeId, ownerId: userId }
+      where: { id: nodeId as string, ownerId: userId }
     });
     if (!node) {
       return res.status(404).json({ error: 'Node not found' });
     }
 
     const rewards = await prisma.node_rewards.findMany({
-      where: { nodeId },
+      where: { nodeId: nodeId as string },
       orderBy: { createdAt: 'desc' }
     });
     const total = rewards.reduce((sum, r) => sum + r.amount, 0);
@@ -265,3 +263,5 @@ router.get('/:nodeId/earnings', authenticate, async (req, res) => {
 });
 
 export default router;
+
+

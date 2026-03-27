@@ -1,0 +1,121 @@
+﻿console.log('?? Server.ts loaded');
+import express from 'express';
+import { authenticate } from './middleware/auth';
+import cors from 'cors';
+import { authenticate } from './middleware/auth';
+import { PrismaClient } from '@prisma/client';
+import { authenticate } from './middleware/auth';
+import dotenv from 'dotenv';
+import { authenticate } from './middleware/auth';
+
+// Routes
+import authRoutes from './routes/auth';
+import { authenticate } from './middleware/auth';
+import agentsRoute from './routes/agents';
+import { authenticate } from './middleware/auth';
+import messagesRoute from './routes/messages';
+import { authenticate } from './middleware/auth';
+import documentsRoute from './routes/documents';
+import { authenticate } from './middleware/auth';
+import recordingsRoute from './routes/recordings';
+import { authenticate } from './middleware/auth';
+import aiqRoutes from './routes/aiq';
+import { authenticate } from './middleware/auth';
+import templatesRoute from './routes/templates';
+import { authenticate } from './middleware/auth';
+import stakingRoute from './routes/staking';
+import { authenticate } from './middleware/auth';
+import governanceRoute from './routes/governance';
+import { authenticate } from './middleware/auth';
+import nodesRoute from './routes/nodes';
+import { authenticate } from './middleware/auth';
+import teamsRoute from './routes/teams';
+import { authenticate } from './middleware/auth';
+import agentVersionsRoute from './routes/agentVersions';
+import { authenticate } from './middleware/auth';
+import testRoute from './routes/test';
+import { authenticate } from './middleware/auth';
+import inviteRoutes from './routes/invite';
+import { authenticate } from './middleware/auth';
+import webhooksRoute from './routes/webhooks';
+import { authenticate } from './middleware/auth';
+import reviewsRoute from './routes/reviews';
+import { authenticate } from './middleware/auth';
+import auditLogsRoute from './routes/auditLogs';
+import { authenticate } from './middleware/auth';
+import settingsRoute from './routes/settings';
+import { authenticate } from './middleware/auth';
+import dashboardRoutes from './routes/dashboard';
+import { authenticate } from './middleware/auth';
+
+dotenv.config();
+
+const app = express();
+const port = process.env.PORT || 5000;
+const prisma = new PrismaClient();
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// CORS
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://agentic-ai-platform-rouge.vercel.app'],
+  credentials: true,
+}));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/agents', authenticate, agentsRoute);
+app.use('/api/messages', authenticate, messagesRoute);
+app.use('/api/documents', authenticate, documentsRoute);
+app.use('/api/recordings', authenticate, recordingsRoute);
+app.use('/api/aiq', authenticate, aiqRoutes);
+app.use('/api/templates', authenticate, templatesRoute);
+app.use('/api/staking', authenticate, stakingRoute);
+app.use('/api/governance', authenticate, governanceRoute);
+app.use('/api/nodes', authenticate, nodesRoute);
+app.use('/api/teams', authenticate, teamsRoute);
+app.use('/api/agent-versions', authenticate, agentVersionsRoute);
+app.use('/api/test', testRoute);
+app.use('/api/dashboard', authenticate, dashboardRoutes);
+app.use('/api/invite', authenticate, inviteRoutes);
+app.use('/api/webhooks', authenticate, webhooksRoute);
+app.use('/api/reviews', authenticate, reviewsRoute);
+app.use('/api/audit-logs', authenticate, auditLogsRoute);
+app.use('/api/settings', authenticate, settingsRoute);
+
+// Database connection
+prisma.$connect()
+  .then(() => console.log('Database connected successfully'))
+  .catch((err) => console.error('Database connection failed:', err));
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+  console.log('Routes registered:');
+  console.log('- /api/auth');
+  console.log('- /api/agents');
+  console.log('- /api/messages');
+  console.log('- /api/documents');
+  console.log('- /api/recordings');
+  console.log('- /api/aiq');
+  console.log('- /api/templates');
+  console.log('- /api/staking');
+  console.log('- /api/governance');
+  console.log('- /api/nodes');
+  console.log('- /api/teams');
+  console.log('- /api/agent-versions');
+  console.log('- /api/test');
+  console.log('- /api/invite');
+  console.log('- /api/webhooks');
+  console.log('- /api/reviews');
+  console.log('- /api/audit-logs');
+  console.log('- /api/settings');
+});
+
+export default app;
+

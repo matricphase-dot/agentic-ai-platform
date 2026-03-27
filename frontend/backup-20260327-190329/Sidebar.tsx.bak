@@ -1,0 +1,40 @@
+﻿'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+const Sidebar = () => {
+  const pathname = usePathname();
+  const links = [
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/agents', label: 'Agents' },
+    { href: '/marketplace', label: 'Marketplace' },
+    { href: '/staking', label: 'Staking' },
+    { href: '/governance', label: 'Governance' },
+    { href: '/nodes', label: 'Nodes' },
+    { href: '/teams', label: 'Teams' },
+    { href: '/webhooks', label: 'Webhooks' },
+    { href: '/reviews', label: 'Reviews' },
+    { href: '/audit-logs', label: 'Audit Logs' },
+  ];
+
+  return (
+    <aside className="w-64 bg-gray-800 text-white p-4">
+      <nav>
+        {links.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={`block py-2 px-4 rounded ${
+              pathname === link.href ? 'bg-gray-700' : 'hover:bg-gray-700'
+            }`}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+    </aside>
+  );
+};
+
+export default Sidebar;

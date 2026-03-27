@@ -1,61 +1,41 @@
-﻿{
+{
   "name": "agentic-ai-backend",
   "version": "1.0.0",
-  "description": "Agentic AI Platform â€“ Backend",
+  "description": "",
   "main": "dist/server.js",
-  "scripts": {\n    "prebuild": "echo \\"Starting TypeScript compilation...\\"",
-    "dev": "nodemon src/server.ts",
+  "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "prisma:generate": "prisma generate --config ./prisma.config.ts",
-    "prisma:push": "prisma db push --config ./prisma.config.ts",
-    "prisma:studio": "prisma studio --config ./prisma.config.ts",
-    "seed": "ts-node src/seed.ts"
+    "dev": "nodemon src/server.ts"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.74.0",
-    "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^6.19.2",
-    "@sentry/node": "^10.45.0",
-    "@sentry/profiling-node": "^10.45.0",
-    "@types/node-fetch": "^2.6.13",
-    "@xenova/transformers": "^2.17.2",
-    "axios": "^1.13.6",
-    "bcrypt": "^6.0.0",
-    "bcryptjs": "^2.4.3",
-    "cheerio": "^1.2.0",
-    "chromadb": "^3.3.1",
-    "cors": "^2.8.6",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "helmet": "^7.1.0",
-    "jsonwebtoken": "^9.0.3",
-    "multer": "^2.1.0",
-    "node-fetch": "^3.3.2",
-    "openai": "^6.22.0",
-    "pdf-parse": "^2.4.5",
-    "pg": "^8.19.0",
+    "axios": "^1.8.4",
+    "bcrypt": "^5.1.1",
+    "chromadb": "^3.4.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.89.0",
     "prisma": "^6.19.2",
-    "puppeteer": "^24.37.3",
-    "react-hot-toast": "^2.6.0",
-    "socket.io": "^4.7.2",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1",
-    "zod": "^3.25.76"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^4.17.21",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/multer": "^2.0.0",
-    "@types/node": "^20.10.5",
-    "@types/pg": "^8.11.0",
-    "nodemon": "^3.0.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.13.10",
+    "nodemon": "^3.1.9"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }
-
-

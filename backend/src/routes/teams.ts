@@ -29,7 +29,7 @@ router.get('/:id', authenticate, async (req, res) => {
     const { id } = req.params;
     const userId = (req as any).user.id;
     const team = await prisma.teams.findFirst({
-      where: { id, userId },
+      where: { id: id as string, userId },
       include: {
         team_agents: {
           include: { agent: true }
@@ -96,7 +96,7 @@ router.put('/:id', authenticate, async (req, res) => {
 
     // Verify team ownership
     const existingTeam = await prisma.teams.findFirst({
-      where: { id, userId }
+      where: { id: id as string, userId }
     });
     if (!existingTeam) {
       return res.status(404).json({ error: 'Team not found' });
@@ -117,7 +117,7 @@ router.put('/:id', authenticate, async (req, res) => {
 
     // Update team and its agents
     const updatedTeam = await prisma.teams.update({
-      where: { id },
+      where: { id: id as string },
       data: {
         name,
         description,
@@ -147,14 +147,14 @@ router.delete('/:id', authenticate, async (req, res) => {
 
     // Verify team ownership
     const existingTeam = await prisma.teams.findFirst({
-      where: { id, userId }
+      where: { id: id as string, userId }
     });
     if (!existingTeam) {
       return res.status(404).json({ error: 'Team not found' });
     }
 
     await prisma.teams.delete({
-      where: { id }
+      where: { id: id as string }
     });
     res.json({ message: 'Team deleted successfully' });
   } catch (error) {
@@ -164,3 +164,4 @@ router.delete('/:id', authenticate, async (req, res) => {
 });
 
 export default router;
+

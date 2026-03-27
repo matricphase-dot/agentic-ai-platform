@@ -1,114 +1,55 @@
-﻿import express from 'express';
-import { prisma } from '../lib/prisma';
+﻿import { Router, Request, Response } from 'express';
 import { authenticate } from '../middleware/auth';
-import { calculateRewardRate } from '../services/stakingService';
+import { PrismaClient } from '@prisma/client';
 
-const router = express.Router();
+const router = Router();
+const prisma = new PrismaClient();
 
-// Get user's stakes
-router.get('/', authenticate, async (req, res) => {
-  try {
-    const userId = (req as any).user.id;
-    const stakes = await prisma.stakes.findMany({
-      where: { stakerId: userId },
-      include: { agent: true },
-      orderBy: { createdAt: 'desc' }
-    });
-    res.json(stakes);
-  } catch (error) {
-    console.error('Error fetching stakes:', error);
-    res.status(500).json({ error: 'Failed to fetch stakes' });
+router.post('/', authenticate, async (req: any, res: Response) => {
+  const { agentId, amount } = req.body;
+  const userId = req.user.id;
+
+  if (!agentId || !amount) {
+    return res.status(400).json({ error: 'Missing required fields' });
   }
-});
 
-// Get single stake
-router.get('/:id', authenticate, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = (req as any).user.id;
-    const stake = await prisma.stakes.findFirst({
-      where: { id, stakerId: userId },
-      include: { agent: true }
-    });
-    if (!stake) {
-      return res.status(404).json({ error: 'Stake not found' });
-    }
-    res.json(stake);
-  } catch (error) {
-    console.error('Error fetching stake:', error);
-    res.status(500).json({ error: 'Failed to fetch stake' });
+  // Check if agent exists
+  const agent = await prisma.agents.findUnique({ where: { id: agentId } });
+  if (!agent) {
+    return res.status(404).json({ error: 'Agent not found' });
   }
-});
 
-// Create a stake
-router.post('/', authenticate, async (req, res) => {
+  // For now, just a simple share percentage (could be based on total staked)
+  const sharePercentage = 1.0; // placeholder
+
   try {
-    const { agentId, amount, sharePercentage } = req.body;
-    const userId = (req as any).user.id;
-
-    // Verify agent exists
-    const agent = await prisma.agents.findFirst({
-      where: { id: agentId, ownerId: userId }
-    });
-    if (!agent) {
-      return res.status(404).json({ error: 'Agent not found or not owned by you' });
-    }
-
     const stake = await prisma.stakes.create({
       data: {
-        amount,
-        sharePercentage: sharePercentage || 0,
-        staker: { connect: { id: userId } },
-        agent: { connect: { id: agentId } }
-      }
+        amount: parseFloat(amount),
+        sharePercentage,
+        stakerId: userId,
+        agentId,
+      },
     });
     res.status(201).json(stake);
-  } catch (error) {
-    console.error('Error creating stake:', error);
-    res.status(500).json({ error: 'Failed to create stake' });
-  }
-});
-
-// Claim rewards for a stake
-router.post('/:id/claim', authenticate, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = (req as any).user.id;
-
-    const stake = await prisma.stakes.findFirst({
-      where: { id, stakerId: userId },
-      include: { agent: true }
-    });
-    if (!stake) {
-      return res.status(404).json({ error: 'Stake not found' });
+  } catch (error: any) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'You already have a stake on this agent. Update existing stake? (not implemented yet)' });
     }
-
-    // Simple reward calculation – you can adjust this logic
-    const rate = calculateRewardRate(stake.agent);
-    const rewardAmount = stake.amount * rate;
-
-    // Create reward record
-    const reward = await prisma.reward.create({
-      data: {
-        stake: { connect: { id: stake.id } },
-        amount: rewardAmount
-      }
-    });
-
-    // Update stake total returns
-    await prisma.stakes.update({
-      where: { id: stake.id },
-      data: { totalReturns: { increment: rewardAmount } }
-    });
-
-    res.json(reward);
-  } catch (error) {
-    console.error('Error claiming reward:', error);
-    res.status(500).json({ error: 'Failed to claim reward' });
+    console.error('Stake creation error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+router.get('/', authenticate, async (req: any, res: Response) => {
+  const userId = req.user.id;
+  const stakes = await prisma.stakes.findMany({
+    where: { stakerId: userId },
+    include: { agent: true },
+  });
+  res.json(stakes);
+});
+
+// Other routes (update, claim, etc.) could be added later
 
 export default router;
-
-
-

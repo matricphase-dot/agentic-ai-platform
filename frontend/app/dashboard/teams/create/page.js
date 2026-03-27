@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
@@ -118,7 +118,7 @@ export default function CreateTeamPage() {
             {/* Team Information */}
             <div className="rounded-xl bg-white p-6 shadow-lg dark:bg-gray-800">
               <h2 className="mb-6 flex items-center text-xl font-bold">
-                <span className="mr-2">👥</span> Team Information
+                <span className="mr-2">??</span> Team Information
               </h2>
 
               <div className="space-y-4">
@@ -226,7 +226,7 @@ export default function CreateTeamPage() {
                   >
                     <div className="flex items-center">
                       <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
-                        <span className="text-sm text-white">🤖</span>
+                        <span className="text-sm text-white">??</span>
                       </div>
                       <div className="flex-1">
                         <div className="font-medium">{agent.name}</div>
@@ -243,7 +243,7 @@ export default function CreateTeamPage() {
                       >
                         {selectedAgents.includes(agent.id) && (
                           <div className="flex items-center justify-center text-xs text-white">
-                            ✓
+                            ?
                           </div>
                         )}
                       </div>

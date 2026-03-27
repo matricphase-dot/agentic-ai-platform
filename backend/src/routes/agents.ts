@@ -52,7 +52,7 @@ router.get('/:id', authenticate, async (req, res) => {
     const userId = (req as any).user.id;
 
     const agent = await prisma.agents.findFirst({
-      where: { id, ownerId: userId }
+      where: { id: id as string, ownerId: userId }
     });
     if (!agent) {
       return res.status(404).json({ error: 'Agent not found' });
@@ -66,6 +66,7 @@ router.get('/:id', authenticate, async (req, res) => {
 
 // Create new agent
 router.post('/', authenticate, async (req, res) => {
+  console.log('Agent creation request:', req.body);
   try {
     const { name, description, capabilities, systemPrompt, modelProvider, modelName, status } = req.body;
     const userId = (req as any).user.id;
@@ -105,14 +106,14 @@ router.put('/:id', authenticate, async (req, res) => {
     const userId = (req as any).user.id;
 
     const existing = await prisma.agents.findFirst({
-      where: { id, ownerId: userId }
+      where: { id: id as string, ownerId: userId }
     });
     if (!existing) {
       return res.status(404).json({ error: 'Agent not found or not owned by you' });
     }
 
     const updated = await prisma.agents.update({
-      where: { id },
+      where: { id: id as string },
       data: req.body
     });
     res.json(updated);
@@ -129,14 +130,14 @@ router.delete('/:id', authenticate, async (req, res) => {
     const userId = (req as any).user.id;
 
     const existing = await prisma.agents.findFirst({
-      where: { id, ownerId: userId }
+      where: { id: id as string, ownerId: userId }
     });
     if (!existing) {
       return res.status(404).json({ error: 'Agent not found or not owned by you' });
     }
 
     await prisma.agents.delete({
-      where: { id }
+      where: { id: id as string }
     });
     res.status(204).send();
   } catch (error) {
@@ -146,4 +147,7 @@ router.delete('/:id', authenticate, async (req, res) => {
 });
 
 export default router;
+
+
+
 

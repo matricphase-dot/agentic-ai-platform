@@ -1,136 +1,75 @@
-﻿"use client";
+﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import Link from 'next/link';
-import { useAuth } from '@/hooks/useAuth';
-
-interface Template {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  price: number;
-  unit: string;
-  status: string;
-  agent: {
-    id: string;
-    name: string;
-    agentType: string;
-    capabilities: string;
-    reputationScore: number;
-  };
-}
+import { useRouter } from 'next/navigation';
 
 export default function MarketplacePage() {
-  const { user } = useAuth();
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [deployingId, setDeployingId] = useState<string | null>(null);
-
-  const categories = ['all', 'healthcare', 'finance', 'education', 'support', 'analytics', 'development', 'general'];
+  const [deploying, setDeploying] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const res = await api.get('/templates');
+        setTemplates(res.data);
+      } catch (error) {
+        console.error('Failed to fetch templates', error);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchTemplates();
   }, []);
 
-  const fetchTemplates = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get('/templates');
-      setTemplates(res.data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load templates');
-      console.error('Marketplace error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredTemplates = selectedCategory === 'all'
-    ? templates
-    : templates.filter(t => t.category === selectedCategory);
-
-  const handleDeploy = async (template: Template) => {
-    if (!user) {
-      alert('Please login to deploy an agent');
-      return;
-    }
-    setDeployingId(template.id);
+  const handleDeploy = async (template) => {
+    setDeploying(template.id);
     try {
       const agentData = {
-        name: template.title,
+        name: `${template.name} - ${new Date().toLocaleString()}`,
         description: template.description,
-        capabilities: template.agent?.capabilities || "N/A",
-        systemPrompt: `You are a ${template.title.toLowerCase()}. ${template.description}`,
-        modelProvider: 'ollama-local',
-        modelName: 'llama2',
-        status: 'active',
-        agentType: template.agent?.agentType || "general",
+        config: template.config,
+        templateId: template.id,
       };
       const res = await api.post('/agents', agentData);
-      if (res.status === 201) {
-        alert('Agent deployed successfully!');
-        window.location.href = '/agents';
-      }
-    } catch (err: any) {
-      alert('Failed to deploy agent. See console.');
-      console.error(err);
+      router.push(`/agents/${res.data.id}`);
+    } catch (error) {
+      console.error('Failed to deploy agent', error);
+      alert('Failed to deploy agent. Please try again.');
     } finally {
-      setDeployingId(null);
+      setDeploying(null);
     }
   };
 
-  if (loading) return <div className="p-8 text-center">Loading marketplace...</div>;
-  if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
+  if (loading) return <div className="flex justify-center items-center h-64">Loading marketplace...</div>;
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">AI Agent Marketplace</h1>
-
-      <div className="mb-8 flex flex-wrap gap-2">
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-              selectedCategory === cat
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            {cat.charAt(0).toUpperCase() + cat.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTemplates.map(template => (
-          <div key={template.id} className="border rounded-lg p-6 hover:shadow-lg transition">
-            <h2 className="text-xl font-semibold mb-2">{template.title}</h2>
-            <p className="text-gray-600 mb-4">{template.description}</p>
-            <div className="text-sm text-gray-500 mb-4">
-              <span className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                {template.category}
-              </span>
+    <div>
+      <h1 className="text-2xl font-bold mb-6">Marketplace</h1>
+      {templates.length === 0 ? (
+        <p>No templates available. Check back later.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {templates.map((template) => (
+            <div key={template.id} className="border rounded-lg p-4 shadow hover:shadow-lg transition">
+              <h2 className="text-xl font-semibold mb-2">{template.name}</h2>
+              <p className="text-gray-600 mb-4">{template.description}</p>
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-bold text-green-600">{template.price} tokens</span>
+                <button
+                  onClick={() => handleDeploy(template)}
+                  disabled={deploying === template.id}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+                >
+                  {deploying === template.id ? 'Deploying...' : 'Deploy'}
+                </button>
+              </div>
             </div>
-            <div className="mb-4">
-              <p><strong>Capabilities:</strong> {template.agent?.capabilities || "N/A"}</p>
-              <p><strong>Price:</strong> {template.price} AGIX / {template.unit}</p>
-            </div>
-            <button
-              onClick={() => handleDeploy(template)}
-              disabled={deployingId === template.id}
-              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-            >
-              {deployingId === template.id ? 'Deploying...' : 'Deploy'}
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
-

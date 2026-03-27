@@ -1,212 +1,53 @@
-﻿import * as crypto from 'crypto';
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../lib/prisma';
+import { PrismaClient } from '@prisma/client';
 
 const router = Router();
+const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Register
 router.post('/register', async (req, res) => {
+  const { email, password, name } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password required' });
+  }
   try {
-    const { email, password, name } = req.body;
-
-    // Check if user exists
-    const existingUser = await (prisma as any).users.findUnique({
-      where: { email }
-    });
-
-    if (existingUser) {
-      return res.status(400).json({ error: 'Email already registered' });
+    const existing = await prisma.users.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ error: 'Email already in use' });
     }
-
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
-    const user = await (prisma as any).users.create({
-      data: {
-    id: crypto.randomUUID(),
-        email,
-        passwordHash: hashedPassword,
-        name,
-        role: 'users',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
+    const user = await prisma.users.create({
+      data: { email, passwordHash: hashedPassword, name: name || email.split('@')[0] },
     });
-
-    // Generate token
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '7d' }
-    );
-
-    // Return user without password
-    const { passwordHash, ...userWithoutPassword } = user;
-
-    res.json({ token, user: userWithoutPassword });
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Registration failed' });
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Failed to register' });
   }
 });
 
 // Login
-router.post('/signin', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Find user
-    const user = await (prisma as any).users.findUnique({
-      where: { email }
-    });
-
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Check password
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Generate token
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '7d' }
-    );
-
-    // Return user without password
-    const { passwordHash, ...userWithoutPassword } = user;
-
-    res.json({ token, user: userWithoutPassword });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Login failed' });
-  }
-});
-
-// Get current user
-router.get('/me', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
-    const user = await (prisma as any).users.findUnique({
-      where: { id: decoded.id }
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const { passwordHash, ...userWithoutPassword } = user;
-    res.json({ user: userWithoutPassword });
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Alias for /login to match frontend
-/**
- * @swagger
- * /auth/login:
- *   post:
- *     summary: Login user
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: Login successful
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 token:
- *                   type: string
- *                 user:
- *                   type: object
- *       401:
- *         description: Invalid credentials
- */
 router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
   try {
-    const { email, password } = req.body;
-
-    // Find user
-    const user = await (prisma as any).users.findUnique({
-      where: { email }
-    });
-
+    const user = await prisma.users.findUnique({ where: { email } });
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
-    // Check password
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
-    // Generate token
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '7d' }
-    );
-
-    // Return user without password
-    const { passwordHash, ...userWithoutPassword } = user;
-
-    res.json({ token, user: userWithoutPassword });
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Login failed' });
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Failed to login' });
   }
 });
+
 export default router;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

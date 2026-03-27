@@ -1,184 +1,95 @@
-﻿import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+﻿import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+
 async function main() {
-  const user = await (prisma as any).user.upsert({
-    where: { email: 'admin@example.com' },
+  // 1. Get or create a placeholder agent for templates
+  const adminUser = await prisma.users.findUnique({ where: { email: 'admin@example.com' } });
+  if (!adminUser) throw new Error('Admin user not found');
+
+  const templateAgent = await prisma.agents.upsert({
+    where: { id: 'template-agent' },
     update: {},
     create: {
-      email: 'admin@example.com',
-      password: '\\\$...'  // Replace with a bcrypt hash of your password
-    }
-  })
-  console.log('Seeded:', user)
+      id: 'template-agent',
+      name: 'Template Host',
+      description: 'Host agent for marketplace templates',
+      agentType: 'template',
+      status: 'active',
+      ownerId: adminUser.id,
+    },
+  });
+
+  // 2. Templates
+  await prisma.templates.upsert({
+    where: { id: 'chatbot-template' },
+    update: {},
+    create: {
+      id: 'chatbot-template',
+      title: 'Chatbot',
+      description: 'A conversational AI assistant that can answer questions, provide recommendations, and hold natural conversations.',
+      category: 'conversation',
+      price: 10,
+      unit: 'credits',
+      agentId: templateAgent.id,
+      status: 'active',
+    },
+  });
+
+  await prisma.templates.upsert({
+    where: { id: 'data-analyst-template' },
+    update: {},
+    create: {
+      id: 'data-analyst-template',
+      title: 'Data Analyst',
+      description: 'Analyzes CSV, Excel, and JSON data, generates visualizations, and provides insights.',
+      category: 'analytics',
+      price: 20,
+      unit: 'credits',
+      agentId: templateAgent.id,
+      status: 'active',
+    },
+  });
+
+  await prisma.templates.upsert({
+    where: { id: 'code-assistant-template' },
+    update: {},
+    create: {
+      id: 'code-assistant-template',
+      title: 'Code Assistant',
+      description: 'Helps with coding tasks: debugging, code review, writing tests, and explaining code.',
+      category: 'development',
+      price: 15,
+      unit: 'credits',
+      agentId: templateAgent.id,
+      status: 'active',
+    },
+  });
+
+  // 3. Sample agent (owned by admin)
+  await prisma.agents.upsert({
+    where: { id: 'sample-agent' },
+    update: {},
+    create: {
+      id: 'sample-agent',
+      name: 'Welcome Bot',
+      description: 'A sample agent to get you started. It can answer basic questions about the platform.',
+      agentType: 'chat',
+      status: 'active',
+      ownerId: adminUser.id,
+      configuration: { model: 'gpt-3.5-turbo', systemPrompt: 'You are a helpful assistant for the Agentic AI Platform.' },
+      model_provider: 'ollama-local',
+      model_name: 'llama2',
+    },
+  });
+
+  console.log('Database seeded with templates and a sample agent.');
 }
-main().catch(console.error).finally(() => prisma.\())
 
-
-
-
-
-
-
-  // Industry‑specific templates
-  const industryTemplates = [
-    // Healthcare
-    {
-      name: 'Medical Scribe',
-      description: 'Automatically transcribe and summarise patient consultations. Extracts key medical terms and suggests follow‑up actions.',
-      category: 'healthcare',
-      price: 49.99,
-      unit: 'month',
-      agent: {
-        name: 'MedScribe',
-        description: 'AI medical scribe',
-        systemPrompt: 'You are a medical scribe. Listen to the conversation and output a structured SOAP note.',
-        modelProvider: 'ollama-local',
-        modelName: 'llama2',
-      }
-    },
-    {
-      name: 'Drug Interaction Checker',
-      description: 'Check for potential interactions between medications. Uses up‑to‑date medical databases.',
-      category: 'healthcare',
-      price: 79.99,
-      unit: 'month',
-      agent: {
-        name: 'RxGuard',
-        description: 'Drug interaction AI',
-        systemPrompt: 'You are a clinical pharmacist. Given a list of medications, identify any known adverse interactions.',
-        modelProvider: 'ollama-local',
-        modelName: 'llama2',
-      }
-    },
-    {
-      name: 'Patient Intake Assistant',
-      description: 'Collect and structure patient intake information via chat. Integrates with EHR systems.',
-      category: 'healthcare',
-      price: 39.99,
-      unit: 'month',
-      agent: {
-        name: 'IntakeBot',
-        description: 'Patient intake AI',
-        systemPrompt: 'You are a medical receptionist. Ask the patient relevant questions about their symptoms and medical history.',
-        modelProvider: 'ollama-local',
-        modelName: 'llama2',
-      }
-    },
-
-    // Finance
-    {
-      name: 'Earnings Call Analyst',
-      description: 'Analyse earnings call transcripts, extract key metrics, sentiment, and Q&A insights.',
-      category: 'finance',
-      price: 99.99,
-      unit: 'month',
-      agent: {
-        name: 'CallAnalyst',
-        description: 'Earnings call AI',
-        systemPrompt: 'You are a financial analyst. Summarise earnings calls, highlight guidance changes, and extract sentiment.',
-        modelProvider: 'ollama-local',
-        modelName: 'llama2',
-      }
-    },
-    {
-      name: 'Personal Finance Coach',
-      description: 'Help users budget, save, and invest. Provides personalised advice based on income and goals.',
-      category: 'finance',
-      price: 29.99,
-      unit: 'month',
-      agent: {
-        name: 'FinanceCoach',
-        description: 'Personal finance AI',
-        systemPrompt: 'You are a certified financial planner. Help users create budgets, plan for retirement, and understand investment options.',
-        modelProvider: 'ollama-local',
-        modelName: 'llama2',
-      }
-    },
-    {
-      name: 'SEC Filing Summariser',
-      description: 'Read 10‑K, 10‑Q filings and produce executive summaries. Highlights risks, financials, and management discussion.',
-      category: 'finance',
-      price: 89.99,
-      unit: 'month',
-      agent: {
-        name: 'FilingsBot',
-        description: 'SEC filing AI',
-        systemPrompt: 'You are a securities analyst. Given an SEC filing, extract the most important financial data and risks.',
-        modelProvider: 'ollama-local',
-        modelName: 'llama2',
-      }
-    },
-
-    // Education
-    {
-      name: 'Math Tutor (K‑12)',
-      description: 'Step‑by‑step math tutor for students. Explains concepts and provides practice problems.',
-      category: 'education',
-      price: 19.99,
-      unit: 'month',
-      agent: {
-        name: 'MathTutor',
-        description: 'K‑12 math tutor',
-        systemPrompt: 'You are a friendly math tutor. Help students understand algebra, geometry, and calculus with clear explanations.',
-        modelProvider: 'ollama-local',
-        modelName: 'llama2',
-      }
-    },
-    {
-      name: 'Essay Grader',
-      description: 'Automatically grade student essays. Provides feedback on grammar, structure, and argumentation.',
-      category: 'education',
-      price: 24.99,
-      unit: 'month',
-      agent: {
-        name: 'EssayGrader',
-        description: 'AI essay grader',
-        systemPrompt: 'You are an experienced teacher. Grade the essay, assign a score, and provide constructive feedback.',
-        modelProvider: 'ollama-local',
-        modelName: 'llama2',
-      }
-    },
-    {
-      name: 'Language Learning Companion',
-      description: 'Chat in a foreign language with corrections and explanations. Supports multiple languages.',
-      category: 'education',
-      price: 14.99,
-      unit: 'month',
-      agent: {
-        name: 'LangBuddy',
-        description: 'Language learning AI',
-        systemPrompt: 'You are a native speaker. Chat with the user in the target language, correct mistakes, and explain nuances.',
-        modelProvider: 'ollama-local',
-        modelName: 'llama2',
-      }
-    },
-  ];
-
-  for (const template of industryTemplates) {
-    // Create the agent first
-    const agent = await prisma.agents.create({
-      data: {
-        name: template.agent.name,
-        description: template.agent.description,
-        systemPrompt: template.agent.systemPrompt,
-        modelProvider: template.agent.modelProvider,
-        modelName: template.agent.modelName,
-        ownerId: (await prisma.users.findFirst({ where: { role: 'admin' } }))?.id,
-        status: 'active',
-      }
-    });
-
-    // Create the template linked to the agent
-    await prisma.templates.create({
-      data: {
-        name: template.name,
-        description: template.description,
-        category: template.category,
-        price: template.price,
-        unit: template.unit,
-        agentId: agent.id,
-      }
-    });
-  }
-
-  console.log(`✅ Added ${industryTemplates.length} industry templates.`);
+main()
+  .catch(e => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

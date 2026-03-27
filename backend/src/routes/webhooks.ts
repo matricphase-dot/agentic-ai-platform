@@ -49,7 +49,7 @@ router.delete('/:id', authenticate, async (req, res) => {
     const userId = (req as any).user.id;
     
     await prisma.webhook.deleteMany({
-      where: { id, userId }
+      where: { id: id as string, userId }
     });
     res.status(204).send();
   } catch (error) {
@@ -58,6 +58,7 @@ router.delete('/:id', authenticate, async (req, res) => {
   }
 });
 export default router;
+
 
 
 

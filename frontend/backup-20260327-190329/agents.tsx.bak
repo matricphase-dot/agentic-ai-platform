@@ -1,0 +1,55 @@
+﻿'use client';
+
+import { useEffect, useState } from 'react';
+import api from '@/lib/api';
+import Link from 'next/link';
+
+interface Agent {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export default function AgentsPage() {
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const res = await api.get('/agents');
+        setAgents(res.data);
+      } catch (error) {
+        console.error('Failed to fetch agents', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAgents();
+  }, []);
+
+  if (loading) return <div>Loading agents...</div>;
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl">My Agents</h1>
+        <Link href="/agents/create" className="bg-blue-500 text-white px-4 py-2 rounded">
+          Create Agent
+        </Link>
+      </div>
+      {agents.length === 0 ? (
+        <p>No agents yet. Create one!</p>
+      ) : (
+        <ul className="space-y-2">
+          {agents.map((agent) => (
+            <li key={agent.id} className="border p-4 rounded">
+              <h2 className="font-bold">{agent.name}</h2>
+              <p>{agent.description}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

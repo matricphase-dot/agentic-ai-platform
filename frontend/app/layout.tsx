@@ -1,17 +1,7 @@
-﻿import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+﻿import Sidebar from '@/components/Sidebar';
+import Header from '@/components/Header';
+import { Toaster } from 'react-hot-toast';
 import './globals.css';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { AuthProvider } from './auth-provider';
-import Layout from '@/components/Layout';
-import ClientWrapper from '@/components/ClientWrapper';
-
-const inter = Inter({ subsets: ['latin'] });
-
-export const metadata: Metadata = {
-  title: 'Agentic AI',
-  description: 'Build and deploy AI agents',
-};
 
 export default function RootLayout({
   children,
@@ -20,13 +10,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <ThemeProvider>
-          <AuthProvider>
-            <Layout>{children}</Layout>
-            <ClientWrapper />
-          </AuthProvider>
-        </ThemeProvider>
+      <body>
+        <div className="flex h-screen">
+          <Sidebar />
+          <div className="flex-1 flex flex-col">
+            <Header />
+            <main className="p-6 overflow-auto">{children}</main>
+          </div>
+        </div>
+        <Toaster position="top-right" />
       </body>
     </html>
   );

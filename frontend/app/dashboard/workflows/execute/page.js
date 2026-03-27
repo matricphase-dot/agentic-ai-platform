@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
@@ -106,7 +106,7 @@ export default function ExecuteWorkflowPage() {
         <div className="lg:col-span-2">
           <div className="mb-6 rounded-xl bg-white p-6 shadow-lg dark:bg-gray-800">
             <h2 className="mb-6 flex items-center text-xl font-bold">
-              <span className="mr-2">⚡</span> Configure Workflow
+              <span className="mr-2">?</span> Configure Workflow
             </h2>
 
             <form onSubmit={executeWorkflow} className="space-y-6">
@@ -134,7 +134,7 @@ export default function ExecuteWorkflowPage() {
                       href="/dashboard/teams/create"
                       className="mt-2 inline-block text-green-600 hover:text-green-700"
                     >
-                      Create Team →
+                      Create Team ?
                     </Link>
                   </div>
                 )}
@@ -150,25 +150,25 @@ export default function ExecuteWorkflowPage() {
                     {
                       id: 'sequential',
                       label: 'Sequential',
-                      icon: '➡️',
+                      icon: '??',
                       description: 'Agents work in sequence',
                     },
                     {
                       id: 'parallel',
                       label: 'Parallel',
-                      icon: '↔️',
+                      icon: '??',
                       description: 'Agents work simultaneously',
                     },
                     {
                       id: 'collaborative',
                       label: 'Collaborative',
-                      icon: '🔄',
+                      icon: '??',
                       description: 'Real-time collaboration',
                     },
                     {
                       id: 'hierarchical',
                       label: 'Hierarchical',
-                      icon: '📊',
+                      icon: '??',
                       description: 'Manager coordinates team',
                     },
                   ].map((type) => (
@@ -259,7 +259,7 @@ export default function ExecuteWorkflowPage() {
           {results && (
             <div className="rounded-xl bg-white p-6 shadow-lg dark:bg-gray-800">
               <h2 className="mb-6 flex items-center text-xl font-bold">
-                <span className="mr-2">📊</span> Workflow Results
+                <span className="mr-2">??</span> Workflow Results
               </h2>
 
               {results.error ? (
@@ -295,7 +295,7 @@ export default function ExecuteWorkflowPage() {
                         >
                           <div className="mb-2 flex items-center">
                             <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600">
-                              <span className="text-xs text-white">🤖</span>
+                              <span className="text-xs text-white">??</span>
                             </div>
                             <div className="flex-1">
                               <div className="font-medium">
@@ -355,14 +355,14 @@ export default function ExecuteWorkflowPage() {
               <div className="space-y-4">
                 <div className="flex items-center">
                   <div className="mr-3 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-r from-purple-500 to-pink-600">
-                    <span className="text-white">👥</span>
+                    <span className="text-white">??</span>
                   </div>
                   <div>
                     <div className="text-lg font-bold">
                       {selectedTeamData.name}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {selectedTeamData.member_count} agents •{' '}
+                      {selectedTeamData.member_count} agents �{' '}
                       {selectedTeamData.workflow_type} workflow
                     </div>
                   </div>
@@ -374,7 +374,7 @@ export default function ExecuteWorkflowPage() {
                     {(selectedTeamData.agents || []).map((agent, index) => (
                       <div key={index} className="flex items-center text-sm">
                         <div className="mr-2 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600">
-                          <span className="text-xs text-white">🤖</span>
+                          <span className="text-xs text-white">??</span>
                         </div>
                         <span className="flex-1">{agent.name}</span>
                         <span className="text-gray-500">
@@ -426,24 +426,24 @@ export default function ExecuteWorkflowPage() {
 
           {/* Workflow Tips */}
           <div className="rounded-xl bg-white p-6 shadow-lg dark:bg-gray-800">
-            <h2 className="mb-4 text-xl font-bold">💡 Workflow Tips</h2>
+            <h2 className="mb-4 text-xl font-bold">?? Workflow Tips</h2>
             <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <li className="flex items-start">
-                <span className="mr-2 text-green-500">✓</span>
+                <span className="mr-2 text-green-500">?</span>
                 <span>Be specific about your requirements</span>
               </li>
               <li className="flex items-start">
-                <span className="mr-2 text-green-500">✓</span>
+                <span className="mr-2 text-green-500">?</span>
                 <span>
                   Complex tasks work better with hierarchical workflows
                 </span>
               </li>
               <li className="flex items-start">
-                <span className="mr-2 text-green-500">✓</span>
+                <span className="mr-2 text-green-500">?</span>
                 <span>Monitor costs in real-time on the dashboard</span>
               </li>
               <li className="flex items-start">
-                <span className="mr-2 text-green-500">✓</span>
+                <span className="mr-2 text-green-500">?</span>
                 <span>
                   Review agent contributions to optimize team composition
                 </span>

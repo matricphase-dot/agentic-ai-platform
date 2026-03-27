@@ -1,69 +1,54 @@
-'use client';
+﻿"use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import axios from '@/lib/axios';
+import api from '@/lib/api';
 
-interface ThemeContextType {
+interface Settings {
   primaryColor: string;
-  logoUrl: string | null;
+  logoUrl: string;
   theme: string;
-  setTheme: (theme: string) => void;
-  setPrimaryColor: (color: string) => void;
-  setLogoUrl: (url: string | null) => void;
-  saveSettings: () => Promise<void>;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) throw new Error('useTheme must be used within ThemeProvider');
-  return context;
-};
+const ThemeContext = createContext<{ settings: Settings; updateSettings: (s: Settings) => void } | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [primaryColor, setPrimaryColor] = useState('#6366f1');
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [theme, setTheme] = useState('light');
+  const [settings, setSettings] = useState<Settings>({ primaryColor: '#6366f1', logoUrl: '', theme: 'light' });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/settings');
+        setSettings(res.data);
+      } catch (error) {
+        console.error('Failed to fetch theme settings', error);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchSettings();
   }, []);
 
-  useEffect(() => {
-    // Apply CSS variables
-    document.documentElement.style.setProperty('--primary-color', primaryColor);
-    document.documentElement.className = theme;
-  }, [primaryColor, theme]);
-
-  const fetchSettings = async () => {
+  const updateSettings = async (newSettings: Settings) => {
     try {
-      const res = await axios.get('/api/settings');
-      setPrimaryColor(res.data.primaryColor || '#6366f1');
-      setLogoUrl(res.data.logoUrl || null);
-      setTheme(res.data.theme || 'light');
+      await api.put('/settings', newSettings);
+      setSettings(newSettings);
     } catch (error) {
-      console.error('Failed to fetch theme settings');
-    } finally {
-      setLoading(false);
+      console.error('Failed to update theme settings', error);
     }
   };
 
-  const saveSettings = async () => {
-    await axios.put('/api/settings', { primaryColor, logoUrl, theme });
-  };
-
-  if (loading) return null;
+  if (loading) return <div>Loading theme...</div>;
 
   return (
-    <ThemeContext.Provider value={{
-      primaryColor, setPrimaryColor,
-      logoUrl, setLogoUrl,
-      theme, setTheme,
-      saveSettings,
-    }}>
-      {children}
+    <ThemeContext.Provider value={{ settings, updateSettings }}>
+      <div style={{ '--primary-color': settings.primaryColor } as React.CSSProperties}>{children}</div>
     </ThemeContext.Provider>
   );
+};
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error('useTheme must be used within a ThemeProvider');
+  return context;
 };

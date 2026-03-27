@@ -1,100 +1,162 @@
 ﻿'use client';
 
 import { useEffect, useState } from 'react';
-import axios from '@/lib/axios';
-import { useAuth } from '@/hooks/useAuth';
-import Link from 'next/link';
-import { StarIcon as StarOutline } from '@heroicons/react/24/outline';
-import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
+import api from '@/lib/api';
 
 interface Review {
   id: string;
   rating: number;
-  comment: string | null;
+  comment: string;
   createdAt: string;
-  template: {
-    id: string;
-    name: string;
-  };
+  agents?: { id: string; name: string };  // note: field is 'agents' (plural)
+  user?: { email: string };
 }
 
-export default function MyReviewsPage() {
-  const { user } = useAuth();
+interface Agent {
+  id: string;
+  name: string;
+}
+
+export default function ReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    fetchReviews();
+    fetchData();
   }, []);
 
-  const fetchReviews = async () => {
+  const fetchData = async () => {
     try {
-      const res = await axios.get('/api/reviews/user');
-      setReviews(res.data);
-    } catch (error) {
-      console.error('Failed to fetch reviews', error);
+      const [reviewsRes, agentsRes] = await Promise.all([
+        api.get('/reviews'),
+        api.get('/agents')
+      ]);
+      setReviews(reviewsRes.data);
+      setAgents(agentsRes.data);
+    } catch (err) {
+      console.error('Failed to fetch data', err);
+      setError('Failed to load reviews');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this review?')) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAgentId) {
+      setError('Please select an agent');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    setSuccess('');
     try {
-      await axios.delete(`/api/reviews/${id}`);
-      fetchReviews();
-    } catch (error) {
-      alert('Failed to delete review');
+      await api.post('/reviews', {
+        agentId: selectedAgentId,
+        rating,
+        comment
+      });
+      setSuccess('Review submitted successfully');
+      setSelectedAgentId('');
+      setRating(5);
+      setComment('');
+      fetchData(); // refresh list
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to submit review');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  if (loading) return <div className="p-6">Loading your reviews...</div>;
+  if (loading) return <div>Loading reviews...</div>;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">My Reviews</h1>
-      {reviews.length === 0 ? (
-        <p className="text-gray-500">You haven't written any reviews yet.</p>
-      ) : (
-        <div className="space-y-4">
-          {reviews.map((review) => (
-            <div key={review.id} className="border rounded-lg p-4 bg-white shadow-sm">
-              <div className="flex items-center justify-between">
-                <Link href={`/marketplace/listings/${review.template.id}`} className="text-lg font-semibold text-indigo-600 hover:underline">
-                  {review.template.name}
-                </Link>
-                <div className="flex items-center gap-1">
-                  {[1,2,3,4,5].map((star) => (
-                    star <= review.rating ? (
-                      <StarSolid key={star} className="w-5 h-5 text-yellow-400" />
-                    ) : (
-                      <StarOutline key={star} className="w-5 h-5 text-gray-300" />
-                    )
-                  ))}
+    <div className="pb-8">
+      <h1 className="text-2xl font-bold mb-6">Reviews</h1>
+
+      {/* Submit Review Form */}
+      <div className="bg-white p-4 rounded shadow mb-6">
+        <h2 className="text-xl font-semibold mb-4">Submit a Review</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block mb-1">Agent</label>
+            <select
+              value={selectedAgentId}
+              onChange={(e) => setSelectedAgentId(e.target.value)}
+              required
+              className="w-full border rounded p-2"
+            >
+              <option value="">Select an agent</option>
+              {agents.map((agent) => (
+                <option key={agent.id} value={agent.id}>{agent.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block mb-1">Rating (1-5)</label>
+            <input
+              type="number"
+              min="1"
+              max="5"
+              step="1"
+              value={rating}
+              onChange={(e) => setRating(parseInt(e.target.value))}
+              required
+              className="w-full border rounded p-2"
+            />
+          </div>
+          <div>
+            <label className="block mb-1">Comment</label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={3}
+              className="w-full border rounded p-2"
+            />
+          </div>
+          {error && <p className="text-red-500">{error}</p>}
+          {success && <p className="text-green-500">{success}</p>}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+          >
+            {submitting ? 'Submitting...' : 'Submit Review'}
+          </button>
+        </form>
+      </div>
+
+      {/* Reviews List */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Existing Reviews</h2>
+        {reviews.length === 0 ? (
+          <p>No reviews yet. Be the first to leave one.</p>
+        ) : (
+          <div className="space-y-4">
+            {reviews.map((review) => (
+              <div key={review.id} className="bg-white p-4 rounded shadow">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold">{review.agents?.name ?? 'Unknown Agent'}</h3>
+                    <p className="text-yellow-500">{'★'.repeat(review.rating)}{'☆'.repeat(5-review.rating)}</p>
+                    <p className="text-gray-600">{review.comment}</p>
+                    <p className="text-gray-500 text-sm">
+                      By {review.user?.email || 'Anonymous'} on {new Date(review.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
               </div>
-              {review.comment && <p className="mt-2 text-gray-700">{review.comment}</p>}
-              <div className="mt-3 flex items-center justify-between text-sm">
-                <span className="text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
-                <div className="flex gap-2">
-                  <Link
-                    href={`/marketplace/listings/${review.template.id}?edit=${review.id}`}
-                    className="text-blue-600 hover:underline"
-                  >
-                    Edit
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(review.id)}
-                    className="text-red-600 hover:underline"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

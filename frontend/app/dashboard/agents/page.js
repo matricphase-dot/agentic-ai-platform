@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
@@ -93,7 +93,7 @@ export default function AgentsPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-lg border border-gray-300 px-4 py-3 pl-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800"
           />
-          <div className="absolute left-4 top-3.5">🔍</div>
+          <div className="absolute left-4 top-3.5">??</div>
         </div>
       </div>
 
@@ -109,7 +109,7 @@ export default function AgentsPage() {
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex items-center">
                     <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
-                      <span className="text-white">🤖</span>
+                      <span className="text-white">??</span>
                     </div>
                     <div>
                       <h3 className="text-lg font-bold">{agent.name}</h3>
@@ -120,7 +120,7 @@ export default function AgentsPage() {
                   </div>
                   <div className="relative">
                     <button className="text-gray-500 hover:text-gray-700">
-                      ⋮
+                      ?
                     </button>
                   </div>
                 </div>
@@ -131,13 +131,13 @@ export default function AgentsPage() {
 
                 <div className="mb-4 flex items-center justify-between text-sm text-gray-500">
                   <div className="flex items-center">
-                    <span className="mr-2">🔄</span>
+                    <span className="mr-2">??</span>
                     <span>
                       Updated {new Date(agent.updated_at).toLocaleDateString()}
                     </span>
                   </div>
                   <div className="flex items-center">
-                    <span className="mr-2">💰</span>
+                    <span className="mr-2">??</span>
                     <span>${agent.cost_per_query || '0.00'}/query</span>
                   </div>
                 </div>
@@ -162,7 +162,7 @@ export default function AgentsPage() {
         </div>
       ) : (
         <div className="py-12 text-center">
-          <div className="mb-4 text-6xl">🤖</div>
+          <div className="mb-4 text-6xl">??</div>
           <h3 className="mb-2 text-xl font-bold">No AI Agents Found</h3>
           <p className="mb-6 text-gray-600 dark:text-gray-400">
             {searchTerm

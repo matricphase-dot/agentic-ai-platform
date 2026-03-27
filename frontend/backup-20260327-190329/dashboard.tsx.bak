@@ -1,0 +1,146 @@
+﻿'use client';
+
+import { useEffect, useState } from 'react';
+import api from '@/lib/api';
+import Link from 'next/link';
+
+interface DashboardStats {
+  agentsCount: number;
+  totalStaked: number;
+  votes: number;
+  reviews: number;
+  dataRequests: number;
+}
+
+interface Agent {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+}
+
+interface Activity {
+  id: string;
+  action: string;
+  userId: string;
+  timestamp: string;
+  details: any;
+}
+
+export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentAgents, setRecentAgents] = useState<Agent[]>([]);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statsRes, agentsRes, logsRes] = await Promise.all([
+          api.get('/dashboard/stats'),
+          api.get('/agents?limit=5'),
+          api.get('/audit-logs?limit=5').catch(() => ({ data: [] })) // ignore if not ready
+        ]);
+        setStats(statsRes.data);
+        setRecentAgents(agentsRes.data);
+        setRecentActivities(logsRes.data);
+      } catch (error) {
+        console.error('Failed to fetch dashboard data', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="flex justify-center items-center h-64">Loading dashboard...</div>;
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <Link href="/agents/create" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          Create New Agent
+        </Link>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="bg-white p-4 rounded shadow">
+          <div className="text-gray-500 text-sm">Agents</div>
+          <div className="text-2xl font-bold">{stats?.agentsCount ?? 0}</div>
+        </div>
+        <div className="bg-white p-4 rounded shadow">
+          <div className="text-gray-500 text-sm">Total Staked</div>
+          <div className="text-2xl font-bold">{stats?.totalStaked ?? 0}</div>
+        </div>
+        <div className="bg-white p-4 rounded shadow">
+          <div className="text-gray-500 text-sm">Votes</div>
+          <div className="text-2xl font-bold">{stats?.votes ?? 0}</div>
+        </div>
+        <div className="bg-white p-4 rounded shadow">
+          <div className="text-gray-500 text-sm">Reviews</div>
+          <div className="text-2xl font-bold">{stats?.reviews ?? 0}</div>
+        </div>
+        <div className="bg-white p-4 rounded shadow">
+          <div className="text-gray-500 text-sm">Data Requests</div>
+          <div className="text-2xl font-bold">{stats?.dataRequests ?? 0}</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Agents */}
+        <div className="bg-white rounded shadow p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Recent Agents</h2>
+            <Link href="/agents" className="text-blue-500 hover:underline">View all</Link>
+          </div>
+          {recentAgents.length === 0 ? (
+            <p className="text-gray-500">No agents yet. <Link href="/agents/create" className="text-blue-500">Create one</Link></p>
+          ) : (
+            <ul className="divide-y">
+              {recentAgents.map((agent) => (
+                <li key={agent.id} className="py-3">
+                  <Link href={`/agents/${agent.id}`} className="block hover:bg-gray-50">
+                    <div className="font-medium">{agent.name}</div>
+                    <div className="text-sm text-gray-600">{agent.description}</div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      Created: {new Date(agent.createdAt).toLocaleDateString()}
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-white rounded shadow p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Recent Activity</h2>
+            <Link href="/audit-logs" className="text-blue-500 hover:underline">View all</Link>
+          </div>
+          {recentActivities.length === 0 ? (
+            <p className="text-gray-500">No recent activity.</p>
+          ) : (
+            <ul className="divide-y">
+              {recentActivities.map((activity) => (
+                <li key={activity.id} className="py-3">
+                  <div className="text-sm">
+                    <span className="font-medium">{activity.action}</span>
+                    <span className="text-gray-500 ml-2">
+                      by {activity.userId}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">
+                    {new Date(activity.timestamp).toLocaleString()}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

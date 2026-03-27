@@ -39,12 +39,12 @@ router.get('/:agentId', authenticate, async (req, res) => {
     const userId = (req as any).user.id;
 
     const agent = await prisma.agents.findFirst({
-      where: { id: agentId, ownerId: userId }
+      where: { id: agentId as string, ownerId: userId }
     });
     if (!agent) return res.status(403).json({ error: 'Agent not found' });
 
     const messages = await prisma.messages.findMany({
-      where: { OR: [{ receiverId: agentId }, { senderId: agentId }] },
+      where: { OR: [{ receiverId: agentId as string }, { senderId: agentId as string }] },
       orderBy: { createdAt: 'desc' }
     });
     res.json(messages);
@@ -77,12 +77,12 @@ router.patch('/:messageId', authenticate, async (req, res) => {
     const userId = (req as any).user.id;
 
     const message = await prisma.messages.findFirst({
-      where: { id: messageId, receiver: { ownerId: userId } }
+      where: { id: messageId as string, receiver: { ownerId: userId } }
     });
     if (!message) return res.status(404).json({ error: 'Message not found' });
 
     const updated = await prisma.messages.update({
-      where: { id: messageId },
+      where: { id: messageId as string },
       data: { status, ...(status === 'delivered' ? { deliveredAt: new Date() } : {}) }
     });
     res.json(updated);
@@ -92,3 +92,4 @@ router.patch('/:messageId', authenticate, async (req, res) => {
 });
 
 export default router;
+

@@ -1,6 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
 import api from '@/lib/api';
-import { useAnalytics } from './useAnalytics';
 import { useRouter } from 'next/navigation';
 
 export function useAuth() {
@@ -9,12 +8,12 @@ export function useAuth() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (token) {
       api.get('/auth/me')
-        .then(res => setUser(res.data))
+        .then(res => setUser(res.data.user))
         .catch(() => {
-          localStorage.removeItem('token');
+          sessionStorage.removeItem('token');
           setUser(null);
         })
         .finally(() => setLoading(false));
@@ -24,26 +23,18 @@ export function useAuth() {
   }, []);
 
   const login = async (email: string, password: string) => {
-    try {
-      const res = await api.post('/auth/login', { email, password });
-      const { token, user } = res.data;
-      localStorage.setItem('token', token);
-      setUser(user);
-      return user;
-    } catch (error: any) {
-      console.error('Login error:', error.response?.data || error.message);
-      throw error;
-    }
-    const { trackEvent } = useAnalytics();
-    trackEvent('login', { email });
-  }
+    const res = await api.post('/auth/login', { email, password });
+    const { token, user } = res.data;
+    sessionStorage.setItem('token', token);
+    setUser(user);
+    return user;
+  };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
     setUser(null);
     router.push('/auth/login');
   };
 
   return { user, loading, login, logout };
 }
-
