@@ -4,11 +4,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = Router();
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
+const apiKey = process.env.GOOGLE_AI_API_KEY;
+console.log('🔑 GOOGLE_AI_API_KEY present?', !!apiKey);
+
+const genAI = new GoogleGenerativeAI(apiKey!);
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-// In‑memory conversation store (key: `${userId}-${agentId}`)
-// For production, use Redis or a database.
+// In‑memory conversation store
 const conversations = new Map();
 
 router.post('/:agentId/chat', authenticate, async (req: any, res: any) => {
@@ -24,7 +26,6 @@ router.post('/:agentId/chat', authenticate, async (req: any, res: any) => {
     const key = `${userId}-${agentId}`;
     let chat = conversations.get(key);
     if (!chat) {
-      // Start a new chat session
       chat = model.startChat({
         history: [],
         generationConfig: { temperature: 0.7, maxOutputTokens: 500 },
@@ -34,9 +35,10 @@ router.post('/:agentId/chat', authenticate, async (req: any, res: any) => {
 
     const result = await chat.sendMessage(message);
     const responseText = result.response.text();
+    console.log(`✅ Gemini response for ${agentId}: ${responseText.substring(0, 50)}...`);
     res.json({ response: responseText });
   } catch (error) {
-    console.error('Gemini error:', error);
+    console.error('❌ Gemini error details:', error);
     // Fallback to echo
     res.json({ response: `Echo from agent ${agentId}: ${message}` });
   }
