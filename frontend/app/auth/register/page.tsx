@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import Link from 'next/link';
 import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
@@ -18,8 +17,9 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const res = await api.post('/auth/register', { email, password, name });
-      const { token } = res.data;
+      const { token, user } = res.data;
       localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       toast.success('Account created!');
       router.push('/dashboard');
     } catch (err: any) {
@@ -69,11 +69,9 @@ export default function RegisterPage() {
         >
           {loading ? 'Creating...' : 'Register'}
         </button>
-        <p className="mt-4 text-center">
+        <p className="mt-4 text-center text-sm">
           Already have an account?{' '}
-          <Link href="/auth/login" className="text-blue-500 hover:underline">
-            Login
-          </Link>
+          <a href="/auth/login" className="text-blue-500 hover:underline">Login</a>
         </p>
       </form>
     </div>
