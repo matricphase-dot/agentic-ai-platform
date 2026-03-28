@@ -1,65 +1,48 @@
-'use client';
+﻿import { Router } from 'express';
+import { authenticate } from '../middleware/auth';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import api from '@/lib/api';
+const router = Router();
 
-interface Agent {
-  id: string;
-  name: string;
-  description: string;
-  agentType: string;
-  status: string;
-  configuration: any;
-}
+const apiKey = process.env.GOOGLE_AI_API_KEY;
+console.log('🔑 GOOGLE_AI_API_KEY present?', !!apiKey);
 
-export default function AgentDetailPage() {
-  const params = useParams();
-  const id = params.id as string;
-  const [agent, setAgent] = useState<Agent | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+const genAI = new GoogleGenerativeAI(apiKey!);
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-lite' });
 
-  useEffect(() => {
-    const fetchAgent = async () => {
-      try {
-        const res = await api.get(`/agents/${id}`);
-        setAgent(res.data);
-      } catch (err: any) {
-        setError(err.response?.data?.error || 'Failed to fetch agent');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAgent();
-  }, [id]);
+// In‑memory conversation store
+const conversations = new Map();
 
-  if (loading) return <div>Loading agent...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!agent) return <div>Agent not found.</div>;
+router.post('/:agentId/chat', authenticate, async (req: any, res: any) => {
+  const { agentId } = req.params;
+  const { message } = req.body;
+  const userId = req.user.id;
 
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">{agent.name}</h1>
-        <Link
-          href={`/agents/${id}/chat`}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-        >
-          Chat with Agent
-        </Link>
-      </div>
-      <p className="text-gray-600 mb-4">{agent.description}</p>
-      <div className="bg-white p-4 rounded shadow">
-        <p><strong>Type:</strong> {agent.agentType}</p>
-        <p><strong>Status:</strong> {agent.status}</p>
-        {agent.configuration && (
-          <pre className="mt-2 text-sm bg-gray-100 p-2 rounded">
-            {JSON.stringify(agent.configuration, null, 2)}
-          </pre>
-        )}
-      </div>
-    </div>
-  );
-}
+  if (!message) {
+    return res.status(400).json({ error: 'Message is required' });
+  }
+
+  try {
+    const key = `${userId}-${agentId}`;
+    let chat = conversations.get(key);
+    if (!chat) {
+      chat = model.startChat({
+        history: [],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 500 },
+      });
+      conversations.set(key, chat);
+    }
+
+    const result = await chat.sendMessage(message);
+    const responseText = result.response.text();
+    console.log(`✅ Gemini response for ${agentId}: ${responseText.substring(0, 50)}...`);
+    res.json({ response: responseText });
+  } catch (error) {
+    console.error('❌ Gemini error details:', error);
+    res.json({ response: `Echo from agent ${agentId}: ${message}` });
+  }
+});
+
+export default router;
+
+

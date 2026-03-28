@@ -23,7 +23,7 @@ import webhooksRoute from './routes/webhooks';
 import reviewsRoute from './routes/reviews';
 import auditLogsRoute from './routes/audit-logs';
 import settingsRoute from './routes/settings';
-import chatRoutes from './routes/chat'; // new
+//  // new
 
 import { authenticate } from './middleware/auth';
 
@@ -65,7 +65,7 @@ app.use('/api/audit-logs', authenticate, auditLogsRoute);
 app.use('/api/settings', authenticate, settingsRoute);
 
 // New chat routes
-app.use('/api/agents', authenticate, chatRoutes); // This will handle /api/agents/:agentId/chat
+//  // This will handle /api/agents/:agentId/chat
 
 // Basic health check
 app.get('/api/health', (req, res) => {
@@ -75,3 +75,4 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
