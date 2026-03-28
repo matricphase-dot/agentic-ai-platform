@@ -18,7 +18,8 @@ const Sidebar = () => {
     { href: '/teams', label: 'Teams' },
     { href: '/webhooks', label: 'Webhooks' },
     { href: '/reviews', label: 'Reviews' },
-    { href: '/audit-logs', label: 'Audit Logs' },
+
+    { href: '/guide', label: 'Guide' },
   ];
 
   return (
@@ -58,3 +59,4 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
+
