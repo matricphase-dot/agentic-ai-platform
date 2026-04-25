@@ -1,206 +1,321 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { billingApi } from '@/lib/api';
+import { billingApi, authApi as userApi } from '@/lib/api';
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import { toast } from 'sonner';
 
-const TOPUP_PRESETS = [10, 50, 100, 500];
+const RAZORPAY_PRESETS = [100, 500, 1000, 2000];
+const PAYPAL_PRESETS = [5, 10, 25, 50];
 
 export default function BillingPage() {
   const [balance, setBalance] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'INR' | 'USD'>('INR');
   const [customAmount, setCustomAmount] = useState('');
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [topping, setTopping] = useState(false);
-  const [msg, setMsg] = useState('');
+  const [processing, setProcessing] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
+  const fetchBalance = async () => {
+    const [balRes, txRes, userRes] = await Promise.all([
       billingApi.balance(),
       billingApi.transactions({ limit: '20' }),
-    ]).then(([balRes, txRes]) => {
-      if (balRes.success) setBalance(balRes.data);
-      if (txRes.success) 
-        setTransactions((txRes.data as any)?.transactions || []);
-      setLoading(false);
-    });
-  }, []);
-
-  const handleTopup = async () => {
-    const amount = selectedAmount || Number(customAmount);
-    if (!amount || amount <= 0) return;
-
-    setTopping(true);
-    const res = await billingApi.topup(amount);
-    if (res.success) {
-      setMsg(`✅ ${amount} credits added!`);
-      const updated = await billingApi.balance();
-      if (updated.success) setBalance(updated.data);
-      const txUpdated = await billingApi.transactions({ limit: '20' });
-      if (txUpdated.success)
-        setTransactions((txUpdated.data as any)?.transactions || []);
-    } else {
-      setMsg('❌ Top-up failed');
-    }
-    setTopping(false);
-    setSelectedAmount(null);
-    setCustomAmount('');
+      userApi.me()
+    ]);
+    if (balRes.success) setBalance(balRes.data);
+    if (txRes.success) setTransactions((txRes.data as any)?.transactions || []);
+    if (userRes.success) setUser(userRes.data);
+    setLoading(false);
   };
 
-  if (loading) return (
-    <div className="p-6 animate-pulse space-y-4">
-      <div className="bg-[#111111] border border-[#1E1E1E] 
-                      rounded-xl h-40" />
-      <div className="bg-[#111111] border border-[#1E1E1E] 
-                      rounded-xl h-64" />
-    </div>
-  );
+  useEffect(() => {
+    fetchBalance();
+  }, []);
+
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleRazorpayPayment = async () => {
+    const amount = selectedAmount || Number(customAmount);
+    if (!amount || amount < 50) {
+      toast.error('Minimum amount is ₹50');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const res = await billingApi.createRazorpayOrder(amount);
+      if (!res.success) throw new Error(res.message);
+
+      const isLoaded = await loadRazorpay();
+      if (!isLoaded) throw new Error('Razorpay SDK failed to load');
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: res.data.amount,
+        currency: res.data.currency,
+        name: 'AgenticAI Platform',
+        description: 'Credit Top-up',
+        order_id: res.data.orderId,
+        handler: async (response: any) => {
+          const verifyRes = await billingApi.verifyRazorpayPayment({
+            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+            amountINR: amount
+          });
+
+          if (verifyRes.success) {
+            toast.success('Credits added successfully!');
+            fetchBalance();
+          } else {
+            toast.error('Payment verification failed');
+          }
+        },
+        prefill: {
+          name: user?.name,
+          email: user?.email,
+        },
+        theme: {
+          color: '#7C3AED',
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (error: any) {
+      toast.error(error.message || 'Payment failed');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleClaimFaucet = async () => {
+    setProcessing(true);
+    try {
+      // Assuming there's a faucet endpoint in userApi or billingApi
+      const res = await billingApi.claimFaucet();
+      if (res.success) {
+        toast.success('1,000 AGNT tokens added to your balance!');
+        fetchBalance();
+      } else {
+        toast.error(res.message || 'Faucet claim failed');
+      }
+    } catch (error: any) {
+      toast.error('Failed to claim tokens');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  if (loading) return <div className="p-6 space-y-4 animate-pulse">
+    <div className="h-32 bg-zinc-900 rounded-xl" />
+    <div className="h-64 bg-zinc-900 rounded-xl" />
+  </div>;
 
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-white">Billing</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-white">Billing & Credits</h1>
+        <button 
+          onClick={handleClaimFaucet}
+          disabled={processing}
+          className="text-xs px-4 py-2 bg-purple-600/10 text-purple-400 border border-purple-500/20 rounded-full hover:bg-purple-600/20 transition disabled:opacity-50"
+        >
+          Claim 1,000 Free AGNT Tokens
+        </button>
+      </div>
 
-      {/* Balance Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-[#111111] border border-[#1E1E1E] 
-                        rounded-xl p-6">
-          <p className="text-zinc-400 text-sm mb-1">Credits Balance</p>
-          <p className="text-4xl font-bold text-white mb-1">
-            ${(balance?.credits || 0).toFixed(2)}
-          </p>
-          <p className="text-zinc-500 text-xs">
-            Available to spend on agent invocations
-          </p>
+      {/* Balance Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-[#111111] border border-[#1E1E1E] rounded-2xl p-6">
+          <p className="text-zinc-500 text-sm mb-1">Credit Balance</p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-4xl font-bold text-white">
+              {balance?.credits?.toLocaleString() || 0}
+            </span>
+            <span className="text-zinc-400 text-sm font-medium">Credits</span>
+          </div>
+          <p className="text-zinc-600 text-xs mt-2">1 credit = 1 free agent invocation</p>
         </div>
-        <div className="bg-[#111111] border border-[#1E1E1E] 
-                        rounded-xl p-6">
-          <p className="text-zinc-400 text-sm mb-1">AGNT Tokens</p>
-          <p className="text-4xl font-bold text-white mb-1">
-            {(balance?.tokenBalance || 0).toFixed(0)}
-          </p>
-          <p className="text-zinc-500 text-xs">
-            {(balance?.lockedTokens || 0).toFixed(0)} locked in staking
-          </p>
+        <div className="bg-[#111111] border border-[#1E1E1E] rounded-2xl p-6">
+          <p className="text-zinc-500 text-sm mb-1">AGNT Tokens</p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-4xl font-bold text-white">
+              {balance?.tokenBalance?.toLocaleString() || 0}
+            </span>
+            <span className="text-zinc-400 text-sm font-medium">AGNT</span>
+          </div>
+          <p className="text-zinc-600 text-xs mt-2">Used for paid agent invocations and staking</p>
         </div>
       </div>
 
-      {/* Top Up */}
-      <div className="bg-[#111111] border border-[#1E1E1E] 
-                      rounded-xl p-6">
-        <h2 className="text-white font-semibold text-lg mb-4">
-          Top Up Credits
-        </h2>
-
-        <div className="grid grid-cols-4 gap-3 mb-4">
-          {TOPUP_PRESETS.map(amt => (
-            <button
-              key={amt}
-              onClick={() => {
-                setSelectedAmount(amt);
-                setCustomAmount('');
-              }}
-              className={`py-3 rounded-lg font-medium text-sm 
-                          transition ${
-                selectedAmount === amt
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-              }`}
-            >
-              ${amt}
-            </button>
-          ))}
+      {/* Payment Section */}
+      <div className="bg-[#111111] border border-[#1E1E1E] rounded-2xl overflow-hidden">
+        <div className="flex border-b border-[#1E1E1E]">
+          <button 
+            onClick={() => { setActiveTab('INR'); setSelectedAmount(null); setCustomAmount(''); }}
+            className={`flex-1 py-4 text-sm font-medium transition ${activeTab === 'INR' ? 'bg-purple-600/5 text-white border-b-2 border-purple-500' : 'text-zinc-500 hover:text-zinc-300'}`}
+          >
+            Indian Payments (₹)
+          </button>
+          <button 
+            onClick={() => { setActiveTab('USD'); setSelectedAmount(null); setCustomAmount(''); }}
+            className={`flex-1 py-4 text-sm font-medium transition ${activeTab === 'USD' ? 'bg-purple-600/5 text-white border-b-2 border-purple-500' : 'text-zinc-500 hover:text-zinc-300'}`}
+          >
+            International Payments ($)
+          </button>
         </div>
 
-        <input
-          type="number"
-          placeholder="Or enter custom amount"
-          value={customAmount}
-          onChange={e => {
-            setCustomAmount(e.target.value);
-            setSelectedAmount(null);
-          }}
-          className="w-full bg-[#1A1A1A] border border-[#2A2A2A] 
-                     text-white rounded-lg px-4 py-3 mb-4
-                     focus:outline-none focus:border-purple-500/50 
-                     transition"
-        />
+        <div className="p-8">
+          {activeTab === 'INR' ? (
+            <div className="space-y-6">
+              <div>
+                <label className="text-sm text-zinc-400 mb-3 block">Select Amount</label>
+                <div className="grid grid-cols-4 gap-3">
+                  {RAZORPAY_PRESETS.map(amt => (
+                    <button
+                      key={amt}
+                      onClick={() => { setSelectedAmount(amt); setCustomAmount(''); }}
+                      className={`py-3 rounded-xl border transition ${selectedAmount === amt ? 'bg-purple-600/10 border-purple-500 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}
+                    >
+                      ₹{amt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="relative">
+                <input
+                  type="number"
+                  placeholder="Custom amount (Min ₹50)"
+                  value={customAmount}
+                  onChange={e => { setCustomAmount(e.target.value); setSelectedAmount(null); }}
+                  className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl px-4 py-4 focus:outline-none focus:border-purple-500 transition"
+                />
+              </div>
 
-        {msg && (
-          <p className="text-sm mb-3 text-green-400">{msg}</p>
-        )}
+              <div className="bg-purple-600/5 border border-purple-500/10 rounded-xl p-4 flex justify-between items-center">
+                <span className="text-sm text-zinc-400">Credits to receive</span>
+                <span className="text-xl font-bold text-white">
+                  {(selectedAmount || Number(customAmount) || 0).toLocaleString()} Credits
+                </span>
+              </div>
 
-        <button
-          onClick={handleTopup}
-          disabled={topping || (!selectedAmount && !customAmount)}
-          className="w-full bg-purple-600 text-white font-bold 
-                     py-3 rounded-lg hover:bg-purple-500 transition 
-                     disabled:opacity-50"
-        >
-          {topping 
-            ? 'Processing...' 
-            : `Add ${selectedAmount || customAmount || 0} Credits`
-          }
-        </button>
-        <p className="text-zinc-500 text-xs text-center mt-2">
-          Mock payment — no real charges in development mode
-        </p>
+              <button
+                onClick={handleRazorpayPayment}
+                disabled={processing || (!selectedAmount && !customAmount)}
+                className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 rounded-xl transition disabled:opacity-50"
+              >
+                {processing ? 'Processing...' : `Pay ₹${selectedAmount || customAmount || 0} with Razorpay`}
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div>
+                <label className="text-sm text-zinc-400 mb-3 block">Select Amount</label>
+                <div className="grid grid-cols-4 gap-3">
+                  {PAYPAL_PRESETS.map(amt => (
+                    <button
+                      key={amt}
+                      onClick={() => { setSelectedAmount(amt); setCustomAmount(''); }}
+                      className={`py-3 rounded-xl border transition ${selectedAmount === amt ? 'bg-purple-600/10 border-purple-500 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}
+                    >
+                      ${amt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <input
+                type="number"
+                placeholder="Custom amount (Min $1)"
+                value={customAmount}
+                onChange={e => { setCustomAmount(e.target.value); setSelectedAmount(null); }}
+                className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl px-4 py-4 focus:outline-none focus:border-purple-500 transition"
+              />
+
+              <div className="bg-purple-600/5 border border-purple-500/10 rounded-xl p-4 flex justify-between items-center">
+                <span className="text-sm text-zinc-400">Credits to receive</span>
+                <span className="text-xl font-bold text-white">
+                  {((selectedAmount || Number(customAmount) || 0) * 100).toLocaleString()} Credits
+                </span>
+              </div>
+
+              <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "" }}>
+                <PayPalButtons
+                  style={{ layout: "vertical", shape: "pill", label: "pay" }}
+                  forceReRender={[selectedAmount, customAmount]}
+                  createOrder={async () => {
+                    const amount = selectedAmount || Number(customAmount);
+                    if (!amount || amount < 1) {
+                      toast.error('Minimum amount is $1');
+                      return "";
+                    }
+                    const res = await billingApi.createPaypalOrder(amount);
+                    return res.data.orderId;
+                  }}
+                  onApprove={async (data) => {
+                    const res = await billingApi.capturePaypalOrder(data.orderID);
+                    if (res.success) {
+                      toast.success('Credits added successfully!');
+                      fetchBalance();
+                    }
+                  }}
+                  onError={() => {
+                    toast.error('PayPal payment failed');
+                  }}
+                />
+              </PayPalScriptProvider>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Info Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl">
+          <p className="text-white text-sm font-semibold mb-1">Indian Rates</p>
+          <p className="text-zinc-500 text-xs">₹1 = 1 Credit</p>
+        </div>
+        <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl">
+          <p className="text-white text-sm font-semibold mb-1">International Rates</p>
+          <p className="text-zinc-500 text-xs">$1 = 100 Credits</p>
+        </div>
+        <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl">
+          <p className="text-white text-sm font-semibold mb-1">Validity</p>
+          <p className="text-zinc-500 text-xs">Credits never expire</p>
+        </div>
       </div>
 
       {/* Transaction History */}
-      <div className="bg-[#111111] border border-[#1E1E1E] 
-                      rounded-xl p-6">
-        <h2 className="text-white font-semibold text-lg mb-4">
-          Transaction History
-        </h2>
-
-        {transactions.length === 0 ? (
-          <p className="text-zinc-400 text-center py-8">
-            No transactions yet
-          </p>
-        ) : (
-          <div className="space-y-0">
-            {transactions.map((tx: any) => {
-              const isPositive = tx.amount > 0;
-              const typeColors: Record<string, string> = {
-                TOPUP: 'bg-green-500/20 text-green-400',
-                INVOCATION_CHARGE: 'bg-red-500/20 text-red-400',
-                AGENT_EARNING: 'bg-blue-500/20 text-blue-400',
-                REWARD_CLAIM: 'bg-purple-500/20 text-purple-400',
-                STAKE: 'bg-yellow-500/20 text-yellow-400',
-                NODE_REWARD: 'bg-cyan-500/20 text-cyan-400',
-              };
-
-              return (
-                <div key={tx.id}
-                     className="flex justify-between items-center 
-                                py-4 border-b border-[#1E1E1E] 
-                                last:border-0">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        typeColors[tx.type] || 
-                        'bg-zinc-700 text-zinc-400'
-                      }`}>
-                        {tx.type.replace(/_/g, ' ')}
-                      </span>
-                    </div>
-                    <p className="text-zinc-400 text-xs">
-                      {tx.description}
-                    </p>
-                    <p className="text-zinc-600 text-xs">
-                      {new Date(tx.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                  <span className={`font-bold ${
-                    isPositive ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                    {isPositive ? '+' : ''}
-                    {tx.amount.toFixed(4)}
-                  </span>
+      <div className="bg-[#111111] border border-[#1E1E1E] rounded-2xl p-8">
+        <h2 className="text-xl font-bold text-white mb-6">Recent Transactions</h2>
+        <div className="space-y-4">
+          {transactions.length === 0 ? (
+            <p className="text-zinc-500 text-center py-8">No transactions found</p>
+          ) : (
+            transactions.map((tx: any) => (
+              <div key={tx.id} className="flex justify-between items-center py-4 border-b border-zinc-800 last:border-0">
+                <div>
+                  <p className="text-white font-medium">{tx.description}</p>
+                  <p className="text-zinc-500 text-xs">{new Date(tx.createdAt).toLocaleString()}</p>
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <span className={`font-bold ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

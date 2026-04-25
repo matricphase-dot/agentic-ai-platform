@@ -186,6 +186,33 @@ export const billingApi = {
     }),
   transactions: (params?: Record<string, string>) =>
     apiFetch('/billing/transactions?' + new URLSearchParams(params || {})),
+  
+  // Razorpay
+  createRazorpayOrder: (amountINR: number) =>
+    apiFetch<any>('/billing/razorpay/create-order', {
+      method: 'POST',
+      body: JSON.stringify({ amountINR }),
+    }),
+  verifyRazorpayPayment: (data: any) =>
+    apiFetch<any>('/billing/razorpay/verify', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // PayPal
+  createPaypalOrder: (amountUSD: number) =>
+    apiFetch<any>('/billing/paypal/create-order', {
+      method: 'POST',
+      body: JSON.stringify({ amountUSD }),
+    }),
+  capturePaypalOrder: (orderId: string) =>
+    apiFetch<any>('/billing/paypal/capture', {
+      method: 'POST',
+      body: JSON.stringify({ orderId }),
+    }),
+
+  // Faucet
+  claimFaucet: () => apiFetch<any>('/staking/faucet', { method: 'POST' }),
 };
 
 // ── GOVERNANCE ───────────────────────────────────────────────

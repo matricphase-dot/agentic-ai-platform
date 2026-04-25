@@ -16,6 +16,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",
     "@google/generative-ai": "^0.24.1",
+    "@paypal/checkout-server-sdk": "^1.0.3",
     "@prisma/client": "^5.12.1",
     "@types/qrcode": "^1.5.6",
     "@types/swagger-jsdoc": "^6.0.4",
@@ -38,6 +39,7 @@
     "otplib": "^13.4.0",
     "qrcode": "^1.5.4",
     "rate-limiter-flexible": "^11.0.1",
+    "razorpay": "^2.9.6",
     "resend": "^6.12.2",
     "socket.io": "^4.7.5",
     "swagger-jsdoc": "^6.2.8",

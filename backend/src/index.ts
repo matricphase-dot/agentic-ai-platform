@@ -32,6 +32,7 @@ import usersRouter from "./routes/users.routes";
 import { cronRouter } from "./routes/cron.routes";
 import statsRouter from "./routes/stats.routes";
 import contactRouter from "./routes/contact.routes";
+import { billingWebhookRouter } from "./routes/webhooks.billing.routes";
 
 const app = express();
 const server = http.createServer(app);
@@ -93,6 +94,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/cron', cronRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/contact', contactRouter);
+app.use('/api/webhooks/billing', billingWebhookRouter);
 
 
 

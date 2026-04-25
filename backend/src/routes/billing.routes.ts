@@ -109,4 +109,99 @@ router.get('/transactions', async (req: Request, res: Response) => {
   }
 });
 
+// --- Razorpay Routes ---
+
+// POST /billing/razorpay/create-order
+router.post('/razorpay/create-order', async (req: Request, res: Response) => {
+  try {
+    const { amountINR } = z.object({
+      amountINR: z.number().min(50),
+    }).parse(req.body);
+
+    const { RazorpayService } = await import('../services/razorpay.service');
+    const orderData = await RazorpayService.createOrder(amountINR, req.user!.id);
+
+    return res.json({ success: true, data: orderData });
+  } catch (error: any) {
+    logger.error('Razorpay order route failed', { error: error.message });
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.message || 'Failed to create payment order'
+    });
+  }
+});
+
+// POST /billing/razorpay/verify
+router.post('/razorpay/verify', async (req: Request, res: Response) => {
+  try {
+    const { razorpayOrderId, razorpayPaymentId, razorpaySignature, amountINR } = z.object({
+      razorpayOrderId: z.string(),
+      razorpayPaymentId: z.string(),
+      razorpaySignature: z.string(),
+      amountINR: z.number(),
+    }).parse(req.body);
+
+    const { RazorpayService } = await import('../services/razorpay.service');
+    const isValid = RazorpayService.verifyPayment(
+      razorpayOrderId, 
+      razorpayPaymentId, 
+      razorpaySignature
+    );
+
+    if (!isValid) {
+      return res.status(400).json({ success: false, message: 'PAYMENT_TAMPERED' });
+    }
+
+    const balance = await RazorpayService.addCreditsAfterPayment(
+      req.user!.id, 
+      amountINR, 
+      razorpayPaymentId
+    );
+
+    return res.json({ 
+      success: true, 
+      data: { 
+        balance: balance.credits, 
+        creditsAdded: amountINR 
+      } 
+    });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: 'Verification failed' });
+  }
+});
+
+// --- PayPal Routes ---
+
+// POST /billing/paypal/create-order
+router.post('/paypal/create-order', async (req: Request, res: Response) => {
+  try {
+    const { amountUSD } = z.object({
+      amountUSD: z.number().min(1),
+    }).parse(req.body);
+
+    const { PaypalService } = await import('../services/paypal.service');
+    const order = await PaypalService.createOrder(amountUSD, req.user!.id);
+
+    return res.json({ success: true, data: order });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /billing/paypal/capture
+router.post('/paypal/capture', async (req: Request, res: Response) => {
+  try {
+    const { orderId } = z.object({
+      orderId: z.string(),
+    }).parse(req.body);
+
+    const { PaypalService } = await import('../services/paypal.service');
+    const result = await PaypalService.captureOrder(orderId, req.user!.id);
+
+    return res.json({ success: true, data: result });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;
