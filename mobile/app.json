@@ -1,25 +1,28 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "AgenticAI",
+    "slug": "agenticai",
     "version": "1.0.0",
+    "scheme": "agenticai",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0A0A0A"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.agenticai.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#7C3AED"
       },
+      "package": "dev.agenticai.app",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },

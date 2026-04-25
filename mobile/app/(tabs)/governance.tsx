@@ -1,71 +1,108 @@
-import React from 'react';
-import { ScrollView, View, Text, RefreshControl } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, View, Text, RefreshControl, TouchableOpacity } from 'react-native';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
-import { useGovernance } from '../../hooks/useGovernance';
-import { Clock, MessageSquare, ChevronRight } from 'lucide-react-native';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../lib/api';
+import { Clock, MessageSquare, ChevronRight, Vote } from 'lucide-react-native';
+import { router } from 'expo-router';
 
 export default function GovernanceScreen() {
-  const { proposals, isLoading } = useGovernance();
+  const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState('ACTIVE');
+
+  const { data: response, isLoading, refetch } = useQuery({
+    queryKey: ['proposals', filter],
+    queryFn: () => api.governance.proposals({ status: filter })
+  });
+
+  const proposals = (response as any)?.data || [];
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ACTIVE': return '#10B981';
+      case 'PASSED': return '#3B82F6';
+      case 'REJECTED': return '#EF4444';
+      default: return '#6B7280';
+    }
+  };
 
   return (
     <ScrollView 
-      className="flex-1 bg-bg"
-      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={() => {}} tintColor="#7C3AED" />}
+      className="flex-1 bg-black"
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C3AED" />}
     >
-      <View className="p-6">
+      <View className="p-6 pt-12">
         <View className="mb-8">
-          <Text className="text-gray-400 font-medium">Protocol DAO</Text>
+          <Text className="text-gray-500 font-bold uppercase tracking-widest text-[10px] mb-1">Protocol DAO</Text>
           <Text className="text-white text-3xl font-black">Governance</Text>
         </View>
 
-        <View className="flex-row mb-8">
-          <View className="flex-1 bg-card border border-border p-4 rounded-xl mr-2">
-            <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Voting Power</Text>
-            <Text className="text-white text-xl font-black">1.2M AGNT</Text>
-          </View>
-          <View className="flex-1 bg-card border border-border p-4 rounded-xl ml-2">
-            <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Proposals</Text>
-            <Text className="text-white text-xl font-black">{proposals?.length || 0} Active</Text>
-          </View>
+        <View className="flex-row mb-8 gap-x-4">
+          {['ACTIVE', 'PASSED', 'REJECTED'].map((f) => (
+            <TouchableOpacity 
+              key={f}
+              onPress={() => setFilter(f)}
+              className={`flex-1 py-3 rounded-2xl border items-center ${
+                filter === f ? 'bg-[#7C3AED10] border-[#7C3AED50]' : 'bg-gray-900 border-gray-800'
+              }`}
+            >
+              <Text className={`font-black text-[10px] tracking-tighter ${filter === f ? 'text-[#7C3AED]' : 'text-gray-500'}`}>
+                {f}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        <Text className="text-white text-xl font-bold mb-4">Active Proposals</Text>
+        <Text className="text-white text-xl font-bold mb-6">Proposals</Text>
 
-        {proposals?.length > 0 ? (
+        {isLoading ? (
+          [1, 2, 3].map(i => (
+            <View key={i} className="h-48 bg-gray-900 rounded-3xl mb-4 border border-gray-800 animate-pulse" />
+          ))
+        ) : proposals.length > 0 ? (
           proposals.map((prop: any, i: number) => (
-            <Card key={i} className="mb-4">
-              <View className="flex-row items-center justify-between mb-3">
-                <Badge label={prop.proposalType} variant="purple" />
+            <Card 
+              key={i} 
+              className="mb-4 p-6 rounded-[32px]"
+              onPress={() => router.push(`/proposal/${prop.id}`)}
+            >
+              <View className="flex-row items-center justify-between mb-4">
+                <Badge label={prop.proposalType} />
                 <View className="flex-row items-center">
-                  <Clock size={12} color="#10B981" />
-                  <Text className="text-success text-xs font-bold ml-1">Active</Text>
+                  <Clock size={12} color={getStatusColor(prop.status)} />
+                  <Text style={{ color: getStatusColor(prop.status) }} className="text-[10px] font-black uppercase ml-1 tracking-widest">{prop.status}</Text>
                 </View>
               </View>
 
-              <Text className="text-white font-bold text-lg mb-2">{prop.title}</Text>
+              <Text className="text-white font-bold text-lg mb-4 leading-6">{prop.title}</Text>
               
-              <View className="h-2 bg-bg rounded-full overflow-hidden flex-row mb-4">
-                <View className="h-full bg-success" style={{ width: '72%' }} />
-                <View className="h-full bg-error" style={{ width: '20%' }} />
-                <View className="h-full bg-gray-500" style={{ width: '8%' }} />
+              <View className="h-1.5 bg-gray-950 rounded-full overflow-hidden flex-row mb-6">
+                <View className="h-full bg-[#10B981]" style={{ width: `${prop.votesFor || 0}%` }} />
+                <View className="h-full bg-[#EF4444]" style={{ width: `${prop.votesAgainst || 0}%` }} />
               </View>
 
-              <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center justify-between pt-4 border-t border-gray-950">
                 <View className="flex-row items-center">
-                  <MessageSquare size={14} color="#6B7280" />
-                  <Text className="text-gray-500 text-xs ml-1">12 Comments</Text>
+                  <Vote size={14} color="#6B7280" />
+                  <Text className="text-gray-500 text-[10px] font-bold ml-1 uppercase tracking-widest">{prop.totalVotes || 0} Votes</Text>
                 </View>
                 <View className="flex-row items-center">
-                   <Text className="text-purple font-bold text-xs mr-1">Vote Now</Text>
+                   <Text className="text-[#7C3AED] font-black text-[10px] uppercase mr-1 tracking-widest">Details</Text>
                    <ChevronRight size={14} color="#7C3AED" />
                 </View>
               </View>
             </Card>
           ))
         ) : (
-          <View className="py-20 items-center justify-center">
-             <Text className="text-gray-500">No active proposals in current epoch.</Text>
+          <View className="py-20 items-center justify-center border border-dashed border-gray-800 rounded-[32px]">
+             <Text className="text-gray-500 font-medium">No proposals found in this epoch.</Text>
           </View>
         )}
       </View>

@@ -27,3 +27,4 @@ mobile/.expo/
 contracts/artifacts/
 contracts/cache/
 contracts/typechain-types/
+mobile/.env

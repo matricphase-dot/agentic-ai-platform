@@ -1,24 +1,34 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { API_URL } from './config';
+import { CONFIG } from './config';
 import { router } from 'expo-router';
 
-const client = axios.create({ baseURL: API_URL, timeout: 15000 });
+const client = axios.create({ 
+  baseURL: CONFIG.API_URL, 
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true
+});
 
 client.interceptors.request.use(async (config) => {
   const token = await SecureStore.getItemAsync('jwt_token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
 client.interceptors.response.use(
-  response => response.data,
+  (response) => response.data,
   async (error) => {
     if (error.response?.status === 401) {
       await SecureStore.deleteItemAsync('jwt_token');
+      // Only redirect if we're not already on the login screen
       router.replace('/(auth)/login');
     }
-    throw error;
+    return Promise.reject(error);
   }
 );
 
@@ -28,10 +38,11 @@ export const api = {
       client.post('/api/auth/login', { email, password }),
     signup: (data: any) =>
       client.post('/api/auth/signup', data),
-    me: () => client.get('/api/users/me'),
+    me: () => client.get('/api/auth/me'),
+    logout: () => client.post('/api/auth/logout'),
   },
   marketplace: {
-    list: (params: any) =>
+    list: (params?: any) =>
       client.get('/api/marketplace', { params }),
     get: (id: string) =>
       client.get(`/api/marketplace/${id}`),
@@ -48,7 +59,7 @@ export const api = {
     claim: () => client.post('/api/staking/claim'),
   },
   governance: {
-    proposals: (params: any) =>
+    proposals: (params?: any) =>
       client.get('/api/governance/proposals', { params }),
     proposal: (id: string) =>
       client.get(`/api/governance/proposals/${id}`),
@@ -58,6 +69,12 @@ export const api = {
   billing: {
     balance: () => client.get('/api/billing/balance'),
   },
+  agents: {
+    list: () => client.get('/api/agents'),
+    get: (id: string) => client.get(`/api/agents/${id}`),
+    chat: (agentId: string, message: string) => 
+      client.post(`/api/agents/${agentId}/chat`, { message }),
+  },
   notifications: {
     list: () => client.get('/api/notifications'),
     markRead: (id: string) =>
@@ -66,9 +83,7 @@ export const api = {
       client.post('/api/notifications/push-token', { token, platform }),
   },
   invoke: {
-    run: (agentId: string, input: Record<string, unknown>, apiKey: string) =>
-      client.post(`/api/invoke/${agentId}`, input, {
-        headers: { 'X-API-Key': apiKey }
-      }),
-  },
+    run: (agentId: string, input: any) =>
+      client.post(`/api/invoke/${agentId}`, input),
+  }
 };
