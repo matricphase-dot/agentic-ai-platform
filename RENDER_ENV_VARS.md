@@ -1,5 +1,31 @@
 # Render Environment Variables
 
+## FREE TIER SETUP (Start here - $0/month)
+
+### Step 1: Get Google Gemini API Key (FREE)
+1. Go to [aistudio.google.com](https://aistudio.google.com)
+2. Click **"Get API Key"**
+3. Create new key
+4. Copy the key starting with `"AIza..."`
+5. Add to Render: `GOOGLE_AI_API_KEY=AIza...`
+
+### Step 2: Get Resend API Key (FREE)
+1. Go to [resend.com](https://resend.com)
+2. Sign up free (no credit card)
+3. Go to **API Keys** → **Create API Key**
+4. Copy the key starting with `"re_..."`
+5. Add to Render: `RESEND_API_KEY=re_...`
+6. Also add these Render env vars:
+   - `SMTP_HOST=smtp.resend.com`
+   - `SMTP_PORT=465`
+   - `SMTP_USER=resend`
+   - `SMTP_PASS=same_as_RESEND_API_KEY`
+   - `SMTP_FROM=onboarding@resend.dev`
+
+*That's it - platform is fully functional for free.*
+
+---
+
 Copy and paste these into the Render dashboard for each service.
 
 ## BACKEND SERVICE ENV VARS

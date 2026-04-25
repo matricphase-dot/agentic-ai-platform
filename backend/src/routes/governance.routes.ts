@@ -82,7 +82,10 @@ router.post(
 
       const proposal = await GovernanceService.createProposal({
         proposerId: req.user!.id,
-        ...data,
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        executionData: data.executionData,
       });
 
       return res.status(201).json({ 

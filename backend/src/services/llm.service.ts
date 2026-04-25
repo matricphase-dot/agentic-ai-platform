@@ -26,9 +26,10 @@ export const LLMService = {
 
   call: async (request: LLMRequest): Promise<LLMResponse> => {
     const start = Date.now();
+    const provider = (request.provider || 'google').toLowerCase();
 
     try {
-      switch (request.provider.toLowerCase()) {
+      switch (provider) {
         case 'openai':
           return await LLMService.callOpenAI(request, start);
         case 'anthropic':
@@ -38,15 +39,10 @@ export const LLMService = {
         case 'custom':
           return await LLMService.callCustom(request, start);
         default:
-          // Default to OpenAI for unknown providers
-          return await LLMService.callOpenAI(request, start);
+          return await LLMService.callGoogle(request, start);
       }
-    } catch (error) {
-      logger.error('LLM call failed', {
-        provider: request.provider,
-        model: request.model,
-        error,
-      });
+    } catch (error: any) {
+      // Pass through specific error messages
       throw error;
     }
   },
@@ -56,27 +52,31 @@ export const LLMService = {
     start: number
   ): Promise<LLMResponse> => {
     const apiKey = req.apiKey || process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error('OpenAI API key not configured');
+    if (!apiKey) throw new Error('OpenAI API key not configured. Add OPENAI_API_KEY in Render environment variables.');
 
     const client = new OpenAI({ apiKey });
-    const response = await client.chat.completions.create({
-      model: req.model || 'gpt-4o-mini',
-      max_tokens: req.maxTokens || 2048,
-      temperature: req.temperature ?? 0.7,
-      messages: [
-        { role: 'system', content: req.systemPrompt },
-        { role: 'user', content: req.userInput },
-      ],
-    });
+    try {
+      const response = await client.chat.completions.create({
+        model: req.model || 'gpt-4o-mini',
+        max_tokens: req.maxTokens || 2048,
+        temperature: req.temperature ?? 0.7,
+        messages: [
+          { role: 'system', content: req.systemPrompt },
+          { role: 'user', content: req.userInput },
+        ],
+      });
 
-    const choice = response.choices[0];
-    return {
-      output: choice.message.content || '',
-      promptTokens: response.usage?.prompt_tokens || 0,
-      completionTokens: response.usage?.completion_tokens || 0,
-      totalTokens: response.usage?.total_tokens || 0,
-      latencyMs: Date.now() - start,
-    };
+      const choice = response.choices[0];
+      return {
+        output: choice.message.content || '',
+        promptTokens: response.usage?.prompt_tokens || 0,
+        completionTokens: response.usage?.completion_tokens || 0,
+        totalTokens: response.usage?.total_tokens || 0,
+        latencyMs: Date.now() - start,
+      };
+    } catch (error: any) {
+      throw new Error(`OpenAI error: ${error.message}`);
+    }
   },
 
   callAnthropic: async (
@@ -84,27 +84,31 @@ export const LLMService = {
     start: number
   ): Promise<LLMResponse> => {
     const apiKey = req.apiKey || process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error('Anthropic API key not configured');
+    if (!apiKey) throw new Error('Anthropic API key not configured.');
 
     const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
-      model: req.model || 'claude-3-haiku-20240307',
-      max_tokens: req.maxTokens || 2048,
-      system: req.systemPrompt,
-      messages: [{ role: 'user', content: req.userInput }],
-    });
+    try {
+      const response = await client.messages.create({
+        model: req.model || 'claude-3-haiku-20240307',
+        max_tokens: req.maxTokens || 2048,
+        system: req.systemPrompt,
+        messages: [{ role: 'user', content: req.userInput }],
+      });
 
-    const outputBlock = response.content[0];
-    const output = outputBlock.type === 'text' ? outputBlock.text : '';
+      const outputBlock = response.content[0];
+      const output = outputBlock.type === 'text' ? outputBlock.text : '';
 
-    return {
-      output,
-      promptTokens: response.usage.input_tokens,
-      completionTokens: response.usage.output_tokens,
-      totalTokens: response.usage.input_tokens + 
-                   response.usage.output_tokens,
-      latencyMs: Date.now() - start,
-    };
+      return {
+        output,
+        promptTokens: response.usage.input_tokens,
+        completionTokens: response.usage.output_tokens,
+        totalTokens: response.usage.input_tokens + 
+                     response.usage.output_tokens,
+        latencyMs: Date.now() - start,
+      };
+    } catch (error: any) {
+      throw new Error(`Anthropic error: ${error.message}`);
+    }
   },
 
   callGoogle: async (
@@ -112,27 +116,38 @@ export const LLMService = {
     start: number
   ): Promise<LLMResponse> => {
     const apiKey = req.apiKey || process.env.GOOGLE_AI_API_KEY;
-    if (!apiKey) throw new Error('Google AI API key not configured');
+    if (!apiKey) {
+      throw new Error('Google AI API key not configured. Add GOOGLE_AI_API_KEY to environment variables.');
+    }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: req.model || 'gemini-pro',
-      systemInstruction: req.systemPrompt,
-    });
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({
+        model: req.model || 'gemini-1.5-flash',
+        systemInstruction: req.systemPrompt,
+      });
 
-    const result = await model.generateContent(req.userInput);
-    const response = result.response;
-    const output = response.text();
+      const result = await model.generateContent(req.userInput);
+      const response = result.response;
+      const output = response.text();
 
-    // Google doesn't always return token counts on all plans
-    const usage = response.usageMetadata;
-    return {
-      output,
-      promptTokens: usage?.promptTokenCount || 0,
-      completionTokens: usage?.candidatesTokenCount || 0,
-      totalTokens: usage?.totalTokenCount || 0,
-      latencyMs: Date.now() - start,
-    };
+      const usage = response.usageMetadata;
+      return {
+        output,
+        promptTokens: usage?.promptTokenCount || 0,
+        completionTokens: usage?.candidatesTokenCount || 0,
+        totalTokens: usage?.totalTokenCount || 0,
+        latencyMs: Date.now() - start,
+      };
+    } catch (error: any) {
+      if (error.message?.includes('quota') || error.status === 429) {
+        throw new Error('Google AI free quota exceeded. Try again in a minute.');
+      }
+      if (error.message?.includes('not found') || error.status === 404) {
+        throw new Error('Gemini model not available.');
+      }
+      throw new Error(error.message || 'Google AI call failed');
+    }
   },
 
   callCustom: async (
