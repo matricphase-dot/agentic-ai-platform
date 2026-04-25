@@ -77,7 +77,7 @@ export default function AgentDetailScreen() {
               <Badge label={agent?.category} />
               <View className="flex-row items-center bg-black/50 px-2 py-1 rounded-md">
                 <Star size={12} color="#F59E0B" fill="#F59E0B" />
-                <Text className="text-white text-[10px] font-bold ml-1">{agent?.rating || '5.0'}</Text>
+                <Text className="text-white text-[10px] font-bold ml-1">{agent?.analytics?.avgRating?.toFixed(1) || '5.0'}</Text>
               </View>
             </View>
             <Text className="text-white text-3xl font-black">{agent?.name}</Text>
@@ -89,7 +89,7 @@ export default function AgentDetailScreen() {
             <Image source={{ uri: agent?.creator?.avatar || 'https://github.com/shadcn.png' }} className="w-10 h-10 rounded-full mr-3 border border-gray-800" />
             <View>
               <Text className="text-gray-500 text-[10px] uppercase font-bold tracking-widest">Architect</Text>
-              <Text className="text-white font-bold">{agent?.creator?.name || 'Protocol Labs'}</Text>
+              <Text className="text-white font-bold">{agent?.user?.name || 'Protocol Labs'}</Text>
             </View>
           </View>
 
@@ -115,7 +115,7 @@ export default function AgentDetailScreen() {
             <View className="flex-row justify-between mb-4">
               <View>
                 <Text className="text-white font-bold text-lg">Infrastructure Cost</Text>
-                <Text className="text-[#7C3AED] text-xs font-medium">{agent?.price || 0} Credits per invocation</Text>
+                <Text className="text-[#7C3AED] text-xs font-medium">{agent?.pricePerCall || 0} Credits per invocation</Text>
               </View>
               <Zap size={24} color="#7C3AED" />
             </View>

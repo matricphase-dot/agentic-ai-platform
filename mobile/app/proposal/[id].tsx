@@ -69,7 +69,7 @@ export default function ProposalDetailScreen() {
           </View>
           <View>
             <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Proposed by</Text>
-            <Text className="text-white font-bold">{prop?.proposer || 'Ecosystem Treasury'}</Text>
+            <Text className="text-white font-bold">{prop?.proposer?.name || 'Ecosystem Treasury'}</Text>
           </View>
         </View>
 
@@ -81,9 +81,9 @@ export default function ProposalDetailScreen() {
         <Text className="text-white text-lg font-bold mb-6">Current Tally</Text>
         <View className="gap-y-4 mb-12">
           {[
-            { label: 'For', value: prop?.votesFor || 0, color: '#10B981', icon: CheckCircle2, choice: 'FOR' },
-            { label: 'Against', value: prop?.votesAgainst || 0, color: '#EF4444', icon: XCircle, choice: 'AGAINST' },
-            { label: 'Abstain', value: prop?.votesAbstain || 0, color: '#6B7280', icon: MinusCircle, choice: 'ABSTAIN' }
+            { label: 'For', value: prop?.forVotes || 0, color: '#10B981', icon: CheckCircle2, choice: 'FOR' },
+            { label: 'Against', value: prop?.againstVotes || 0, color: '#EF4444', icon: XCircle, choice: 'AGAINST' },
+            { label: 'Abstain', value: prop?.abstainVotes || 0, color: '#6B7280', icon: MinusCircle, choice: 'ABSTAIN' }
           ].map((item, i) => (
             <Card key={i} className="p-5 rounded-[24px] border-gray-900 bg-gray-950">
               <View className="flex-row items-center justify-between mb-3">

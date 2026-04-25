@@ -27,7 +27,7 @@ export default function MarketplaceScreen() {
     })
   });
 
-  const agents = (response as any)?.data || [];
+  const agents = (response as any)?.data?.agents || [];
 
   return (
     <View className="flex-1 bg-black">

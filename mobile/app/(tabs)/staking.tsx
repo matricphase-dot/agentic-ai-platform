@@ -24,7 +24,8 @@ export default function StakingScreen() {
   });
 
   const positions = (positionsResponse as any)?.data || [];
-  const rewards = (rewardsResponse as any)?.data || { total: 0 };
+  const rewardsList = (rewardsResponse as any)?.data?.rewards || [];
+  const rewardsTotal = rewardsList.reduce((sum: number, r: any) => sum + (r.claimed ? 0 : r.amount), 0);
 
   const claimMutation = useMutation({
     mutationFn: () => api.staking.claim(),
@@ -58,7 +59,7 @@ export default function StakingScreen() {
             <View>
               <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">Claimable Yield</Text>
               <View className="flex-row items-baseline">
-                <Text className="text-white text-4xl font-black">{rewards.total?.toLocaleString() || '0'}</Text>
+                <Text className="text-white text-4xl font-black">{rewardsTotal?.toLocaleString() || '0'}</Text>
                 <Text className="text-gray-500 ml-2 font-bold text-sm">AGNT</Text>
               </View>
             </View>

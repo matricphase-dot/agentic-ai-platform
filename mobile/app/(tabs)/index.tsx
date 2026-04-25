@@ -22,7 +22,7 @@ export default function DashboardScreen() {
   });
 
   const balanceData = (balanceResponse as any)?.data || { credits: 0 };
-  const notifications = (notificationsResponse as any)?.data || [];
+  const notifications = (notificationsResponse as any)?.data?.notifications || [];
 
   const onRefresh = async () => {
     setRefreshing(true);

@@ -7,18 +7,18 @@ import { logger } from '../lib/logger';
 const loginLimiter = new RateLimiterRedis({
   storeClient: redis,
   keyPrefix: 'rl:login',
-  points: 5,           // 5 attempts
+  points: 20,           // 20 attempts
   duration: 15 * 60,   // per 15 minutes
-  blockDuration: 15 * 60, // block for 15 min after exceeded
+  blockDuration: 60,    // block for 1 min after exceeded
 });
 
 // Strict limiter per email — 5 attempts per hour per email
 const loginEmailLimiter = new RateLimiterRedis({
   storeClient: redis,
   keyPrefix: 'rl:login:email',
-  points: 5,
+  points: 20,
   duration: 60 * 60,   // per 1 hour
-  blockDuration: 60 * 60,
+  blockDuration: 60,
 });
 
 // Signup limiter — 3 per hour per IP

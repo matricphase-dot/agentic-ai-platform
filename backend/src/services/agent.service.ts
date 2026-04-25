@@ -64,7 +64,7 @@ export class AgentService {
         cpuRequired: cpuRequired || 1,
         ramRequired: ramRequired || 512,
         gpuRequired: gpuRequired || false,
-        status: AgentStatus.PUBLISHED, // Auto-publish for MVP
+        status: AgentStatus.DRAFT, // Start as draft
         analytics: {
           create: {}
         }

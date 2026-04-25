@@ -8,6 +8,7 @@ import { auditMiddleware } from "../middleware/audit.middleware";
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { LLMService } from '../services/llm.service';
+import { AgentStatus } from "@prisma/client";
 import logger from '../lib/logger';
 
 const router = Router();
@@ -128,6 +129,59 @@ router.patch("/:id", auditMiddleware, async (req, res, next) => {
   try {
     const agent = await AgentService.updateAgent(req.params.id, (req as any).user.id, req.body);
     res.json({ success: true, data: agent });
+  } catch (err: any) {
+    if (err.message.includes("unauthorized")) {
+      return res.status(403).json({ success: false, message: err.message });
+    }
+    if (err.message.includes("not found")) {
+      return res.status(404).json({ success: false, message: err.message });
+    }
+    next(err);
+  }
+});
+
+/**
+ * @openapi
+ * /api/agents/{id}:
+ *   put:
+ *     tags: [Agents]
+ *     summary: Update agent configuration
+ */
+router.put("/:id", auditMiddleware, async (req, res, next) => {
+  try {
+    const agent = await AgentService.updateAgent(req.params.id, (req as any).user.id, req.body);
+    res.json({ success: true, data: agent });
+  } catch (err: any) {
+    if (err.message.includes("unauthorized")) {
+      return res.status(403).json({ success: false, message: err.message });
+    }
+    if (err.message.includes("not found")) {
+      return res.status(404).json({ success: false, message: err.message });
+    }
+    next(err);
+  }
+});
+
+/**
+ * @openapi
+ * /api/agents/{id}/publish:
+ *   post:
+ *     tags: [Agents]
+ *     summary: Publish an agent
+ */
+router.post("/:id/publish", auditMiddleware, async (req, res, next) => {
+  try {
+    const agent = await prisma.agent.findUnique({ where: { id: req.params.id } });
+    if (!agent || agent.userId !== (req as any).user.id) {
+      return res.status(403).json({ success: false, message: "Unauthorized or agent not found" });
+    }
+
+    const updated = await prisma.agent.update({
+      where: { id: req.params.id },
+      data: { status: AgentStatus.PUBLISHED, isPublic: true }
+    });
+
+    res.json({ success: true, data: updated });
   } catch (err) {
     next(err);
   }

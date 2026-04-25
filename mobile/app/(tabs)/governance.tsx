@@ -16,7 +16,7 @@ export default function GovernanceScreen() {
     queryFn: () => api.governance.proposals({ status: filter })
   });
 
-  const proposals = (response as any)?.data || [];
+  const proposals = (response as any)?.data?.proposals || [];
 
   const onRefresh = async () => {
     setRefreshing(true);
