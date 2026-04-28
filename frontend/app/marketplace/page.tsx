@@ -38,10 +38,20 @@ export default function MarketplacePage() {
     if (search) params.search = search;
     if (category !== 'All') params.category = category;
 
-    const res = await marketplaceApi.list(params);
-    if (res.success) {
-      setAgents((res.data as any)?.agents || []);
-      setPagination((res.data as any)?.pagination);
+    const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agenticai-backend-xao9.onrender.com';
+    try {
+      const queryString = new URLSearchParams(params).toString();
+      const res = await fetch(`${BASE_URL}/api/marketplace?${queryString}`);
+      const data = await res.json();
+      if (data.success) {
+        setAgents(data.data?.agents || []);
+        setPagination(data.data?.pagination);
+      } else {
+        setAgents([]);
+      }
+    } catch (error) {
+      console.error('Marketplace fetch failed:', error);
+      setAgents([]);
     }
     setLoading(false);
   };

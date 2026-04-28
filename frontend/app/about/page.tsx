@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, Target, Users, Zap } from "lucide-react";
+import Footer from "@/components/Footer";
 
 export default function AboutPage() {
   return (
@@ -75,6 +76,9 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

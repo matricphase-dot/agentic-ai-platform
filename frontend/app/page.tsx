@@ -48,7 +48,15 @@ export default function LandingPage() {
           setStats(res.data);
         }
       })
-      .catch(err => console.error("Stats fetch error:", err));
+      .catch(err => {
+        console.error("Stats fetch error:", err);
+        setStats({
+          totalAgents: 0,
+          totalInvocations: 0,
+          activeNodes: 0,
+          totalStaked: 0
+        });
+      });
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -345,9 +353,9 @@ export default function LandingPage() {
             <ul className="space-y-4 text-sm text-muted-foreground">
               <li><Link href="/marketplace" className="hover:text-white">Marketplace</Link></li>
               <li><Link href="/dashboard" className="hover:text-white">Create Agent</Link></li>
-              <li><Link href="/staking" className="hover:text-white">Staking</Link></li>
-              <li><Link href="/governance" className="hover:text-white">Governance</Link></li>
-              <li><Link href="/nodes" className="hover:text-white">Nodes</Link></li>
+              <li><Link href="/dashboard/staking" className="hover:text-white">Staking</Link></li>
+              <li><Link href="/dashboard/governance" className="hover:text-white">Governance</Link></li>
+              <li><Link href="/dashboard/nodes" className="hover:text-white">Nodes</Link></li>
             </ul>
           </div>
           <div>
@@ -371,8 +379,8 @@ export default function LandingPage() {
           <div>
             <h4 className="font-bold uppercase tracking-widest text-primary mb-6">Legal</h4>
             <ul className="space-y-4 text-sm text-muted-foreground">
-              <li><Link href="#" className="hover:text-white">Privacy Policy</Link></li>
-              <li><Link href="#" className="hover:text-white">Terms of Service</Link></li>
+              <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-white">Terms of Service</Link></li>
             </ul>
           </div>
         </div>

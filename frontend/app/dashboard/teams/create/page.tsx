@@ -20,7 +20,7 @@ export default function CreateTeamPage() {
     try {
       const res = await teamsApi.create({ name, description });
       if (res.success) {
-        router.push(`/dashboard/teams/${res.data.id}`);
+        router.push(`/dashboard/teams/${(res.data as any).id}`);
       } else {
         setError(res.message || 'Failed to create team');
       }
