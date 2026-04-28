@@ -148,7 +148,7 @@ async function main() {
       const agent = await prisma.agent.create({
         data: {
           ...agentData,
-          userId: alice.id,
+          user: { connect: { id: alice.id } },
         },
       });
 
@@ -221,7 +221,7 @@ async function main() {
       await prisma.node.create({
         data: {
           ...nodeData,
-          userId: admin.id,
+          user: { connect: { id: admin.id } },
           lastHeartbeat: new Date(),
         },
       });
