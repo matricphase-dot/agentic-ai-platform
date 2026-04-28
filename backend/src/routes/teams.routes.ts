@@ -34,4 +34,58 @@ router.post("/:id/invite", auditMiddleware, async (req: any, res, next) => {
   }
 });
 
+router.get("/:id", async (req: any, res, next) => {
+  try {
+    const team = await TeamService.getTeam(req.params.id, req.user.id);
+    res.json({ success: true, data: team });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put("/:id", auditMiddleware, async (req: any, res, next) => {
+  try {
+    const team = await TeamService.updateTeam(req.params.id, req.user.id, req.body);
+    res.json({ success: true, data: team });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete("/:id", auditMiddleware, async (req: any, res, next) => {
+  try {
+    await TeamService.deleteTeam(req.params.id, req.user.id);
+    res.json({ success: true, message: "Team deleted" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put("/:id/members/:userId", auditMiddleware, async (req: any, res, next) => {
+  try {
+    await TeamService.changeMemberRole(req.params.id, req.user.id, req.params.userId, req.body.role);
+    res.json({ success: true, message: "Role updated" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete("/:id/members/:userId", auditMiddleware, async (req: any, res, next) => {
+  try {
+    await TeamService.removeMember(req.params.id, req.user.id, req.params.userId);
+    res.json({ success: true, message: "Member removed" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/:id/agents", async (req: any, res, next) => {
+  try {
+    const agents = await TeamService.getTeamAgents(req.params.id, req.user.id);
+    res.json({ success: true, data: agents });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

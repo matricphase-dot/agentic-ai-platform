@@ -32,4 +32,40 @@ router.post("/heartbeat", async (req, res, next) => {
   }
 });
 
+router.get("/:id", authMiddleware, async (req: any, res, next) => {
+  try {
+    const node = await NodeService.getNode(req.params.id, req.user.id);
+    res.json({ success: true, data: node });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put("/:id", authMiddleware, auditMiddleware, async (req: any, res, next) => {
+  try {
+    const node = await NodeService.updateNode(req.params.id, req.user.id, req.body);
+    res.json({ success: true, data: node });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete("/:id", authMiddleware, auditMiddleware, async (req: any, res, next) => {
+  try {
+    await NodeService.deregisterNode(req.params.id, req.user.id);
+    res.json({ success: true, message: "Node deleted" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/:id/tasks", authMiddleware, async (req: any, res, next) => {
+  try {
+    const tasks = await NodeService.getNodeTasks(req.params.id, req.user.id);
+    res.json({ success: true, data: tasks });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

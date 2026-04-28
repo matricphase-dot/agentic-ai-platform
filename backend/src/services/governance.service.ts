@@ -277,7 +277,7 @@ export const GovernanceService = {
     const quorumReached = (totalVotes / totalStaked) >= proposal.quorum;
 
     // Check if requesting user has voted
-    let myVote = null;
+    let myVote: any = null;
     if (requestingUserId) {
       myVote = await prisma.vote.findUnique({
         where: { 

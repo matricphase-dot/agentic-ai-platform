@@ -127,4 +127,35 @@ export const NodeService = {
       },
     });
   },
+
+  getNode: async (nodeId: string, userId: string) => {
+    const node = await prisma.node.findUnique({ where: { id: nodeId } });
+    if (!node || node.userId !== userId) throw new Error("Not found");
+    return node;
+  },
+
+  updateNode: async (nodeId: string, userId: string, data: any) => {
+    const node = await prisma.node.findUnique({ where: { id: nodeId } });
+    if (!node || node.userId !== userId) throw new Error("Not found");
+    return prisma.node.update({
+      where: { id: nodeId },
+      data
+    });
+  },
+
+  deregisterNode: async (nodeId: string, userId: string) => {
+    const node = await prisma.node.findUnique({ where: { id: nodeId } });
+    if (!node || node.userId !== userId) throw new Error("Not found");
+    return prisma.node.delete({ where: { id: nodeId } });
+  },
+
+  getNodeTasks: async (nodeId: string, userId: string) => {
+    const node = await prisma.node.findUnique({ where: { id: nodeId } });
+    if (!node || node.userId !== userId) throw new Error("Not found");
+    return prisma.nodeTask.findMany({
+      where: { nodeId },
+      orderBy: { createdAt: 'desc' },
+      take: 50
+    });
+  }
 };

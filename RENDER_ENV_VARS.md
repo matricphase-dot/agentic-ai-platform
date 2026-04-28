@@ -52,6 +52,21 @@ Copy and paste these into the Render dashboard for each service.
 | `INTERNAL_CRON_SECRET` | `097ca16c4a3ee5441335369f7b26d2f1` | Generated |
 | `ADMIN_EMAIL` | `admin@agenticai.dev` | |
 | `ADMIN_PASSWORD` | `Demo@1234` | Change as needed |
+| `OPENAI_API_KEY` | `sk-proj-...` | For OpenAI models |
+| `ANTHROPIC_API_KEY` | `sk-ant-...` | For Anthropic models |
+| `RAZORPAY_KEY_ID` | `rzp_...` | For Razorpay billing |
+| `RAZORPAY_KEY_SECRET` | `...` | For Razorpay billing |
+| `RAZORPAY_WEBHOOK_SECRET` | `...` | Webhook verification |
+| `PAYPAL_CLIENT_ID` | `...` | For PayPal billing |
+| `PAYPAL_CLIENT_SECRET` | `...` | For PayPal billing |
+| `PAYPAL_MODE` | `sandbox` | `sandbox` or `live` |
+| `AGNT_TOKEN_ADDRESS` | `0x...` | Blockchain token |
+| `STAKING_CONTRACT_ADDRESS` | `0x...` | Smart contract |
+| `GOVERNANCE_CONTRACT_ADDRESS` | `0x...` | Smart contract |
+| `NODE_REWARDS_CONTRACT_ADDRESS` | `0x...` | Smart contract |
+| `TREASURY_CONTRACT_ADDRESS` | `0x...` | Smart contract |
+| `BLOCKCHAIN_RPC_URL` | `https://rpc-mumbai.maticvigil.com` | Polygon RPC |
+| `BACKEND_WALLET_PRIVATE_KEY` | `0x...` | Admin wallet |
 
 ## FRONTEND SERVICE ENV VARS
 `agenticai-frontend`

@@ -325,6 +325,33 @@ export const platformApi = {
   stats: () => apiFetch<PlatformStats>('/stats'),
 };
 
+// ── TEAMS ──────────────────────────────────────────────────
+export const teamsApi = {
+  list: () => apiFetch('/teams'),
+  get: (id: string) => apiFetch(`/teams/${id}`),
+  create: (data: any) => apiFetch('/teams', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: any) => apiFetch(`/teams/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: string) => apiFetch(`/teams/${id}`, { method: 'DELETE' }),
+  invite: (id: string, data: any) => apiFetch(`/teams/${id}/invite`, { method: 'POST', body: JSON.stringify(data) }),
+  changeRole: (teamId: string, memberId: string, role: string) => apiFetch(`/teams/${teamId}/members/${memberId}`, { method: 'PUT', body: JSON.stringify({ role }) }),
+  removeMember: (teamId: string, memberId: string) => apiFetch(`/teams/${teamId}/members/${memberId}`, { method: 'DELETE' }),
+  agents: (id: string) => apiFetch(`/teams/${id}/agents`),
+};
+
+// ── STORAGE ──────────────────────────────────────────────────
+export const storageApi = {
+  get: (agentId: string, key: string) => apiFetch(`/storage/${agentId}/${key}`),
+  set: (agentId: string, key: string, value: string) => apiFetch(`/storage/${agentId}/${key}`, { method: 'POST', body: JSON.stringify({ value }) }),
+  delete: (agentId: string, key: string) => apiFetch(`/storage/${agentId}/${key}`, { method: 'DELETE' }),
+};
+
+// ── WALLET ──────────────────────────────────────────────────
+export const walletApi = {
+  getOnChainBalance: async (address: string) => {
+    return { success: true, data: { balance: 0, staked: 0 } };
+  }
+};
+
 // ── BACKWARD COMPATIBILITY ───────────────────────────────────
 export const api = {
   get: <T>(endpoint: string) => apiFetch<T>(endpoint, { method: 'GET' }),

@@ -187,4 +187,40 @@ router.post("/:id/publish", auditMiddleware, async (req, res, next) => {
   }
 });
 
+router.delete("/:id", auditMiddleware, async (req, res, next) => {
+  try {
+    await AgentService.deleteAgent(req.params.id, (req as any).user.id);
+    res.json({ success: true, message: "Agent deleted" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/:id/analytics", async (req, res, next) => {
+  try {
+    const analytics = await AgentService.getAnalytics(req.params.id);
+    res.json({ success: true, data: analytics });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/:id/versions", async (req, res, next) => {
+  try {
+    const versions = await AgentService.getVersions(req.params.id);
+    res.json({ success: true, data: versions });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/:id/versions", auditMiddleware, async (req, res, next) => {
+  try {
+    const version = await AgentService.createVersion(req.params.id, (req as any).user.id, req.body);
+    res.json({ success: true, data: version });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
