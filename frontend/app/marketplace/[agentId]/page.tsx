@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { marketplaceApi, stakingApi } from '@/lib/api';
+import { API_URL } from '@/lib/config';
 
 export default function MarketplaceAgentPage() {
   const { agentId } = useParams<{ agentId: string }>();
@@ -45,7 +46,7 @@ export default function MarketplaceAgentPage() {
 
   const copyEndpoint = () => {
     navigator.clipboard.writeText(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/invoke/${agentId}`
+      `${API_URL}/api/invoke/${agentId}`
     );
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -65,7 +66,7 @@ export default function MarketplaceAgentPage() {
     ? ((analytics.successCount / analytics.totalInvocations) * 100).toFixed(1)
     : '0';
 
-  const curlSnippet = `curl -X POST ${process.env.NEXT_PUBLIC_API_URL}/api/invoke/${agentId} \\
+  const curlSnippet = `curl -X POST ${API_URL}/api/invoke/${agentId} \\
   -H "X-API-Key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"message": "Hello!"}'`;

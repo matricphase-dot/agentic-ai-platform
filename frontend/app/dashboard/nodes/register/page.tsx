@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { nodesApi } from '@/lib/api';
+import { API_URL } from '@/lib/config';
 
 const SUPPORTED_MODELS = [
   'gpt-4o', 'gpt-4o-mini', 'claude-3-opus', 'claude-3-haiku',
@@ -115,7 +116,7 @@ export default function RegisterNodePage() {
           <pre className="bg-zinc-900 rounded-lg p-3 text-zinc-300 
                           text-xs font-mono overflow-x-auto">
 {`# Send heartbeat every 60 seconds
-curl -X PUT ${process.env.NEXT_PUBLIC_API_URL}/api/nodes/heartbeat \\
+curl -X PUT ${API_URL}/api/nodes/heartbeat \\
   -H "X-Node-Key: ${apiKey}"`}
           </pre>
         </div>

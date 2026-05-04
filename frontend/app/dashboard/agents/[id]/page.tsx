@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { agentsApi } from '@/lib/api';
+import { API_URL } from '@/lib/config';
 import type { Agent, AgentAnalytics } from '@/types/api.types';
 
 const TABS = ['Overview', 'Analytics', 'Versions', 'Sandbox', 'Settings'];
@@ -280,11 +281,11 @@ export default function AgentDetailPage() {
             <div className="flex items-center gap-2">
               <code className="flex-1 bg-zinc-900 text-zinc-300 text-sm 
                                px-4 py-3 rounded-lg font-mono">
-                POST {process.env.NEXT_PUBLIC_API_URL}/api/invoke/{id}
+                POST {API_URL}/api/invoke/{id}
               </code>
               <button
                 onClick={() => navigator.clipboard.writeText(
-                  `${process.env.NEXT_PUBLIC_API_URL}/api/invoke/${id}`
+                  `${API_URL}/api/invoke/${id}`
                 )}
                 className="text-purple-400 text-sm hover:text-purple-300 
                            px-3 py-3 border border-zinc-700 rounded-lg">

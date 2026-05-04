@@ -34,8 +34,8 @@ router.post('/signup', rateLimitSignup, async (req: Request, res: Response) => {
       email, password, name 
     });
 
-    // TODO: Send verification email with verifyToken
-    // EmailService.sendVerification(email, verifyToken)
+    await EmailService.sendVerification(user.email, user.name, verifyToken);
+
     // For development: return token directly
     const devToken = process.env.NODE_ENV === 'development' 
       ? verifyToken 
@@ -170,7 +170,8 @@ router.get('/verify-email', async (req: Request, res: Response) => {
       });
     }
 
-    await AuthService.verifyEmail(token);
+    const user = await AuthService.verifyEmail(token);
+    await EmailService.sendWelcome(user.email, user.name);
     
     // Redirect to login with success message
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -263,8 +264,11 @@ router.post('/forgot-password', rateLimitForgotPassword, async (req: Request, re
     const result = await AuthService.forgotPassword(email);
     
     if (result) {
-      // TODO: Send reset email
-      // EmailService.sendPasswordReset(email, result.resetToken)
+      await EmailService.sendPasswordReset(
+        result.user.email,
+        result.user.name, 
+        result.resetToken
+      );
       logger.info('Password reset requested', { email });
     }
 

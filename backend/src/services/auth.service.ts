@@ -100,12 +100,6 @@ export const AuthService = {
 
     logger.info('User signed up', { userId: user.id, email: user.email });
     
-    await EmailService.sendVerification(
-      user.email, 
-      user.name, 
-      verifyToken
-    );
-
     return { user, verifyToken };
   },
 
@@ -192,7 +186,6 @@ export const AuthService = {
       },
     });
 
-    await EmailService.sendWelcome(user.email, user.name);
 
     return user;
   },
@@ -212,12 +205,6 @@ export const AuthService = {
         passwordResetExpiry: expiry,
       },
     });
-
-    await EmailService.sendPasswordReset(
-      user.email,
-      user.name,
-      token
-    );
 
     return { user, resetToken: token };
   },

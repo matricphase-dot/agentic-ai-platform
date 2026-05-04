@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { marketplaceApi } from '@/lib/api';
+import { API_URL } from '@/lib/config';
 
 const CATEGORIES = [
   'All', 'CHATBOT', 'DATA_ANALYST', 'CODE_ASSISTANT',
@@ -38,10 +39,10 @@ export default function MarketplacePage() {
     if (search) params.search = search;
     if (category !== 'All') params.category = category;
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agenticai-backend-xao9.onrender.com';
     try {
       const queryString = new URLSearchParams(params).toString();
       const res = await fetch(`${API_URL}/api/marketplace?${queryString}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.success) {
         setAgents(data.data?.agents || []);

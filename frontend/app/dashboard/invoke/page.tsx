@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { agentsApi, keysApi, invokeApi } from '@/lib/api';
+import { API_URL } from '@/lib/config';
 
 export default function InvokePage() {
   const [agents, setAgents] = useState<any[]>([]);
@@ -56,7 +57,7 @@ export default function InvokePage() {
   };
 
   const curlCommand = selectedAgent && selectedKey
-    ? `curl -X POST ${process.env.NEXT_PUBLIC_API_URL}/api/invoke/${selectedAgent} \\
+    ? `curl -X POST ${API_URL}/api/invoke/${selectedAgent} \\
   -H "X-API-Key: ${selectedKey}" \\
   -H "Content-Type: application/json" \\
   -d '${inputJson}'`

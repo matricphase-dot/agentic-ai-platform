@@ -1,9 +1,9 @@
 "use client";
-
 import { useState } from "react";
 import Link from "next/link";
 import { Mail, MessageSquare, Send, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { API_URL } from "@/lib/config";
 
 export default function ContactPage() {
   const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ export default function ContactPage() {
     };
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://agenticai-backend-xao9.onrender.com'}/api/contact`, {
+      const res = await fetch(`${API_URL}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

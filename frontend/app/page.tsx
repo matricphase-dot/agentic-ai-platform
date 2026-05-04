@@ -18,6 +18,7 @@ import {
   X,
   CheckCircle2
 } from "lucide-react";
+import { API_URL } from '@/lib/config';
 
 interface Stats {
   totalAgents: number;
@@ -41,7 +42,6 @@ export default function LandingPage() {
     window.addEventListener("scroll", handleScroll);
     
     // Fetch stats
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agenticai-backend-xao9.onrender.com';
     fetch(`${API_URL}/api/stats`)
       .then(res => res.json())
       .then(res => {
