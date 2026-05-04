@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { prisma } from '../lib/prisma';
+import { sanitizeUser } from '../lib/sanitize';
 
 const router = Router();
 router.use(authMiddleware);
@@ -18,7 +19,7 @@ router.get('/me', async (req: Request, res: Response) => {
         twoFactorEnabled: true, createdAt: true,
       },
     });
-    return res.json({ success: true, data: user });
+    return res.json({ success: true, data: sanitizeUser(user) });
   } catch (error) {
     return res.status(500).json({ 
       success: false, 
@@ -51,7 +52,7 @@ router.put('/me', async (req: Request, res: Response) => {
       },
     });
 
-    return res.json({ success: true, data: user });
+    return res.json({ success: true, data: sanitizeUser(user) });
   } catch (error: any) {
     if (error.name === 'ZodError') {
       return res.status(422).json({ 

@@ -6,10 +6,16 @@ import { logger } from '../lib/logger';
 import { prisma } from '../lib/prisma';
 import { EmailService } from '../services/email.service';
 import { 
-  rateLimitLogin, 
-  rateLimitSignup,
-  rateLimitForgotPassword 
+  rateLimitLogin as rateLimitLoginOld, 
+  rateLimitSignup as rateLimitSignupOld,
+  rateLimitForgotPassword as rateLimitForgotPasswordOld 
 } from '../middleware/rateLimitAuth.middleware';
+import { 
+  authRateLimit as rateLimitLogin,
+  publicRateLimit as rateLimitSignup,
+  publicRateLimit as rateLimitForgotPassword
+} from '../middleware/rate-limit.middleware';
+import { signupSchema, loginSchema } from '../lib/schemas';
 
 const router = Router();
 
@@ -23,13 +29,7 @@ const COOKIE_OPTIONS = {
 // POST /auth/signup
 router.post('/signup', rateLimitSignup, async (req: Request, res: Response) => {
   try {
-    const schema = z.object({
-      email: z.string().email(),
-      password: z.string().min(8),
-      name: z.string().min(2).max(100),
-    });
-    
-    const { email, password, name } = schema.parse(req.body);
+    const { email, password, name } = signupSchema.parse({ body: req.body }).body;
     const { user, verifyToken } = await AuthService.signup({ 
       email, password, name 
     });
@@ -77,12 +77,7 @@ router.post('/signup', rateLimitSignup, async (req: Request, res: Response) => {
 // POST /auth/login
 router.post('/login', rateLimitLogin, async (req: Request, res: Response) => {
   try {
-    const schema = z.object({
-      email: z.string().email(),
-      password: z.string(),
-    });
-    
-    const { email, password } = schema.parse(req.body);
+    const { email, password } = loginSchema.parse({ body: req.body }).body;
     const result = await AuthService.login(email, password);
 
     if ('requires2FA' in result && result.requires2FA) {
@@ -119,6 +114,18 @@ router.post('/login', rateLimitLogin, async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     if (error.message === 'INVALID_CREDENTIALS') {
+      // Audit log failed login
+      prisma.auditLog.create({
+        data: {
+          userId: 'ANONYMOUS',
+          action: 'LOGIN_FAILURE',
+          entityType: 'USER',
+          metadata: { email: req.body.email, reason: 'Invalid credentials' },
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        }
+      }).catch(() => {});
+
       return res.status(401).json({ 
         success: false, 
         code: 'INVALID_CREDENTIALS',

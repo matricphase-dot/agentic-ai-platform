@@ -6,12 +6,21 @@ import { logger } from '../lib/logger';
 
 import { marketplaceRateLimit } from '../middleware/rate-limit.middleware';
 
+import { redis } from '../lib/redis';
+
 const router = Router();
 
 // GET /marketplace — list public agents
 router.get('/', marketplaceRateLimit, async (req: Request, res: Response) => {
   res.header('Access-Control-Allow-Origin', '*');
   try {
+    // 1. Check Cache
+    const cacheKey = `marketplace:${JSON.stringify(req.query)}`;
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      return res.json(JSON.parse(cached));
+    }
+
     const {
       search,
       category,
@@ -65,7 +74,21 @@ router.get('/', marketplaceRateLimit, async (req: Request, res: Response) => {
     const [agents, total] = await Promise.all([
       prisma.agent.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          modelProvider: true,
+          modelName: true,
+          category: true,
+          pricingModel: true,
+          pricePerCall: true,
+          pricePerToken: true,
+          gpuRequired: true,
+          currentVersion: true,
+          tags: true,
+          createdAt: true,
           user: { 
             select: { id: true, name: true, avatar: true } 
           },
@@ -84,7 +107,7 @@ router.get('/', marketplaceRateLimit, async (req: Request, res: Response) => {
       .filter(a => (a.analytics?.avgRating || 0) >= 4.5)
       .slice(0, 4);
 
-    return res.json({
+    const response = {
       success: true,
       data: {
         agents,
@@ -96,7 +119,12 @@ router.get('/', marketplaceRateLimit, async (req: Request, res: Response) => {
           pages: Math.ceil(total / Number(limit)),
         },
       },
-    });
+    };
+
+    // 2. Set Cache (2 minutes)
+    await redis.setex(cacheKey, 120, JSON.stringify(response));
+
+    return res.json(response);
   } catch (error) {
     logger.error('Marketplace list failed', { error });
     return res.status(500).json({ 
@@ -116,7 +144,24 @@ router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
         isPublic: true,
         status: 'PUBLISHED',
       },
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        name: true,
+        slug: true,
+        description: true,
+        modelProvider: true,
+        modelName: true,
+        category: true,
+        pricingModel: true,
+        pricePerCall: true,
+        pricePerToken: true,
+        gpuRequired: true,
+        currentVersion: true,
+        tags: true,
+        readme: true,
+        githubUrl: true,
+        createdAt: true,
         user: { 
           select: { id: true, name: true, avatar: true, bio: true } 
         },

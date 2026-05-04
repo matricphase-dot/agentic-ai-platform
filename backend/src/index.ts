@@ -3,18 +3,77 @@ import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import http from "http";
-import logger from "./lib/logger";
+import hpp from "hpp";
+import compression from "compression";
+import cookieParser from 'cookie-parser';
+import { validateEnvironment } from './lib/validateEnv';
+import { logger } from "./lib/logger";
 import { initSocket } from "./lib/socket";
 import { errorHandler } from "./middleware/error.middleware";
 import { setupSwagger } from "./lib/swagger";
-import cookieParser from 'cookie-parser';
 import { EmailService } from './services/email.service';
 import { initializeJobs } from './jobs';
 import { prisma } from './lib/prisma';
+import { globalRateLimit } from './middleware/rate-limit.middleware';
 
+// 1. Validate Environment
 dotenv.config();
-EmailService.verifyConnection(); // fire and forget
+validateEnvironment();
 
+// 2. Initialize App
+const app = express();
+const server = http.createServer(app);
+
+// 3. Security & Optimization Middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", 'https://agenticai-frontend-3tam.onrender.com', process.env.FRONTEND_URL || ''],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
+}));
+
+const allowedOrigins = [
+  'https://agenticai-frontend-3tam.onrender.com',
+  process.env.FRONTEND_URL,
+  ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000'] : []),
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS: Origin ${origin} not allowed`));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+  maxAge: 86400,
+}));
+
+app.use(globalRateLimit);
+app.use(compression());
+app.use(hpp());
+app.use(cookieParser());
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// 4. Initialize Socket.io
+initSocket(server);
+
+// 5. Routes
 import authRouter from "./routes/auth.routes";
 import agentsRouter from "./routes/agents.routes";
 import { invokeRouter } from "./routes/invoke.routes";
@@ -34,50 +93,6 @@ import statsRouter from "./routes/stats.routes";
 import contactRouter from "./routes/contact.routes";
 import { billingWebhookRouter } from "./routes/webhooks.billing.routes";
 
-const app = express();
-const server = http.createServer(app);
-
-// Initialize Socket.io
-initSocket(server);
-
-const PORT = process.env.PORT || 4000;
-
-console.log(`[SERVER] Starting in ${process.env.NODE_ENV} mode`);
-
-app.use(helmet({
-  contentSecurityPolicy: true,
-  crossOriginEmbedderPolicy: true,
-  crossOriginOpenerPolicy: true,
-  crossOriginResourcePolicy: true,
-  dnsPrefetchControl: true,
-  frameguard: { action: 'deny' },
-  hidePoweredBy: true,
-  hsts: true,
-  ieNoOpen: true,
-  noSniff: true,
-  originAgentCluster: true,
-  permittedCrossDomainPolicies: true,
-  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-  xssFilter: true,
-}));
-
-app.use(cookieParser());
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://agenticai-frontend-3tam.onrender.com',
-    process.env.FRONTEND_URL || '',
-  ].filter(Boolean),
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
-}));
-app.use(express.json());
-
-// Swagger Documentation
-setupSwagger(app);
-
-// Routes
 app.use('/api/auth', authRouter);
 app.use('/api/agents', agentsRouter);
 app.use('/api/invoke', invokeRouter);
@@ -97,27 +112,44 @@ app.use('/api/stats', statsRouter);
 app.use('/api/contact', contactRouter);
 app.use('/api/webhooks/billing', billingWebhookRouter);
 
-
+// Documentation
+setupSwagger(app);
 
 // Health check
 app.get("/health", (req, res) => {
-  res.json({ 
-    status: "ok",
-    timestamp: new Date() 
-  });
+  res.json({ status: "ok", timestamp: new Date() });
 });
 
-// Global Error Handler
+// Error Handling
 app.use(errorHandler);
 
+// 6. Server Lifecycle
+const PORT = process.env.PORT || 4000;
 server.listen(PORT, async () => {
   logger.info(`🚀 Agentic AI Backend running on port ${PORT}`);
-  logger.info(`📖 API Docs available at http://localhost:${PORT}/api-docs`);
+  EmailService.verifyConnection();
   
-  // Non-blocking job initialization for free tier
   try {
     await initializeJobs();
   } catch (error) {
-    logger.warn('Job initialization skipped or failed (Redis might be unavailable)');
+    logger.warn('Job initialization failed (Redis might be unavailable)');
   }
 });
+
+const shutdown = async (signal: string) => {
+  logger.info(`${signal} received — shutting down gracefully`);
+  server.close(async () => {
+    logger.info('HTTP server closed');
+    await prisma.$disconnect();
+    logger.info('All connections closed');
+    process.exit(0);
+  });
+
+  setTimeout(() => {
+    logger.error('Forcefully shutting down');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

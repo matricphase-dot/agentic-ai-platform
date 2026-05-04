@@ -2,13 +2,14 @@ import { Router } from "express";
 import { NodeService } from "../services/node.service";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { auditMiddleware } from "../middleware/audit.middleware";
+import { sanitizeNode } from "../lib/sanitize";
 
 const router = Router();
 
 router.get("/", authMiddleware, async (req: any, res, next) => {
   try {
     const nodes = await NodeService.listNodes({ userId: req.user.id });
-    res.json({ success: true, data: nodes });
+    res.json({ success: true, data: nodes.map(sanitizeNode) });
   } catch (err) {
     next(err);
   }
@@ -17,7 +18,7 @@ router.get("/", authMiddleware, async (req: any, res, next) => {
 router.post("/register", authMiddleware, auditMiddleware, async (req: any, res, next) => {
   try {
     const result = await NodeService.registerNode(req.user.id, req.body);
-    res.status(201).json({ success: true, data: result });
+    res.status(201).json({ success: true, data: sanitizeNode(result) });
   } catch (err) {
     next(err);
   }
@@ -35,7 +36,7 @@ router.post("/heartbeat", async (req, res, next) => {
 router.get("/:id", authMiddleware, async (req: any, res, next) => {
   try {
     const node = await NodeService.getNode(req.params.id, req.user.id);
-    res.json({ success: true, data: node });
+    res.json({ success: true, data: sanitizeNode(node) });
   } catch (err) {
     next(err);
   }
@@ -44,7 +45,7 @@ router.get("/:id", authMiddleware, async (req: any, res, next) => {
 router.put("/:id", authMiddleware, auditMiddleware, async (req: any, res, next) => {
   try {
     const node = await NodeService.updateNode(req.params.id, req.user.id, req.body);
-    res.json({ success: true, data: node });
+    res.json({ success: true, data: sanitizeNode(node) });
   } catch (err) {
     next(err);
   }
