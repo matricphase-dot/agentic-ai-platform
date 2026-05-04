@@ -72,6 +72,29 @@ export default function DocsPage() {
             </div>
           </div>
 
+          {/* Recommended Free Models */}
+          <div className="space-y-6">
+            <h2 className="text-3xl font-bold flex items-center gap-4 text-green-400">
+              <BookOpen className="w-8 h-8" /> Recommended Free Models
+            </h2>
+            <p className="text-muted-foreground">
+              AgenticAI prioritizes free, open-source models to keep your operating costs at zero.
+            </p>
+            <div className="grid md:grid-cols-2 gap-4">
+              {[
+                { name: 'Groq Llama 3 8B', desc: 'Best for general tasks, fastest response (300+ t/s)' },
+                { name: 'Groq Mixtral 8x7B', desc: 'Best for complex reasoning and logic' },
+                { name: 'HuggingFace Mistral 7B', desc: 'Best for coding and technical tasks' },
+                { name: 'Ollama (Self-hosted)', desc: 'Best for privacy and no rate limits' },
+              ].map(m => (
+                <div key={m.name} className="bg-white/[0.03] border border-white/10 p-5 rounded-2xl">
+                  <h4 className="font-bold text-white mb-1">{m.name}</h4>
+                  <p className="text-zinc-400 text-sm">{m.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Swagger Link */}
           <div className="pt-8">
             <Link 

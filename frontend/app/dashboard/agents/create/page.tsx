@@ -16,10 +16,71 @@ const CATEGORIES = [
 ];
 
 const PROVIDERS = [
-  { id: 'openai', label: 'OpenAI', models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'] },
-  { id: 'anthropic', label: 'Anthropic', models: ['claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'] },
-  { id: 'google', label: 'Google', models: ['gemini-pro', 'gemini-1.5-pro'] },
-  { id: 'custom', label: 'Custom', models: [] },
+  {
+    id: 'groq',
+    label: 'Groq (Free — Fastest)',
+    badge: 'FREE',
+    models: [
+      'llama3-8b-8192',
+      'llama3-70b-8192',
+      'mixtral-8x7b-32768',
+      'gemma-7b-it',
+    ],
+  },
+  {
+    id: 'huggingface',
+    label: 'Hugging Face (Free)',
+    badge: 'FREE',
+    models: [
+      'mistralai/Mistral-7B-Instruct-v0.2',
+      'microsoft/Phi-3-mini-4k-instruct',
+      'HuggingFaceH4/zephyr-7b-beta',
+      'google/gemma-7b-it',
+    ],
+  },
+  {
+    id: 'ollama',
+    label: 'Ollama (Self-Hosted)',
+    badge: 'FREE',
+    models: [
+      'llama3',
+      'mistral',
+      'phi3',
+      'gemma',
+      'codellama',
+    ],
+  },
+  {
+    id: 'google',
+    label: 'Google Gemini',
+    badge: 'FREE TIER',
+    models: [
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
+      'gemini-pro',
+    ],
+  },
+  {
+    id: 'openai',
+    label: 'OpenAI',
+    badge: 'PAID',
+    models: [
+      'gpt-4o',
+      'gpt-4o-mini',
+      'gpt-4-turbo',
+    ],
+  },
+  {
+    id: 'anthropic',
+    label: 'Anthropic',
+    badge: 'PAID',
+    models: [
+      'claude-3-opus-20240229',
+      'claude-3-sonnet-20240229',
+      'claude-3-haiku-20240307',
+    ],
+  },
+  { id: 'custom', label: 'Custom', badge: 'VARIES', models: [] },
 ];
 
 const PRICING_MODELS = ['FREE', 'PER_INVOCATION', 'PER_TOKEN'];
@@ -50,8 +111,8 @@ export default function CreateAgentPage() {
     description: '',
     category: 'CHATBOT',
     tags: '',
-    modelProvider: 'openai',
-    modelName: 'gpt-4o-mini',
+    modelProvider: 'groq',
+    modelName: 'llama3-8b-8192',
     customModel: '',
     systemPrompt: 'You are a helpful AI assistant.',
     gpuRequired: false,
@@ -217,22 +278,36 @@ export default function CreateAgentPage() {
               <label className="text-zinc-400 text-sm block mb-2">
                 Provider
               </label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {PROVIDERS.map(p => (
                   <button key={p.id}
+                    type="button"
                     onClick={() => {
                       set('modelProvider', p.id);
                       if (p.models.length > 0) {
                         set('modelName', p.models[0]);
                       }
                     }}
-                    className={`py-2.5 rounded-lg text-sm font-medium 
-                                transition ${
+                    className={`p-4 rounded-xl text-left transition border-2 ${
                       form.modelProvider === p.id
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                        ? 'border-purple-600 bg-purple-600/10'
+                        : 'border-[#2A2A2A] bg-zinc-800/30 hover:border-zinc-700'
                     }`}>
-                    {p.label}
+                    <div className="flex justify-between items-start mb-1">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                        p.badge === 'PAID' ? 'bg-zinc-700 text-zinc-300' : 'bg-green-500/20 text-green-400'
+                      }`}>
+                        {p.badge}
+                      </span>
+                    </div>
+                    <span className={`block font-bold ${
+                      form.modelProvider === p.id ? 'text-white' : 'text-zinc-400'
+                    }`}>
+                      {p.label.split(' (')[0]}
+                    </span>
+                    <span className="text-[10px] text-zinc-500 block mt-1 uppercase tracking-tight">
+                      {p.label.includes('(') ? p.label.split('(')[1].replace(')', '') : ''}
+                    </span>
                   </button>
                 ))}
               </div>

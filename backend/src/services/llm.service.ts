@@ -1,11 +1,13 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
+import { HfInference } from '@huggingface/inference';
 import { logger } from '../lib/logger';
 
 interface LLMProvider {
   name: string;
-  priority: number;
   hasKey: () => boolean;
   call: (systemPrompt: string, userInput: string, modelName?: string) => Promise<LLMResponse>;
+  description: string;
 }
 
 export interface LLMResponse {
@@ -26,6 +28,9 @@ interface ProviderHealth {
 
 // Track provider health in memory
 const providerHealth: Record<string, ProviderHealth> = {
+  groq: { name: 'groq', failureCount: 0, lastFailureAt: null, isCircuitOpen: false, circuitOpenedAt: null },
+  huggingface: { name: 'huggingface', failureCount: 0, lastFailureAt: null, isCircuitOpen: false, circuitOpenedAt: null },
+  ollama: { name: 'ollama', failureCount: 0, lastFailureAt: null, isCircuitOpen: false, circuitOpenedAt: null },
   google: { name: 'google', failureCount: 0, lastFailureAt: null, isCircuitOpen: false, circuitOpenedAt: null },
   openai: { name: 'openai', failureCount: 0, lastFailureAt: null, isCircuitOpen: false, circuitOpenedAt: null },
   anthropic: { name: 'anthropic', failureCount: 0, lastFailureAt: null, isCircuitOpen: false, circuitOpenedAt: null },
@@ -68,7 +73,110 @@ function isProviderAvailable(providerName: string): boolean {
   return false;
 }
 
-// Support multiple Google API keys for rotation
+// --- GROQ PROVIDER ---
+function getGroqApiKey(): string {
+  const keys = [
+    process.env.GROQ_API_KEY,
+    process.env.GROQ_API_KEY_2,
+    process.env.GROQ_API_KEY_3,
+  ].filter(Boolean) as string[];
+
+  if (keys.length === 0) throw new Error('No Groq API keys configured');
+
+  // Round-robin rotation based on time (rotates every minute or per request)
+  const index = Math.floor(Date.now() / 60000) % keys.length;
+  return keys[index];
+}
+
+async function callGroq(systemPrompt: string, userInput: string, modelName = 'llama3-8b-8192'): Promise<LLMResponse> {
+  const apiKey = getGroqApiKey();
+  const start = Date.now();
+  const groq = new Groq({ apiKey });
+
+  const completion = await groq.chat.completions.create({
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userInput },
+    ],
+    model: modelName,
+    max_tokens: 2048,
+    temperature: 0.7,
+  });
+
+  const output = completion.choices[0]?.message?.content || '';
+  const usage = completion.usage;
+
+  return {
+    output,
+    tokensUsed: usage?.total_tokens || 0,
+    provider: 'groq',
+    model: modelName,
+    latencyMs: Date.now() - start,
+  };
+}
+
+// --- HUGGING FACE PROVIDER ---
+async function callHuggingFace(systemPrompt: string, userInput: string, modelName = 'mistralai/Mistral-7B-Instruct-v0.2'): Promise<LLMResponse> {
+  const apiKey = process.env.HF_API_KEY;
+  if (!apiKey) throw new Error('HF_API_KEY not configured');
+
+  const start = Date.now();
+  const hf = new HfInference(apiKey);
+
+  const prompt = `<s>[INST] <<SYS>>\n${systemPrompt}\n<</SYS>>\n\n${userInput} [/INST]`;
+
+  const result = await hf.textGeneration({
+    model: modelName,
+    inputs: prompt,
+    parameters: {
+      max_new_tokens: 1024,
+      temperature: 0.7,
+      return_full_text: false,
+    },
+  });
+
+  return {
+    output: result.generated_text,
+    tokensUsed: 0,
+    provider: 'huggingface',
+    model: modelName,
+    latencyMs: Date.now() - start,
+  };
+}
+
+// --- OLLAMA PROVIDER ---
+async function callOllama(systemPrompt: string, userInput: string, modelName = 'llama3'): Promise<LLMResponse> {
+  const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+
+  const start = Date.now();
+  const response = await fetch(`${ollamaUrl}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: modelName,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userInput },
+      ],
+      stream: false,
+    }),
+    // @ts-ignore - signal might not be in older fetch types but works in modern Node
+    signal: (AbortSignal as any).timeout ? (AbortSignal as any).timeout(30000) : undefined,
+  });
+
+  if (!response.ok) throw new Error(`Ollama error: ${response.status}`);
+
+  const data = await response.json() as any;
+  return {
+    output: data.message?.content || '',
+    tokensUsed: data.eval_count || 0,
+    provider: 'ollama',
+    model: modelName,
+    latencyMs: Date.now() - start,
+  };
+}
+
+// --- GOOGLE GEMINI PROVIDER ---
 function getGoogleApiKey(): string {
   const keys = [
     process.env.GOOGLE_AI_API_KEY,
@@ -78,15 +186,12 @@ function getGoogleApiKey(): string {
 
   if (keys.length === 0) throw new Error('No Google AI API keys configured');
 
-  // Round-robin rotation
   const index = Math.floor(Date.now() / 1000) % keys.length;
   return keys[index];
 }
 
-// Google Gemini provider
 async function callGemini(systemPrompt: string, userInput: string, modelName = 'gemini-1.5-flash'): Promise<LLMResponse> {
   const apiKey = getGoogleApiKey();
-  
   const start = Date.now();
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
@@ -107,7 +212,7 @@ async function callGemini(systemPrompt: string, userInput: string, modelName = '
   };
 }
 
-// OpenAI provider
+// --- OPENAI PROVIDER ---
 async function callOpenAI(systemPrompt: string, userInput: string, modelName = 'gpt-4o-mini'): Promise<LLMResponse> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
@@ -125,7 +230,7 @@ async function callOpenAI(systemPrompt: string, userInput: string, modelName = '
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userInput },
       ],
-      max_tokens: 2000,
+      max_tokens: 2048,
     }),
   });
 
@@ -143,7 +248,7 @@ async function callOpenAI(systemPrompt: string, userInput: string, modelName = '
   };
 }
 
-// Anthropic provider
+// --- ANTHROPIC PROVIDER ---
 async function callAnthropic(systemPrompt: string, userInput: string, modelName = 'claude-3-haiku-20240307'): Promise<LLMResponse> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
@@ -158,7 +263,7 @@ async function callAnthropic(systemPrompt: string, userInput: string, modelName 
     },
     body: JSON.stringify({
       model: modelName,
-      max_tokens: 2000,
+      max_tokens: 2048,
       system: systemPrompt,
       messages: [{ role: 'user', content: userInput }],
     }),
@@ -179,21 +284,42 @@ async function callAnthropic(systemPrompt: string, userInput: string, modelName 
 }
 
 // Define provider chain in priority order
-const PROVIDER_CHAIN = [
+const PROVIDER_CHAIN: LLMProvider[] = [
+  {
+    name: 'groq',
+    call: callGroq,
+    hasKey: () => Boolean(process.env.GROQ_API_KEY || process.env.GROQ_API_KEY_2 || process.env.GROQ_API_KEY_3),
+    description: 'Groq - Free, ultra-fast Llama 3',
+  },
+  {
+    name: 'huggingface',
+    call: callHuggingFace,
+    hasKey: () => Boolean(process.env.HF_API_KEY),
+    description: 'Hugging Face - Free open source models',
+  },
+  {
+    name: 'ollama',
+    call: callOllama,
+    hasKey: () => Boolean(process.env.OLLAMA_URL),
+    description: 'Ollama - Self-hosted, completely free',
+  },
   {
     name: 'google',
     call: callGemini,
     hasKey: () => Boolean(process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_AI_API_KEY_2 || process.env.GOOGLE_AI_API_KEY_3),
+    description: 'Google Gemini - Free tier',
   },
   {
     name: 'openai',
     call: callOpenAI,
     hasKey: () => Boolean(process.env.OPENAI_API_KEY),
+    description: 'OpenAI - Paid',
   },
   {
     name: 'anthropic',
     call: callAnthropic,
     hasKey: () => Boolean(process.env.ANTHROPIC_API_KEY),
+    description: 'Anthropic Claude - Paid',
   },
 ];
 
@@ -231,7 +357,7 @@ export async function callLLM(
       recordSuccess(provider.name);
 
       // Log if we used a fallback
-      if (provider.name !== (preferredProvider || 'google')) {
+      if (provider.name !== preferredProvider) {
         logger.warn(`Used fallback provider ${provider.name} instead of ${preferredProvider}`);
       }
 
@@ -251,7 +377,6 @@ export async function callLLM(
   throw new Error(`All LLM providers failed. Errors: ${errors.join(', ')}`);
 }
 
-// Legacy export for compatibility if needed, or we can just update invocation service
 export const LLMService = {
   call: async (params: { 
     provider: string, 

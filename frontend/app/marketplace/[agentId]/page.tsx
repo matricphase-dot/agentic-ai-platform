@@ -305,9 +305,21 @@ export default function MarketplaceAgentPage() {
             {/* Technical */}
             <div className="bg-[#111111] border border-[#1E1E1E] rounded-xl p-5">
               <h3 className="text-zinc-400 text-xs font-medium uppercase mb-3">Technical</h3>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-zinc-400">Provider</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      ['openai', 'anthropic'].includes(agent.modelProvider?.toLowerCase()) 
+                        ? 'bg-zinc-700 text-zinc-300' 
+                        : 'bg-green-500/20 text-green-400'
+                    }`}>
+                      {['openai', 'anthropic'].includes(agent.modelProvider?.toLowerCase()) ? 'PAID' : 'FREE'}
+                    </span>
+                    <span className="text-white font-medium capitalize">{agent.modelProvider}</span>
+                  </div>
+                </div>
                 {[
-                  { label: 'Provider', value: agent.modelProvider },
                   { label: 'Model', value: agent.modelName },
                   { label: 'Version', value: `v${agent.currentVersion}` },
                   { label: 'GPU Required', value: agent.gpuRequired ? 'Yes' : 'No' },
