@@ -31,35 +31,30 @@ export default function MarketplacePage() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<any>(null);
 
-  const fetchAgents = async () => {
-    setLoading(true);
-    const params: Record<string, string> = {
-      sort, page: String(page), limit: '12'
-    };
-    if (search) params.search = search;
-    if (category !== 'All') params.category = category;
-
-    try {
-      const queryString = new URLSearchParams(params).toString();
-      const res = await fetch(`${API_URL}/api/marketplace?${queryString}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (data.success) {
-        setAgents(data.data?.agents || []);
-        setPagination(data.data?.pagination);
-      } else {
-        setAgents([]);
-      }
-    } catch (error) {
-      console.error('Marketplace fetch failed:', error);
-      setAgents([]);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
-    const timer = setTimeout(fetchAgents, 300);
-    return () => clearTimeout(timer);
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (category !== 'All') params.set('category', category);
+    params.set('sort', sort);
+    params.set('page', String(page));
+    params.set('limit', '12');
+
+    fetch(`${API_URL}/api/marketplace?${params.toString()}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setAgents(data.data?.agents || []);
+          setPagination(data.data?.pagination || null);
+        } else {
+          setAgents([]);
+        }
+      })
+      .catch(err => {
+        console.error('Marketplace error:', err);
+        setAgents([]);
+      })
+      .finally(() => setLoading(false));
   }, [search, category, sort, page]);
 
   return (

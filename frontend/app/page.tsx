@@ -19,6 +19,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { API_URL } from '@/lib/config';
+import StatsBar from "@/components/StatsBar";
 
 interface Stats {
   totalAgents: number;
@@ -28,45 +29,14 @@ interface Stats {
 }
 
 export default function LandingPage() {
-  const [stats, setStats] = useState<Stats>({
-    totalAgents: 0,
-    totalInvocations: 0,
-    activeNodes: 0,
-    totalStaked: 0
-  });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
-    
-    // Fetch stats
-    fetch(`${API_URL}/api/stats`)
-      .then(res => res.json())
-      .then(res => {
-        if (res.success && res.data) {
-          setStats(res.data);
-        }
-      })
-      .catch(err => {
-        console.error("Stats fetch error:", err);
-        setStats({
-          totalAgents: 0,
-          totalInvocations: 0,
-          activeNodes: 0,
-          totalStaked: 0
-        });
-      });
-
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-    return num.toString();
-  };
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0a0a0a] text-white selection:bg-primary/30 selection:text-white">
@@ -142,21 +112,7 @@ export default function LandingPage() {
         </div>
 
         {/* Stats Bar */}
-        <div className="w-full max-w-6xl grid grid-cols-2 lg:grid-cols-4 gap-8 py-12 px-8 bg-white/[0.02] border border-white/5 rounded-[3rem] backdrop-blur-sm">
-          {[
-            { label: "Total Agents", value: stats.totalAgents, suffix: "" },
-            { label: "Total Invocations", value: stats.totalInvocations, suffix: "" },
-            { label: "Active Nodes", value: stats.activeNodes, suffix: "" },
-            { label: "Total Staked AGNT", value: stats.totalStaked, suffix: "" },
-          ].map((stat, i) => (
-            <div key={i} className="flex flex-col items-center">
-              <div className="text-4xl md:text-5xl font-black tracking-tighter text-white mb-1">
-                {formatNumber(stat.value)}{stat.suffix}
-              </div>
-              <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{stat.label}</div>
-            </div>
-          ))}
-        </div>
+        <StatsBar />
       </section>
 
       {/* Features Section */}

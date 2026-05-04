@@ -10,6 +10,7 @@ const router = Router();
 
 // GET /marketplace — list public agents
 router.get('/', marketplaceRateLimit, async (req: Request, res: Response) => {
+  res.header('Access-Control-Allow-Origin', '*');
   try {
     const {
       search,
@@ -107,6 +108,7 @@ router.get('/', marketplaceRateLimit, async (req: Request, res: Response) => {
 
 // GET /marketplace/:id — public agent detail
 router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
+  res.header('Access-Control-Allow-Origin', '*');
   try {
     const agent = await prisma.agent.findFirst({
       where: { 

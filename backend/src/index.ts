@@ -64,10 +64,11 @@ app.use(helmet({
 app.use(cookieParser());
 app.use(cors({
   origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-    'https://agenticai-frontend-3tam.onrender.com'
-  ],
-  credentials: true, // Required for cookies
+    'http://localhost:3000',
+    'https://agenticai-frontend-3tam.onrender.com',
+    process.env.FRONTEND_URL || '',
+  ].filter(Boolean),
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
 }));

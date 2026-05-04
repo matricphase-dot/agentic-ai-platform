@@ -7,6 +7,7 @@ import { statsRateLimit } from '../middleware/rate-limit.middleware';
 const router = Router();
 
 router.get('/', statsRateLimit, async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
   try {
     // Try to get from cache first
     const cachedStats = await getCache('platform_stats');
