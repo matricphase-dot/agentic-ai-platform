@@ -11,6 +11,48 @@ import { sanitizeAgent } from '../lib/sanitize';
 
 const router = Router();
 
+/**
+ * High-security response filter for public marketplace data.
+ * Ensures proprietary configurations never leave the server.
+ */
+function sanitizeAgentForPublic(agent: any) {
+  if (!agent) return null;
+  const { systemPrompt, inputSchema, outputSchema, ...safe } = agent;
+  return safe;
+}
+
+const MARKETPLACE_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  description: true,
+  modelProvider: true,
+  modelName: true,
+  category: true,
+  pricingModel: true,
+  pricePerCall: true,
+  pricePerToken: true,
+  gpuRequired: true,
+  currentVersion: true,
+  tags: true,
+  readme: true,
+  createdAt: true,
+  updatedAt: true,
+  userId: true,
+  teamId: true,
+  user: {
+    select: {
+      id: true,
+      name: true,
+      avatar: true,
+    }
+  },
+  analytics: true,
+  _count: {
+    select: { reviews: true }
+  },
+};
+
 // GET /marketplace — list public agents
 router.get('/', marketplaceRateLimit, async (req: Request, res: Response) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -75,27 +117,7 @@ router.get('/', marketplaceRateLimit, async (req: Request, res: Response) => {
     const [agents, total] = await Promise.all([
       prisma.agent.findMany({
         where,
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          description: true,
-          modelProvider: true,
-          modelName: true,
-          category: true,
-          pricingModel: true,
-          pricePerCall: true,
-          pricePerToken: true,
-          gpuRequired: true,
-          currentVersion: true,
-          tags: true,
-          createdAt: true,
-          user: { 
-            select: { id: true, name: true, avatar: true } 
-          },
-          analytics: true,
-          _count: { select: { reviews: true } },
-        },
+        select: MARKETPLACE_SELECT,
         orderBy,
         take: Number(limit),
         skip,
@@ -111,8 +133,8 @@ router.get('/', marketplaceRateLimit, async (req: Request, res: Response) => {
     const response = {
       success: true,
       data: {
-        agents: agents.map(a => sanitizeAgent(a)),
-        featured: featured.map(a => sanitizeAgent(a)),
+        agents: agents.map(sanitizeAgentForPublic),
+        featured: featured.map(sanitizeAgentForPublic),
         pagination: {
           total,
           page: Number(page),
@@ -146,27 +168,7 @@ router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
         status: 'PUBLISHED',
       },
       select: {
-        id: true,
-        userId: true,
-        name: true,
-        slug: true,
-        description: true,
-        modelProvider: true,
-        modelName: true,
-        category: true,
-        pricingModel: true,
-        pricePerCall: true,
-        pricePerToken: true,
-        gpuRequired: true,
-        currentVersion: true,
-        tags: true,
-        readme: true,
-        githubUrl: true,
-        createdAt: true,
-        user: { 
-          select: { id: true, name: true, avatar: true, bio: true } 
-        },
-        analytics: true,
+        ...MARKETPLACE_SELECT,
         reviews: {
           include: {
             user: { 
@@ -206,7 +208,10 @@ router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
 
     return res.json({ 
       success: true, 
-      data: { ...sanitizeAgent(agent, req.user?.id), hasAccess } 
+      data: { 
+        ...sanitizeAgentForPublic(agent), 
+        hasAccess 
+      } 
     });
   } catch (error) {
     logger.error('Agent detail failed', { error });
