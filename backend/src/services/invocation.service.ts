@@ -23,6 +23,7 @@ export interface InvokeResult {
   tokensUsed: number;
   cost: number;
   status: 'SUCCESS' | 'FAILED';
+  provider?: string;
 }
 
 export const InvocationService = {
@@ -216,9 +217,10 @@ export const InvocationService = {
       invocationId: invocation.id,
       output: llmResult ? llmResult.output : null,
       latencyMs: llmResult?.latencyMs || 0,
-      tokensUsed: llmResult?.totalTokens || 0,
+      tokensUsed: llmResult?.tokensUsed || 0,
       cost,
       status: finalStatus,
+      provider: llmResult?.provider,
     };
   },
 

@@ -81,6 +81,7 @@ router.post('/:agentId', async (req: Request, res: Response) => {
             tokensUsed: result.tokensUsed,
             cost: result.cost,
             status: result.status,
+            provider: result.provider,
           },
         });
 

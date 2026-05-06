@@ -92,6 +92,7 @@ import { cronRouter } from "./routes/cron.routes";
 import statsRouter from "./routes/stats.routes";
 import contactRouter from "./routes/contact.routes";
 import { billingWebhookRouter } from "./routes/webhooks.billing.routes";
+import webhooksRouter from "./routes/webhooks.routes";
 
 app.use('/api/auth', authRouter);
 app.use('/api/agents', agentsRouter);
@@ -111,6 +112,7 @@ app.use('/api/cron', cronRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/contact', contactRouter);
 app.use('/api/webhooks/billing', billingWebhookRouter);
+app.use('/api/webhooks', webhooksRouter);
 
 // Documentation
 setupSwagger(app);

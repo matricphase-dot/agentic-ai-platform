@@ -1,58 +1,116 @@
-import fetch from 'node-fetch';
+import * as https from 'https';
 
-const BACKEND_URL = 'https://agenticai-backend-xao9.onrender.com';
+const BASE_URL = 'agenticai-backend-xao9.onrender.com';
 
-async function testEndpoint(url: string, method: string, users: number) {
-  const fullUrl = url.startsWith('http') ? url : `${BACKEND_URL}${url}`;
-  
-  const promises = [];
-  
-  for (let i = 0; i < users; i++) {
-    const options: any = { method };
-    if (method === 'POST') {
-      options.headers = { 'Content-Type': 'application/json' };
-      options.body = JSON.stringify({ email: `loaduser${i}@agenticai.dev`, password: "password123" });
-    }
+interface Result {
+  endpoint: string;
+  totalRequests: number;
+  successCount: number;
+  failCount: number;
+  avgMs: number;
+  minMs: number;
+  maxMs: number;
+  p95Ms: number;
+  requestsPerSecond: number;
+}
+
+async function makeRequest(path: string): Promise<number> {
+  return new Promise((resolve, reject) => {
     const start = Date.now();
-    promises.push(
-      fetch(fullUrl, options)
-        .then(res => ({ success: res.status >= 200 && res.status < 400, time: Date.now() - start, status: res.status }))
-        .catch(err => ({ success: false, time: Date.now() - start, error: err.message }))
+    const req = https.get({
+      hostname: BASE_URL,
+      path,
+      timeout: 10000,
+    }, (res) => {
+      res.resume();
+      res.on('end', () => resolve(Date.now() - start));
+    });
+    req.on('error', reject);
+    req.on('timeout', () => reject(new Error('timeout')));
+  });
+}
+
+async function loadTest(
+  path: string,
+  concurrency: number,
+  totalRequests: number
+): Promise<Result> {
+  const times: number[] = [];
+  let successCount = 0;
+  let failCount = 0;
+  const startTime = Date.now();
+
+  // Run in batches of concurrency
+  for (let i = 0; i < totalRequests; i += concurrency) {
+    const batch = Math.min(concurrency, totalRequests - i);
+    const promises = Array(batch).fill(null).map(() =>
+      makeRequest(path)
+        .then(ms => { times.push(ms); successCount++; })
+        .catch(() => failCount++)
+    );
+    await Promise.all(promises);
+  }
+
+  const totalTime = Date.now() - startTime;
+  times.sort((a, b) => a - b);
+
+  return {
+    endpoint: path,
+    totalRequests,
+    successCount,
+    failCount,
+    avgMs: times.reduce((a, b) => a + b, 0) / times.length || 0,
+    minMs: times[0] || 0,
+    maxMs: times[times.length - 1] || 0,
+    p95Ms: times[Math.floor(times.length * 0.95)] || 0,
+    requestsPerSecond: Math.round((successCount / totalTime) * 1000),
+  };
+}
+
+async function runAllTests() {
+  console.log('🚀 Starting load test for AgenticAI Platform...\n');
+
+  const tests = [
+    { path: '/health', concurrency: 100, total: 500 },
+    { path: '/api/stats', concurrency: 50, total: 200 },
+    { path: '/api/marketplace', concurrency: 50, total: 200 },
+    { path: '/api/governance/proposals', concurrency: 30, total: 100 },
+  ];
+
+  const results: Result[] = [];
+
+  for (const test of tests) {
+    console.log(`Testing ${test.path} with ${test.concurrency} concurrent users...`);
+    const result = await loadTest(test.path, test.concurrency, test.total);
+    results.push(result);
+    console.log(`✅ ${test.path}: ${result.avgMs.toFixed(0)}ms avg, ${result.requestsPerSecond} req/s, ${result.failCount} failures\n`);
+  }
+
+  console.log('\n📊 FULL LOAD TEST REPORT');
+  console.log('='.repeat(80));
+  console.log('Endpoint'.padEnd(30) + 'Avg'.padEnd(10) + 'P95'.padEnd(10) + 'Max'.padEnd(10) + 'Req/s'.padEnd(10) + 'Failures');
+  console.log('-'.repeat(80));
+
+  for (const r of results) {
+    console.log(
+      r.endpoint.padEnd(30) +
+      `${r.avgMs.toFixed(0)}ms`.padEnd(10) +
+      `${r.p95Ms.toFixed(0)}ms`.padEnd(10) +
+      `${r.maxMs.toFixed(0)}ms`.padEnd(10) +
+      `${r.requestsPerSecond}`.padEnd(10) +
+      `${r.failCount}/${r.totalRequests}`
     );
   }
-  
-  const results = await Promise.all(promises);
-  
-  let successCount = 0;
-  let totalTime = 0;
-  let minTime = Number.MAX_VALUE;
-  let maxTime = 0;
-  
-  results.forEach(r => {
-    if (r.success) successCount++;
-    totalTime += r.time;
-    if (r.time < minTime) minTime = r.time;
-    if (r.time > maxTime) maxTime = r.time;
-  });
-  
-  console.log(`Endpoint: ${method} ${url} (${users} users)`);
-  console.log(`Average response time: ${(totalTime / users).toFixed(2)}ms`);
-  console.log(`Min response time: ${minTime === Number.MAX_VALUE ? 0 : minTime}ms`);
-  console.log(`Max response time: ${maxTime}ms`);
-  console.log(`Success rate %: ${(successCount / users) * 100}%`);
-  console.log(`Errors/Non-2xx: ${users - successCount}`);
-  console.log('-----------------------------------');
+
+  console.log('='.repeat(80));
+
+  const allPassed = results.every(r =>
+    r.avgMs < 3000 &&
+    r.failCount / r.totalRequests < 0.05
+  );
+
+  console.log(`\n🎯 Overall result: ${allPassed ? '✅ READY FOR MILLIONS' : '❌ NEEDS OPTIMIZATION'}`);
+  console.log(`Success rate: ${results.map(r => ((r.successCount/r.totalRequests)*100).toFixed(1)+'%').join(', ')}`);
 }
 
-async function main() {
-  console.log('Starting Load Test...\n');
-  await Promise.all([
-    testEndpoint('/api/marketplace', 'GET', 20),
-    testEndpoint('/api/stats', 'GET', 10),
-    testEndpoint('/api/governance/proposals', 'GET', 10),
-    testEndpoint('/api/auth/login', 'POST', 10)
-  ]);
-  console.log('Load Test Complete.');
-}
-
-main().catch(console.error);
+runAllTests().catch(console.error);

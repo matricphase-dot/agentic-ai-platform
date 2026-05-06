@@ -12,7 +12,10 @@
     "migrate:prod": "npx prisma migrate deploy",
     "seed": "ts-node prisma/seed.ts",
     "seed:reset": "npx prisma migrate reset --force && ts-node prisma/seed.ts",
-    "reseed": "ts-node scripts/reseed.ts"
+    "reseed": "ts-node scripts/reseed.ts",
+    "load-test": "ts-node scripts/load-test.ts",
+    "demo-data": "ts-node scripts/demo-data.ts",
+    "audit": "ts-node scripts/audit-tests.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",
