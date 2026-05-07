@@ -21,8 +21,8 @@ const router = Router();
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
+  secure: true,
+  sameSite: 'none' as const,
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
@@ -99,8 +99,8 @@ router.post('/login', rateLimitLogin, async (req: Request, res: Response) => {
     // Set refresh token as separate httpOnly cookie
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       path: '/api/auth/refresh', // Only sent to refresh endpoint
     });
@@ -153,13 +153,13 @@ router.post('/logout', authMiddleware, async (req: Request, res: Response) => {
   await AuthService.revokeAllRefreshTokens(req.user!.id);
   res.clearCookie('jwt_token', { 
     httpOnly: true, 
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: true,
+    sameSite: 'none',
   });
   res.clearCookie('refresh_token', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: true,
+    sameSite: 'none',
     path: '/api/auth/refresh',
   });
   res.json({ success: true, message: 'Logged out' });
@@ -214,8 +214,8 @@ router.post('/refresh', async (req, res) => {
     res.cookie('jwt_token', accessToken, COOKIE_OPTIONS);
     res.cookie('refresh_token', newRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000,
       path: '/api/auth/refresh',
     });
