@@ -133,7 +133,7 @@ export const invokeApi = {
 export const usersApi = {
   me: () => apiRequest('/users/me'),
   updateMe: (data: any) => apiRequest('/users/me', { method: 'PUT', body: JSON.stringify(data) }),
-  stats: () => apiRequest('/users/me/stats'),
+  stats: () => apiRequest('/users/stats'),
 };
 
 export const notificationsApi = {
