@@ -42,6 +42,7 @@ const AGENT_PUBLIC_SELECT = {
   _count: {
     select: { reviews: true }
   },
+  // NEVER include: systemPrompt, inputSchema, outputSchema
 } as const;
 
 /**
