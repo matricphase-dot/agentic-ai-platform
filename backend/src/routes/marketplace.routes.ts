@@ -123,7 +123,30 @@ router.get('/', marketplaceRateLimit, async (req: Request, res: Response) => {
     const [agents, total] = await Promise.all([
       prisma.agent.findMany({
         where,
-        select: AGENT_PUBLIC_SELECT,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          modelProvider: true,
+          modelName: true,
+          category: true,
+          pricingModel: true,
+          pricePerCall: true,
+          pricePerToken: true,
+          gpuRequired: true,
+          currentVersion: true,
+          tags: true,
+          readme: true,
+          isPublic: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true,
+          user: { select: { id: true, name: true, avatar: true } },
+          analytics: true,
+          _count: { select: { reviews: true } },
+        },
         orderBy,
         take: Number(limit),
         skip,
@@ -136,24 +159,30 @@ router.get('/', marketplaceRateLimit, async (req: Request, res: Response) => {
       .filter(a => (a.analytics?.avgRating || 0) >= 4.5)
       .slice(0, 4);
 
-    const response = {
-      success: true,
-      data: {
-        agents: agents.map(stripSensitiveFields),
-        featured: featured.map(stripSensitiveFields),
-        pagination: {
-          total,
-          page: Number(page),
-          limit: Number(limit),
-          pages: Math.ceil(total / Number(limit)),
-        },
-      },
+    // Strip sensitive fields as safety net
+    const sanitize = (a: any) => {
+      const { systemPrompt, inputSchema, outputSchema, ...safe } = a;
+      return safe;
+    };
+
+    const pagination = {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      pages: Math.ceil(total / Number(limit)),
     };
 
     // 2. Set Cache (Disabled temporarily)
     // await redis.setex(cacheKey, 120, JSON.stringify(response));
 
-    return res.json(response);
+    return res.json({ 
+      success: true, 
+      data: { 
+        agents: agents.map(sanitize), 
+        featured: featured.map(sanitize), 
+        pagination 
+      } 
+    });
   } catch (error) {
     logger.error('Marketplace list failed', { error });
     return res.status(500).json({ 
