@@ -22,7 +22,7 @@ export default function LoginPage() {
 
     if (verified && token) {
       // Auto-login after email verification
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://agenticai-backend-xao9.onrender.com'}/api/auth/me`, {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(r => r.json())

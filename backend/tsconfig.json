@@ -1,23 +1,24 @@
 {
-        "compilerOptions": {
-                  "target": "ES2020",
-                  "module": "CommonJS",
-                  "lib": ["ES2020"],
-                  "outDir": "./dist",
-                  "rootDir": "./src",
-                  "strict": false,
-                  "noImplicitAny": false,
-                  "esModuleInterop": true,
-                  "skipLibCheck": true,
-                  "forceConsistentCasingInFileNames": true,
-                  "moduleResolution": "node",
-                  "resolveJsonModule": true,
-                  "baseUrl": ".",
-                  "ignoreDeprecations": "6.0",
-                  "paths": {
-                               "@/*": ["src/*"]
-                  }
-        },
-        "include": ["src/**/*"],
-        "exclude": ["node_modules", "**/*.spec.ts"]
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "strict": false,
+    "noImplicitAny": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "scripts/**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
 }
+

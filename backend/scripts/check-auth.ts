@@ -1,3 +1,4 @@
+// Add to backend/scripts/check-auth.ts
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 

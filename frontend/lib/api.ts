@@ -38,6 +38,14 @@ export const authApi = {
   me: () => apiRequest('/auth/me'),
 };
 
+export const api = {
+  get: <T>(endpoint: string) => apiRequest<T>(endpoint, { method: 'GET' }),
+  post: <T>(endpoint: string, body: any) => apiRequest<T>(endpoint, { method: 'POST', body: JSON.stringify(body) }),
+  put: <T>(endpoint: string, body: any) => apiRequest<T>(endpoint, { method: 'PUT', body: JSON.stringify(body) }),
+  patch: <T>(endpoint: string, body: any) => apiRequest<T>(endpoint, { method: 'PATCH', body: JSON.stringify(body) }),
+  delete: <T>(endpoint: string) => apiRequest<T>(endpoint, { method: 'DELETE' }),
+};
+
 export const agentsApi = {
   list: (params?: any) => apiRequest(`/agents?${new URLSearchParams(params || {})}`),
   get: (id: string) => apiRequest(`/agents/${id}`),
@@ -53,7 +61,8 @@ export const agentsApi = {
 export const marketplaceApi = {
   list: (params?: any) => apiRequest(`/marketplace?${new URLSearchParams(params || {})}`),
   get: (id: string) => apiRequest(`/marketplace/${id}`),
-  review: (id: string, data: any) => apiRequest(`/marketplace/${id}/review`, { method: 'POST', body: JSON.stringify(data) }),
+  review: (id: string, rating: number, comment: string) => 
+    apiRequest(`/marketplace/${id}/review`, { method: 'POST', body: JSON.stringify({ rating, comment }) }),
 };
 
 export const stakingApi = {
@@ -62,18 +71,27 @@ export const stakingApi = {
   stake: (agentId: string, amount: number) => apiRequest('/staking/stake', { method: 'POST', body: JSON.stringify({ agentId, amount }) }),
   unstake: (stakeId: string) => apiRequest('/staking/unstake', { method: 'POST', body: JSON.stringify({ stakeId }) }),
   claim: () => apiRequest('/staking/claim', { method: 'POST' }),
+  portfolio: () => apiRequest('/staking/portfolio'),
+  faucet: () => apiRequest('/staking/faucet', { method: 'POST' }),
 };
 
 export const billingApi = {
   balance: () => apiRequest('/billing/balance'),
-  transactions: () => apiRequest('/billing/transactions'),
+  transactions: (params?: any) => apiRequest(`/billing/transactions?${new URLSearchParams(params || {})}`),
   topup: (amount: number) => apiRequest('/billing/topup', { method: 'POST', body: JSON.stringify({ amount }) }),
+  createRazorpayOrder: (amount: number) => apiRequest('/billing/razorpay/order', { method: 'POST', body: JSON.stringify({ amount }) }),
+  verifyRazorpayPayment: (data: any) => apiRequest('/billing/razorpay/verify', { method: 'POST', body: JSON.stringify(data) }),
+  createPaypalOrder: (amount: number) => apiRequest('/billing/paypal/order', { method: 'POST', body: JSON.stringify({ amount }) }),
+  capturePaypalOrder: (orderId: string) => apiRequest(`/billing/paypal/capture/${orderId}`, { method: 'POST' }),
+  claimFaucet: () => apiRequest('/billing/faucet', { method: 'POST' }),
 };
 
 export const governanceApi = {
   proposals: (params?: any) => apiRequest(`/governance/proposals?${new URLSearchParams(params || {})}`),
   proposal: (id: string) => apiRequest(`/governance/proposals/${id}`),
   vote: (id: string, choice: string) => apiRequest(`/governance/proposals/${id}/vote`, { method: 'POST', body: JSON.stringify({ choice }) }),
+  votingPower: () => apiRequest('/governance/voting-power'),
+  revokeDelegate: () => apiRequest('/governance/delegate/revoke', { method: 'POST' }),
 };
 
 export const nodesApi = {
@@ -113,11 +131,13 @@ export const invokeApi = {
 };
 
 export const usersApi = {
+  me: () => apiRequest('/users/me'),
   updateMe: (data: any) => apiRequest('/users/me', { method: 'PUT', body: JSON.stringify(data) }),
+  stats: () => apiRequest('/users/me/stats'),
 };
 
 export const notificationsApi = {
-  list: () => apiRequest('/notifications'),
+  list: (params?: any) => apiRequest(`/notifications?${new URLSearchParams(params || {})}`),
   markRead: (id: string) => apiRequest(`/notifications/${id}/read`, { method: 'PUT' }),
   markAllRead: () => apiRequest('/notifications/read-all', { method: 'PUT' }),
 };

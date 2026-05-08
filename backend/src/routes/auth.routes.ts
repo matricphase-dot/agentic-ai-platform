@@ -83,7 +83,7 @@ router.post('/signup', rateLimitSignup, async (req, res) => {
   }
 });
 
-// POST /auth/login
+// POST /api/auth/login
 router.post('/login', rateLimitLogin, async (req, res) => {
   try {
     const { email, password } = z.object({
