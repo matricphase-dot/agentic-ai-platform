@@ -17,9 +17,9 @@
       "@/*": ["src/*"]
     },
     "types": ["node"],
-    "rootDir": "."
+    "rootDir": "src"
   },
-  "include": ["src/**/*", "scripts/**/*", "prisma/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }
 
