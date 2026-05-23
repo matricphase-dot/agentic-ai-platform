@@ -26,7 +26,15 @@ export async function apiRequest<T>(
     return { success: false, code: 'UNAUTHORIZED' };
   }
 
-  return res.json();
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return res.json();
+  } else {
+    return { 
+      success: false, 
+      message: `Server returned an unexpected ${res.status} error` 
+    };
+  }
 }
 
 // Re-export auth methods for convenience
@@ -79,11 +87,11 @@ export const billingApi = {
   balance: () => apiRequest('/billing/balance'),
   transactions: (params?: any) => apiRequest(`/billing/transactions?${new URLSearchParams(params || {})}`),
   topup: (amount: number) => apiRequest('/billing/topup', { method: 'POST', body: JSON.stringify({ amount }) }),
-  createRazorpayOrder: (amount: number) => apiRequest('/billing/razorpay/order', { method: 'POST', body: JSON.stringify({ amount }) }),
+  createRazorpayOrder: (amount: number) => apiRequest('/billing/razorpay/create-order', { method: 'POST', body: JSON.stringify({ amountINR: amount }) }),
   verifyRazorpayPayment: (data: any) => apiRequest('/billing/razorpay/verify', { method: 'POST', body: JSON.stringify(data) }),
-  createPaypalOrder: (amount: number) => apiRequest('/billing/paypal/order', { method: 'POST', body: JSON.stringify({ amount }) }),
-  capturePaypalOrder: (orderId: string) => apiRequest(`/billing/paypal/capture/${orderId}`, { method: 'POST' }),
-  claimFaucet: () => apiRequest('/billing/faucet', { method: 'POST' }),
+  createPaypalOrder: (amount: number) => apiRequest('/billing/paypal/create-order', { method: 'POST', body: JSON.stringify({ amountUSD: amount }) }),
+  capturePaypalOrder: (orderId: string) => apiRequest(`/billing/paypal/capture`, { method: 'POST', body: JSON.stringify({ orderId }) }),
+  claimFaucet: () => apiRequest('/staking/faucet', { method: 'POST' }),
 };
 
 export const governanceApi = {
