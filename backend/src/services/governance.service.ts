@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { logger } from '../lib/logger';
+import { NotificationService } from './notification.service';
 
 const MIN_STAKE_TO_PROPOSE = 100; // AGNT
 
@@ -380,16 +381,26 @@ export const GovernanceService = {
           },
         });
 
+        // Notify all voters of result
+        const votes = await prisma.vote.findMany({
+          where: { proposalId: proposal.id },
+          select: { userId: true }
+        });
+
+        for (const vote of votes) {
+          await NotificationService.proposalResult(
+            vote.userId,
+            proposal.title,
+            passed
+          );
+        }
+
         // Notify proposer
-        await prisma.notification.create({
-          data: {
-            userId: proposal.proposerId,
-            type: 'proposal_finalized',
-            title: `Proposal ${passed ? 'Passed' : 'Rejected'}`,
-            message: `"${proposal.title}" has ${passed ? 'passed' : 'been rejected'}`,
-            link: `/dashboard/governance/${proposal.id}`,
-          },
-        }).catch(() => {});
+        await NotificationService.proposalResult(
+          proposal.proposerId,
+          proposal.title,
+          passed
+        );
 
         finalized++;
       } catch (error) {

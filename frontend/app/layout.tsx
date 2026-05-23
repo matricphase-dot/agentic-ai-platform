@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
+import { KeepAlive } from "@/components/KeepAlive";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,6 +34,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-[#0a0a0a] text-white antialiased`}>
         <Providers>
+          <KeepAlive />
           {children}
         </Providers>
         <Toaster richColors position="bottom-right" />

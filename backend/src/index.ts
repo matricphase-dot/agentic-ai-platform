@@ -152,6 +152,20 @@ server.listen(PORT, async () => {
   logger.info(`🚀 Agentic AI Backend running on port ${PORT}`);
   EmailService.verifyConnection();
   
+  // Keep-alive ping for Render free tier
+  if (process.env.NODE_ENV === 'production') {
+    const RENDER_URL = process.env.RENDER_EXTERNAL_URL || 
+      'https://agenticai-backend-xao9.onrender.com';
+    
+    setInterval(() => {
+      fetch(`${RENDER_URL}/health`)
+        .then(() => logger.debug('Keep-alive ping sent'))
+        .catch(err => logger.warn('Keep-alive failed', { err }));
+    }, 14 * 60 * 1000); // every 14 minutes
+    
+    logger.info('Keep-alive service started');
+  }
+
   try {
     await initializeJobs();
   } catch (error) {

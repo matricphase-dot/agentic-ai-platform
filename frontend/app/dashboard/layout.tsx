@@ -30,6 +30,12 @@ export default function DashboardLayout({
       if (data.success) {
         // Update stored user data
         auth.setSession(token, data.data);
+        
+        if (!localStorage.getItem('onboarded')) {
+          router.replace('/onboarding');
+          return;
+        }
+
         setAuthorized(true);
       } else {
         auth.clearSession();

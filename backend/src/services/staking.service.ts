@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { logger } from '../lib/logger';
+import { NotificationService } from './notification.service';
 
 const LOCK_PERIOD_DAYS = 7;
 const STAKER_REWARD_PERCENT = 
@@ -118,6 +119,25 @@ export const StakingService = {
         totalStaked: allStakes._sum.amount || 0,
       },
     });
+
+    const agentOwner = await prisma.agent.findUnique({
+      where: { id: agentId },
+      select: { userId: true, name: true }
+    });
+    
+    const staker = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true }
+    });
+
+    if (agentOwner && staker) {
+      await NotificationService.stakePlaced(
+        agentOwner.userId,
+        staker.name,
+        amount,
+        agentOwner.name
+      );
+    }
 
     logger.info('Stake created', { userId, agentId, amount });
     return result;
@@ -286,6 +306,8 @@ export const StakingService = {
 
         const totalStaked = stakes.reduce((sum, s) => sum + s.amount, 0);
 
+        const stakerRewards: { userId: string; amount: number }[] = [];
+
         // Distribute proportionally
         await prisma.$transaction(async (tx) => {
           for (const stake of stakes) {
@@ -306,21 +328,25 @@ export const StakingService = {
               },
             });
 
+            stakerRewards.push({ userId: stake.userId, amount: rewardAmount });
             totalDistributed += rewardAmount;
           }
         });
 
         // Notify stakers
-        for (const stake of stakes) {
-          await prisma.notification.create({
-            data: {
-              userId: stake.userId,
-              type: 'reward',
-              title: 'Staking Reward Earned',
-              message: `You earned AGNT from staking on an agent`,
-              link: '/dashboard/staking',
-            },
-          }).catch(() => {});
+        const agent = await prisma.agent.findUnique({
+          where: { id: agentId },
+          select: { name: true }
+        });
+        
+        if (agent) {
+          for (const reward of stakerRewards) {
+            await NotificationService.reward(
+              reward.userId,
+              reward.amount,
+              agent.name
+            );
+          }
         }
 
         agentsProcessed++;

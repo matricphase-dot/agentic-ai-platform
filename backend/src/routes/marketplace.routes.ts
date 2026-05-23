@@ -11,7 +11,7 @@ import { sanitizeAgent } from '../lib/sanitize';
 
 const router = Router();
 
-const AGENT_PUBLIC_SELECT = {
+const MARKETPLACE_AGENT_SELECT = {
   id: true,
   name: true,
   slug: true,
@@ -32,30 +32,20 @@ const AGENT_PUBLIC_SELECT = {
   updatedAt: true,
   userId: true,
   user: {
-    select: {
-      id: true,
-      name: true,
-      avatar: true,
-    }
+    select: { id: true, name: true, avatar: true }
   },
   analytics: true,
-  _count: {
-    select: { reviews: true }
-  },
-  // NEVER include: systemPrompt, inputSchema, outputSchema
+  _count: { select: { reviews: true } },
 } as const;
 
 /**
  * Double protection: ensures sensitive fields never leave the server
  */
-function stripSensitiveFields(agent: any) {
-  if (!agent) return null;
-  const cleaned = { ...agent };
-  delete cleaned.systemPrompt;
-  delete cleaned.inputSchema;
-  delete cleaned.outputSchema;
-  return cleaned;
-}
+const sanitize = (a: any) => {
+  if (!a) return null;
+  const { systemPrompt, inputSchema, outputSchema, ...safe } = a;
+  return safe;
+};
 
 // GET /marketplace — list public agents
 router.get('/', marketplaceRateLimit, async (req: Request, res: Response) => {
@@ -159,12 +149,6 @@ router.get('/', marketplaceRateLimit, async (req: Request, res: Response) => {
       .filter(a => (a.analytics?.avgRating || 0) >= 4.5)
       .slice(0, 4);
 
-    // Strip sensitive fields as safety net
-    const sanitize = (a: any) => {
-      const { systemPrompt, inputSchema, outputSchema, ...safe } = a;
-      return safe;
-    };
-
     const pagination = {
       total,
       page: Number(page),
@@ -203,7 +187,7 @@ router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
         status: 'PUBLISHED',
       },
       select: {
-        ...AGENT_PUBLIC_SELECT,
+        ...MARKETPLACE_AGENT_SELECT,
         reviews: {
           include: {
             user: { 
@@ -244,7 +228,7 @@ router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
     return res.json({ 
       success: true, 
       data: { 
-        ...stripSensitiveFields(agent), 
+        ...sanitize(agent), 
         hasAccess 
       } 
     });
@@ -335,6 +319,7 @@ router.post(
           isPublic: true, 
           status: 'PUBLISHED' 
         },
+        select: MARKETPLACE_AGENT_SELECT,
       });
 
       if (!agent) {

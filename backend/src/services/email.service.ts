@@ -105,6 +105,48 @@ const wrapTemplate = (content: string, ctaText?: string, ctaLink?: string) => `
 `;
 
 export const EmailService = {
+  sendNotification: async (
+    email: string,
+    name: string,
+    title: string,
+    message: string,
+    link?: string
+  ) => {
+    const frontendUrl = process.env.FRONTEND_URL || 
+      'https://agenticai-frontend-3tam.onrender.com';
+    
+    // We reuse the existing wrapTemplate and sendWithFailover to maintain consistency 
+    // with the rest of the application, but format it exactly as requested.
+    const html = `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;
+                  background:#0A0A0A;color:#ffffff;padding:32px;
+                  border-radius:12px">
+        <h2 style="color:#7C3AED;margin-bottom:16px">AgenticAI</h2>
+        <h3 style="color:#ffffff">${title}</h3>
+        <p style="color:#A1A1AA">${message}</p>
+        ${link ? `
+          <a href="${frontendUrl}${link}" 
+             style="display:inline-block;background:#7C3AED;
+                    color:#ffffff;padding:12px 24px;
+                    border-radius:8px;text-decoration:none;
+                    margin-top:16px">
+            View Details
+          </a>
+        ` : ''}
+        <p style="color:#52525B;font-size:12px;margin-top:32px">
+          AgenticAI — The Infrastructure Layer for the AI Agent Economy
+        </p>
+      </div>
+    `;
+
+    await sendWithFailover({
+      to: email,
+      subject: `AgenticAI: ${title}`,
+      html,
+      text: `${title}\n\n${message}\n\n${link ? frontendUrl + link : ''}`
+    });
+  },
+
   sendVerification: async (email: string, name: string, token: string): Promise<void> => {
     const url = `${FRONTEND_URL}/auth/verify-email?token=${token}`;
     const subject = "Verify your AgenticAI account";
