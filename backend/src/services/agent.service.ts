@@ -45,11 +45,18 @@ export class AgentService {
       gpuRequired
     } = data;
 
+    let uniqueSlug = slug;
+    let counter = 1;
+    while (await prisma.agent.findUnique({ where: { slug: uniqueSlug } })) {
+      uniqueSlug = `${slug}-${counter}`;
+      counter++;
+    }
+
     return prisma.agent.create({
       data: {
         userId,
         name,
-        slug,
+        slug: uniqueSlug,
         description,
         modelProvider,
         modelName,

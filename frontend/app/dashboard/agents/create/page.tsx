@@ -168,7 +168,7 @@ export default function CreateAgentPage() {
       }
       router.push('/dashboard/agents');
     } else {
-      setError((res as any).message || 'Failed to create agent');
+      setError((res as any).error || (res as any).message || 'Failed to create agent');
     }
     setCreating(false);
   };

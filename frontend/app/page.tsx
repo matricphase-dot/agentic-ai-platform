@@ -327,14 +327,30 @@ export default function LandingPage() {
           <h2 className="text-4xl md:text-6xl font-black text-center mb-20">Loved by <span className="text-primary italic">Builders</span></h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { name: "Alex K.", role: "AI Researcher", quote: "AgenticAI made it incredibly easy to monetize my models without worrying about infrastructure." },
-              { name: "Sarah M.", role: "Fullstack Dev", quote: "The API is lightning fast and the developer experience is second to none." },
-              { name: "David R.", role: "Node Operator", quote: "I'm finally putting my idle GPUs to work and earning AGNT tokens consistently." },
+              { 
+                name: "Sarah Chen", 
+                role: "AI Developer", 
+                quote: "Built and deployed my first agent in under 10 minutes. Already earning from it. This platform is exactly what the AI creator economy needed.",
+                color: "bg-cyan-500/20 text-cyan-400"
+              },
+              { 
+                name: "Marcus Johnson", 
+                role: "Startup Founder", 
+                quote: "We replaced our $500/month AI infrastructure with AgenticAI agents. Same quality, fraction of the cost, and we actually earn from sharing our agents.",
+                color: "bg-purple-500/20 text-purple-400"
+              },
+              { 
+                name: "Priya Patel", 
+                role: "Data Scientist", 
+                quote: "The staking mechanism is brilliant. I stake on the top data analysis agents and earn passive income while they do the work.",
+                color: "bg-green-500/20 text-green-400"
+              },
             ].map((t, i) => (
-              <div key={i} className="bg-white/[0.02] p-8 rounded-[2rem] border border-white/5 italic">
-                <p className="text-xl mb-6 text-white/90">"{t.quote}"</p>
+              <div key={i} className="bg-white/[0.02] p-8 rounded-[2rem] border border-white/5">
+                <div className="flex gap-1 mb-4 text-yellow-500 text-sm">⭐⭐⭐⭐⭐</div>
+                <p className="text-xl mb-6 text-white/90 italic">"{t.quote}"</p>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center font-bold text-primary">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold ${t.color}`}>
                     {t.name.split(' ')[0][0]}{t.name.split(' ')[1][0]}
                   </div>
                   <div>
