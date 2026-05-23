@@ -11,7 +11,10 @@ export default function AgentsPage() {
 
   useEffect(() => {
     agentsApi.list().then(res => {
-      if (res.success) setAgents((res.data as any)?.agents || []);
+      if (res.success) {
+        const data = res.data as any;
+        setAgents(Array.isArray(data) ? data : (data?.agents || []));
+      }
       setLoading(false);
     });
   }, []);
