@@ -59,7 +59,7 @@ export default function BillingPage() {
       if (!isLoaded) throw new Error('Razorpay SDK failed to load');
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_SlC9oFgIO6E4iy',
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: res.data.amount,
         currency: res.data.currency,
         name: 'AgenticAI Platform',
@@ -250,7 +250,7 @@ export default function BillingPage() {
                 </span>
               </div>
 
-              <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "ATzN4HypBBqHLV-gTUdguwwmoeejltZ8dmm-SJN-HrGymtsKdul2oaoYF8z8fOkdDkYHap-DQy00qUt1" }}>
+              <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "" }}>
                 <PayPalButtons
                   style={{ layout: "vertical", shape: "pill", label: "pay" }}
                   forceReRender={[selectedAmount, customAmount]}
