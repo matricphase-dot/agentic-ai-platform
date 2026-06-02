@@ -33,7 +33,13 @@ export default function SignupPage() {
       const result = await auth.signup(name, email, password);
 
       if (result.success) {
-        setDone(true);
+        // Automatically log the user in and redirect to dashboard
+        const loginResult = await auth.login(email, password);
+        if (loginResult.success) {
+          router.replace('/dashboard');
+        } else {
+          router.replace('/auth/login');
+        }
       } else {
         switch (result.code) {
           case 'EMAIL_EXISTS':
@@ -54,43 +60,7 @@ export default function SignupPage() {
   };
 
   if (done) {
-    return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center 
-                      justify-center px-4">
-        <div className="w-full max-w-md text-center">
-          <div className="bg-[#111111] border border-[#1E1E1E] 
-                          rounded-2xl p-8">
-            <div className="text-5xl mb-4">📧</div>
-            <h2 className="text-2xl font-bold text-white mb-3">
-              Check your email!
-            </h2>
-            <p className="text-zinc-400 text-sm mb-6">
-              We sent a verification link to{' '}
-              <span className="text-white font-medium">{email}</span>
-            </p>
-            <p className="text-zinc-500 text-xs mb-6">
-              Click the link in the email to verify your account 
-              and get started.
-            </p>
-            <div className="bg-purple-500/10 border border-purple-500/20 
-                            rounded-lg p-4 mb-6">
-              <p className="text-purple-300 text-xs">
-                Want to explore first? Use our demo accounts:
-              </p>
-              <p className="text-white text-xs mt-1 font-mono">
-                alice@agenticai.dev / Demo@1234
-              </p>
-            </div>
-            <Link href="/auth/login"
-              className="block w-full bg-purple-600 text-white font-bold 
-                         py-3 rounded-lg hover:bg-purple-500 transition 
-                         text-center">
-              Go to Login
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    return null; // The old verification screen is bypassed
   }
 
   return (
