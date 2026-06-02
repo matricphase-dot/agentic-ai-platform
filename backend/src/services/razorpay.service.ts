@@ -24,9 +24,9 @@ export const RazorpayService = {
         currency: order.currency,
         keyId: process.env.RAZORPAY_KEY_ID,
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Razorpay order creation failed', { userId, error });
-      throw new Error('Failed to create Razorpay order');
+      throw new Error('Razorpay Error: ' + (error.error?.description || error.message || JSON.stringify(error)));
     }
   },
 
