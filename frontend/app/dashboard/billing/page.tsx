@@ -250,7 +250,7 @@ export default function BillingPage() {
                 </span>
               </div>
 
-              <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test" }}>
+              <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "ATzN4HypBBqHLV-gTUdguwwmoeejltZ8dmm-SJN-HrGymtsKdul2oaoYF8z8fOkdDkYHap-DQy00qUt1" }}>
                 <PayPalButtons
                   style={{ layout: "vertical", shape: "pill", label: "pay" }}
                   forceReRender={[selectedAmount, customAmount]}

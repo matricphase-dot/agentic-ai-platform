@@ -1,9 +1,9 @@
 import { prisma } from '../lib/prisma';
 import { logger } from '../lib/logger';
 
-const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
-const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
-const PAYPAL_MODE = process.env.PAYPAL_MODE || 'sandbox';
+const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || 'ATzN4HypBBqHLV-gTUdguwwmoeejltZ8dmm-SJN-HrGymtsKdul2oaoYF8z8fOkdDkYHap-DQy00qUt1';
+const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || 'EE5mDYyD2yZ9eYzH5UWfMMmAwHEJXWepAwMwosoTohhepNL3jobgJedG8TRujNRY78vl0FwFzWAAalnT';
+const PAYPAL_MODE = process.env.PAYPAL_MODE || 'live';
 
 const BASE_URL = PAYPAL_MODE === 'live' 
   ? 'https://api-m.paypal.com' 
