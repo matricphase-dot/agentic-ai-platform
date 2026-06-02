@@ -13,7 +13,7 @@ export const RazorpayService = {
     const options = {
       amount: Math.round(amountINR * 100), // in paise
       currency: "INR",
-      receipt: `receipt_${userId}_${Date.now()}`,
+      receipt: `rcpt_${userId.slice(-10)}_${Date.now()}`,
     };
 
     try {
