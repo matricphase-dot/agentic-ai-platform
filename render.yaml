@@ -13,6 +13,10 @@ services:
         value: production
       - key: PORT
         value: 4000
+      - key: RAZORPAY_KEY_ID
+        value: rzp_live_SlC9oFgIO6E4iy
+      - key: RAZORPAY_KEY_SECRET
+        value: luBbo7eVnVFJTHBuYAkzxIUk
 
   # Service 2 — Frontend (free web service)
   - type: web
