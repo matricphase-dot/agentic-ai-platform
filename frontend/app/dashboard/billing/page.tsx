@@ -59,7 +59,7 @@ export default function BillingPage() {
       if (!isLoaded) throw new Error('Razorpay SDK failed to load');
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_SlC9oFgIO6E4iy',
         amount: res.data.amount,
         currency: res.data.currency,
         name: 'AgenticAI Platform',
