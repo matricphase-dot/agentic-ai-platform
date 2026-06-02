@@ -87,7 +87,7 @@ export const billingApi = {
   balance: () => apiRequest('/billing/balance'),
   transactions: (params?: any) => apiRequest(`/billing/transactions?${new URLSearchParams(params || {})}`),
   topup: (amount: number) => apiRequest('/billing/topup', { method: 'POST', body: JSON.stringify({ amount }) }),
-  createRazorpayOrder: (amount: number) => apiRequest('/billing/razorpay/create-order', { method: 'POST', body: JSON.stringify({ amountINR: amount }) }),
+  createRazorpayOrder: (amount: number, currency: string = 'INR') => apiRequest('/billing/razorpay/create-order', { method: 'POST', body: JSON.stringify({ amount, currency }) }),
   verifyRazorpayPayment: (data: any) => apiRequest('/billing/razorpay/verify', { method: 'POST', body: JSON.stringify(data) }),
   createPaypalOrder: (amount: number) => apiRequest('/billing/paypal/create-order', { method: 'POST', body: JSON.stringify({ amountUSD: amount }) }),
   capturePaypalOrder: (orderId: string) => apiRequest(`/billing/paypal/capture`, { method: 'POST', body: JSON.stringify({ orderId }) }),

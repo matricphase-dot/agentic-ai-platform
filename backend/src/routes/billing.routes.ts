@@ -125,12 +125,13 @@ router.get('/transactions', async (req: Request, res: Response) => {
 // POST /billing/razorpay/create-order
 router.post('/razorpay/create-order', async (req: Request, res: Response) => {
   try {
-    const { amountINR } = z.object({
-      amountINR: z.number().min(50),
+    const { amount, currency = 'INR' } = z.object({
+      amount: z.number().min(1),
+      currency: z.string().optional(),
     }).parse(req.body);
 
     const { RazorpayService } = await import('../services/razorpay.service');
-    const orderData = await RazorpayService.createOrder(amountINR, req.user!.id);
+    const orderData = await RazorpayService.createOrder(amount, req.user!.id, currency);
 
     return res.json({ success: true, data: orderData });
   } catch (error: any) {
@@ -145,11 +146,12 @@ router.post('/razorpay/create-order', async (req: Request, res: Response) => {
 // POST /billing/razorpay/verify
 router.post('/razorpay/verify', async (req: Request, res: Response) => {
   try {
-    const { razorpayOrderId, razorpayPaymentId, razorpaySignature, amountINR } = z.object({
+    const { razorpayOrderId, razorpayPaymentId, razorpaySignature, amount, currency = 'INR' } = z.object({
       razorpayOrderId: z.string(),
       razorpayPaymentId: z.string(),
       razorpaySignature: z.string(),
-      amountINR: z.number(),
+      amount: z.number(),
+      currency: z.string().optional(),
     }).parse(req.body);
 
     const { RazorpayService } = await import('../services/razorpay.service');
@@ -165,15 +167,16 @@ router.post('/razorpay/verify', async (req: Request, res: Response) => {
 
     const balance = await RazorpayService.addCreditsAfterPayment(
       req.user!.id, 
-      amountINR, 
-      razorpayPaymentId
+      amount, 
+      razorpayPaymentId,
+      currency
     );
 
     return res.json({ 
       success: true, 
       data: { 
         balance: balance.credits, 
-        creditsAdded: amountINR 
+        creditsAdded: amount 
       } 
     });
   } catch (error: any) {

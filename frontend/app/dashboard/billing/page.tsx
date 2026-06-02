@@ -46,16 +46,17 @@ export default function BillingPage() {
     });
   };
 
-  const handleRazorpayPayment = async () => {
+  const handleRazorpayPayment = async (currency: 'INR' | 'USD' = 'INR') => {
     const amount = selectedAmount || Number(customAmount);
-    if (!amount || amount < 50) {
-      toast.error('Minimum amount is ₹50');
+    const minAmount = currency === 'INR' ? 50 : 1;
+    if (!amount || amount < minAmount) {
+      toast.error(`Minimum amount is ${currency === 'INR' ? '₹50' : '$1'}`);
       return;
     }
 
     setProcessing(true);
     try {
-      const res = await billingApi.createRazorpayOrder(amount);
+      const res = await billingApi.createRazorpayOrder(amount, currency);
       if (!res.success) throw new Error(res.message);
 
       const isLoaded = await loadRazorpay();
@@ -73,7 +74,8 @@ export default function BillingPage() {
             razorpayOrderId: response.razorpay_order_id,
             razorpayPaymentId: response.razorpay_payment_id,
             razorpaySignature: response.razorpay_signature,
-            amountINR: amount
+            amount: amount,
+            currency: currency
           });
 
           if (verifyRes.success) {
@@ -214,7 +216,7 @@ export default function BillingPage() {
               </div>
 
               <button
-                onClick={handleRazorpayPayment}
+                onClick={() => handleRazorpayPayment('INR')}
                 disabled={processing || (!selectedAmount && !customAmount)}
                 className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 rounded-xl transition disabled:opacity-50"
               >
@@ -253,33 +255,13 @@ export default function BillingPage() {
                 </span>
               </div>
 
-              {config.paypalClientId && (
-                <PayPalScriptProvider options={{ clientId: config.paypalClientId }}>
-                <PayPalButtons
-                  style={{ layout: "vertical", shape: "pill", label: "pay" }}
-                  forceReRender={[selectedAmount, customAmount]}
-                  createOrder={async () => {
-                    const amount = selectedAmount || Number(customAmount);
-                    if (!amount || amount < 1) {
-                      toast.error('Minimum amount is $1');
-                      return "";
-                    }
-                    const res = await billingApi.createPaypalOrder(amount);
-                    return res.data.orderId;
-                  }}
-                  onApprove={async (data) => {
-                    const res = await billingApi.capturePaypalOrder(data.orderID);
-                    if (res.success) {
-                      toast.success('Credits added successfully!');
-                      fetchBalance();
-                    }
-                  }}
-                  onError={() => {
-                    toast.error('PayPal payment failed');
-                  }}
-                />
-              </PayPalScriptProvider>
-              )}
+              <button
+                onClick={() => handleRazorpayPayment('USD')}
+                disabled={processing || (!selectedAmount && !customAmount)}
+                className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 rounded-xl transition disabled:opacity-50"
+              >
+                {processing ? 'Processing...' : `Pay $${selectedAmount || customAmount || 0} with Razorpay`}
+              </button>
             </div>
           )}
         </div>

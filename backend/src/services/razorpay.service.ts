@@ -9,10 +9,10 @@ const razorpay = new Razorpay({
 });
 
 export const RazorpayService = {
-  createOrder: async (amountINR: number, userId: string) => {
+  createOrder: async (amount: number, userId: string, currency: string = 'INR') => {
     const options = {
-      amount: Math.round(amountINR * 100), // in paise
-      currency: "INR",
+      amount: Math.round(amount * 100), // in paise or cents
+      currency: currency,
       receipt: `rcpt_${userId.slice(-10)}_${Date.now()}`,
     };
 
@@ -47,8 +47,9 @@ export const RazorpayService = {
     return expectedSignature === razorpaySignature;
   },
 
-  addCreditsAfterPayment: async (userId: string, amountINR: number, paymentId: string) => {
-    const creditsToAdd = amountINR; // 1 INR = 1 credit
+  addCreditsAfterPayment: async (userId: string, amount: number, paymentId: string, currency: string = 'INR') => {
+    // 1 USD = 100 credits, 1 INR = 1 credit
+    const creditsToAdd = currency === 'USD' ? amount * 100 : amount;
 
     return await prisma.$transaction(async (tx) => {
       // 1. Update balance
@@ -68,8 +69,8 @@ export const RazorpayService = {
           metadata: { 
             paymentId, 
             gateway: 'razorpay',
-            currency: 'INR',
-            amountPaid: amountINR
+            currency,
+            amountPaid: amount
           },
         },
       });
