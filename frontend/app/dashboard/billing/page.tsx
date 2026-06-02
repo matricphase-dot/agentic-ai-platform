@@ -16,16 +16,19 @@ export default function BillingPage() {
   const [customAmount, setCustomAmount] = useState('');
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [config, setConfig] = useState({ paypalClientId: '', razorpayKeyId: '' });
 
   const fetchBalance = async () => {
-    const [balRes, txRes, userRes] = await Promise.all([
+    const [balRes, txRes, userRes, configRes] = await Promise.all([
       billingApi.balance(),
       billingApi.transactions({ limit: '20' }),
-      userApi.me()
+      userApi.me(),
+      billingApi.getConfig()
     ]);
     if (balRes.success) setBalance(balRes.data);
     if (txRes.success) setTransactions((txRes.data as any)?.transactions || []);
     if (userRes.success) setUser(userRes.data);
+    if (configRes.success) setConfig(configRes.data);
     setLoading(false);
   };
 
@@ -59,7 +62,7 @@ export default function BillingPage() {
       if (!isLoaded) throw new Error('Razorpay SDK failed to load');
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: config.razorpayKeyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: res.data.amount,
         currency: res.data.currency,
         name: 'AgenticAI Platform',
@@ -250,7 +253,8 @@ export default function BillingPage() {
                 </span>
               </div>
 
-              <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "" }}>
+              {config.paypalClientId && (
+                <PayPalScriptProvider options={{ clientId: config.paypalClientId }}>
                 <PayPalButtons
                   style={{ layout: "vertical", shape: "pill", label: "pay" }}
                   forceReRender={[selectedAmount, customAmount]}
@@ -275,6 +279,7 @@ export default function BillingPage() {
                   }}
                 />
               </PayPalScriptProvider>
+              )}
             </div>
           )}
         </div>

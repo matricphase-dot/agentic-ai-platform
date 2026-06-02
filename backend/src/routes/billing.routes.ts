@@ -7,6 +7,17 @@ import { logger } from '../lib/logger';
 const router = Router();
 router.use(authMiddleware);
 
+// GET /billing/config
+router.get('/config', async (req: Request, res: Response) => {
+  return res.json({
+    success: true,
+    data: {
+      paypalClientId: process.env.PAYPAL_CLIENT_ID || 'ATzN4HypBBqHLV-gTUdguwwmoeejltZ8dmm-SJN-HrGymtsKdul2oaoYF8z8fOkdDkYHap-DQy00qUt1',
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_live_SlC9oFgIO6E4iy'
+    }
+  });
+});
+
 // GET /billing/balance
 router.get('/balance', async (req: Request, res: Response) => {
   try {

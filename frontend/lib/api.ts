@@ -92,6 +92,7 @@ export const billingApi = {
   createPaypalOrder: (amount: number) => apiRequest('/billing/paypal/create-order', { method: 'POST', body: JSON.stringify({ amountUSD: amount }) }),
   capturePaypalOrder: (orderId: string) => apiRequest(`/billing/paypal/capture`, { method: 'POST', body: JSON.stringify({ orderId }) }),
   claimFaucet: () => apiRequest('/staking/faucet', { method: 'POST' }),
+  getConfig: () => apiRequest('/billing/config'),
 };
 
 export const governanceApi = {
