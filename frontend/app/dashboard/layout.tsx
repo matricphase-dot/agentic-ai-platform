@@ -63,7 +63,39 @@ export default function DashboardLayout({
     );
   }
 
+  const handleLogout = () => {
+    auth.logout();
+    router.replace('/auth/login');
+  };
+
   if (!authorized) return null;
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-[#0A0A0A]">
+      <nav className="border-b border-[#1E1E1E] bg-[#111111] px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <a href="/dashboard" className="text-xl font-black text-white tracking-tighter">
+              Agentic<span className="text-purple-500 italic">AI</span>
+            </a>
+            <div className="hidden md:flex gap-6 text-sm text-zinc-400">
+              <a href="/dashboard" className="hover:text-white transition">Dashboard</a>
+              <a href="/dashboard/billing" className="hover:text-white transition">Billing</a>
+              <a href="/marketplace" className="hover:text-white transition">Marketplace</a>
+              <a href="/docs" className="hover:text-white transition">Docs</a>
+            </div>
+          </div>
+          <button 
+            onClick={handleLogout}
+            className="text-sm font-medium text-red-400 hover:text-red-300 transition px-4 py-2 bg-red-400/10 hover:bg-red-400/20 rounded-lg"
+          >
+            Logout
+          </button>
+        </div>
+      </nav>
+      <main className="max-w-7xl mx-auto">
+        {children}
+      </main>
+    </div>
+  );
 }
