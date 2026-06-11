@@ -111,13 +111,33 @@ export const InvocationService = {
     let errorMessage: string | undefined;
 
     try {
-      // 7. Call LLM with failover
-      llmResult = await callLLM(
-        agent.modelProvider,    // preferred provider
-        systemPrompt,           // system prompt (with secrets injected)
-        userInput,              // user message
-        agent.modelName         // preferred model
-      );
+      // 7. Check if Ollama is running and call it
+      try {
+        await fetch('http://localhost:11434/', { signal: AbortSignal.timeout(2000) });
+      } catch (err) {
+        logger.error('Ollama is not running. Please start Ollama.');
+        throw new Error('Ollama is not running.');
+      }
+
+      const startMs = Date.now();
+      const response = await fetch('http://localhost:11434/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'myagent',
+          prompt: `${systemPrompt}\nUser: ${userInput}\nAssistant:`,
+          stream: false
+        })
+      });
+      const data = await response.json();
+
+      llmResult = {
+        output: data.response,
+        tokensUsed: data.eval_count || 0,
+        provider: 'ollama',
+        model: 'myagent',
+        latencyMs: Date.now() - startMs,
+      };
     } catch (error: any) {
       finalStatus = 'FAILED';
       errorMessage = error.message || 'LLM call failed';
