@@ -146,7 +146,10 @@ async function callHuggingFace(systemPrompt: string, userInput: string, modelNam
 
 // --- OLLAMA PROVIDER ---
 async function callOllama(systemPrompt: string, userInput: string, modelName = 'llama3'): Promise<LLMResponse> {
-  const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+  let ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+  if (!ollamaUrl.startsWith('http://') && !ollamaUrl.startsWith('https://')) {
+    ollamaUrl = `https://${ollamaUrl}`;
+  }
 
   const start = Date.now();
   const response = await fetch(`${ollamaUrl}/api/chat`, {

@@ -111,7 +111,10 @@ export const InvocationService = {
     let errorMessage: string | undefined;
 
     try {
-      const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+      let ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+      if (!ollamaUrl.startsWith('http://') && !ollamaUrl.startsWith('https://')) {
+        ollamaUrl = `https://${ollamaUrl}`;
+      }
       
       // 7. Check if Ollama is running and call it
       try {
