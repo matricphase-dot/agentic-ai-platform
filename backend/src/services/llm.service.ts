@@ -152,7 +152,7 @@ async function callOllama(systemPrompt: string, userInput: string, modelName = '
   }
 
   const start = Date.now();
-  const response = await fetch(`${ollamaUrl}/api/chat`, {
+  const response = await fetch(`${ollamaUrl}/api/generate`, {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
@@ -160,21 +160,18 @@ async function callOllama(systemPrompt: string, userInput: string, modelName = '
     },
     body: JSON.stringify({
       model: 'myagent',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userInput },
-      ],
+      prompt: `${systemPrompt}\n\nUser: ${userInput}\n\nAssistant:`,
       stream: false,
     }),
-    // @ts-ignore - signal might not be in older fetch types but works in modern Node
-    signal: (AbortSignal as any).timeout ? (AbortSignal as any).timeout(30000) : undefined,
+    // @ts-ignore
+    signal: (AbortSignal as any).timeout ? (AbortSignal as any).timeout(60000) : undefined,
   });
 
   if (!response.ok) throw new Error(`Ollama error: ${response.status}`);
 
   const data = await response.json() as any;
   return {
-    output: data.message?.content || '',
+    output: data.response || '',
     tokensUsed: data.eval_count || 0,
     provider: 'ollama',
     model: modelName,
