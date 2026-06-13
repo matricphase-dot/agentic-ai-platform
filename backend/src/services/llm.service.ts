@@ -154,7 +154,10 @@ async function callOllama(systemPrompt: string, userInput: string, modelName = '
   const start = Date.now();
   const response = await fetch(`${ollamaUrl}/api/chat`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true'
+    },
     body: JSON.stringify({
       model: modelName,
       messages: [

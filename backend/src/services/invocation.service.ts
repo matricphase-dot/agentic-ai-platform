@@ -127,7 +127,10 @@ export const InvocationService = {
       const startMs = Date.now();
       const response = await fetch(`${ollamaUrl}/api/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: JSON.stringify({
           model: 'myagent',
           prompt: `${systemPrompt}\nUser: ${userInput}\nAssistant:`,
