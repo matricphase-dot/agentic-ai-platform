@@ -146,7 +146,7 @@ async function callHuggingFace(systemPrompt: string, userInput: string, modelNam
 
 // --- OLLAMA PROVIDER ---
 async function callOllama(systemPrompt: string, userInput: string, modelName = 'llama3'): Promise<LLMResponse> {
-  let ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+  let ollamaUrl = (process.env.OLLAMA_URL || 'http://localhost:11434').replace(/\/$/, '');
   if (!ollamaUrl.startsWith('http://') && !ollamaUrl.startsWith('https://')) {
     ollamaUrl = `https://${ollamaUrl}`;
   }

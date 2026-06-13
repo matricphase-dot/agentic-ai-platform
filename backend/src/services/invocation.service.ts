@@ -111,7 +111,7 @@ export const InvocationService = {
     let errorMessage: string | undefined;
 
     try {
-      let ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+      let ollamaUrl = (process.env.OLLAMA_URL || 'http://localhost:11434').replace(/\/$/, '');
       if (!ollamaUrl.startsWith('http://') && !ollamaUrl.startsWith('https://')) {
         ollamaUrl = `https://${ollamaUrl}`;
       }
