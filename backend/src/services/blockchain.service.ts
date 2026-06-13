@@ -12,7 +12,7 @@ const STAKING_ADDRESS = process.env.STAKING_CONTRACT_ADDRESS;
 const GOVERNANCE_ADDRESS = process.env.GOVERNANCE_CONTRACT_ADDRESS;
 const NODE_REWARDS_ADDRESS = process.env.NODE_REWARDS_CONTRACT_ADDRESS;
 const TREASURY_ADDRESS = process.env.TREASURY_CONTRACT_ADDRESS;
-const RPC_URL = process.env.BLOCKCHAIN_RPC_URL || 'https://rpc-mumbai.maticvigil.com';
+const RPC_URL = process.env.BLOCKCHAIN_RPC_URL || 'https://rpc-amoy.polygon.technology';
 
 export class BlockchainService {
   private provider: ethers.FallbackProvider;
@@ -21,7 +21,7 @@ export class BlockchainService {
   constructor() {
     const providers = [
       new ethers.JsonRpcProvider(RPC_URL),
-      new ethers.JsonRpcProvider("https://polygon-rpc.com"), // Public fallback
+      new ethers.JsonRpcProvider("https://rpc-amoy.polygon.technology"), // Public fallback
     ].filter(p => !!p);
 
     this.provider = new ethers.FallbackProvider(providers, 1);

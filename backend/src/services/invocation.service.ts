@@ -111,16 +111,18 @@ export const InvocationService = {
     let errorMessage: string | undefined;
 
     try {
+      const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+      
       // 7. Check if Ollama is running and call it
       try {
-        await fetch('http://localhost:11434/', { signal: AbortSignal.timeout(2000) });
+        await fetch(`${ollamaUrl}/`, { signal: AbortSignal.timeout(2000) });
       } catch (err) {
-        logger.error('Ollama is not running. Please start Ollama.');
-        throw new Error('Ollama is not running.');
+        logger.error(`Ollama is not reachable at ${ollamaUrl}.`);
+        throw new Error(`Ollama is not reachable at ${ollamaUrl}.`);
       }
 
       const startMs = Date.now();
-      const response = await fetch('http://localhost:11434/api/generate', {
+      const response = await fetch(`${ollamaUrl}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

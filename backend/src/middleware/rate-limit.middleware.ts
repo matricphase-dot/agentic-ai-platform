@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { RateLimiterRedis } from 'rate-limiter-flexible';
-import { redis } from '../lib/redis';
-import { logger } from '../lib/logger';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
 
 function getIp(req: Request): string {
   return (
@@ -11,9 +9,8 @@ function getIp(req: Request): string {
   );
 }
 
-// Global IP limiter - prevents DDoS
-export const globalLimiter = new RateLimiterRedis({
-  storeClient: redis,
+// Global IP limiter - prevents DDoS (Memory based for free tier)
+export const globalLimiter = new RateLimiterMemory({
   keyPrefix: 'rl:global',
   points: 200,        // 200 requests
   duration: 60,       // per minute
@@ -21,8 +18,7 @@ export const globalLimiter = new RateLimiterRedis({
 });
 
 // Public endpoints - generous but protected
-const publicLimiter = new RateLimiterRedis({
-  storeClient: redis,
+const publicLimiter = new RateLimiterMemory({
   keyPrefix: 'rl:public',
   points: 60,        // 60 requests
   duration: 60,      // per minute
@@ -30,8 +26,7 @@ const publicLimiter = new RateLimiterRedis({
 });
 
 // Auth endpoints - strict
-const authLimiter = new RateLimiterRedis({
-  storeClient: redis,
+const authLimiter = new RateLimiterMemory({
   keyPrefix: 'rl:auth',
   points: 10,
   duration: 60,
@@ -39,8 +34,7 @@ const authLimiter = new RateLimiterRedis({
 });
 
 // Invocation endpoint - per API key
-const invocationLimiter = new RateLimiterRedis({
-  storeClient: redis,
+const invocationLimiter = new RateLimiterMemory({
   keyPrefix: 'rl:invoke',
   points: 20,         // 20 invocations
   duration: 60,       // per minute

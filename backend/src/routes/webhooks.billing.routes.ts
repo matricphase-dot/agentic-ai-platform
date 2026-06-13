@@ -8,7 +8,11 @@ const router = Router();
 
 // POST /api/webhooks/razorpay
 router.post('/razorpay', async (req: Request, res: Response) => {
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET || 'your_webhook_secret';
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  if (!secret) {
+    logger.error('RAZORPAY_WEBHOOK_SECRET is not configured');
+    return res.status(500).send('Webhook configuration error');
+  }
   const signature = req.headers['x-razorpay-signature'] as string;
 
   const expectedSignature = crypto
@@ -41,21 +45,6 @@ router.post('/razorpay', async (req: Request, res: Response) => {
   return res.status(200).send('OK');
 });
 
-// POST /api/webhooks/paypal
-router.post('/paypal', async (req: Request, res: Response) => {
-  // Simple check for PayPal event (real verification requires calling PayPal API)
-  const event = req.body.event_type;
-  
-  if (event === 'PAYMENT.CAPTURE.COMPLETED') {
-    const resource = req.body.resource;
-    const orderId = resource.supplementary_data?.related_ids?.order_id || resource.id;
-    const amountUSD = parseFloat(resource.amount.value);
-    
-    // We'd need a way to map PayPal order to userId if not in webhook
-    // Usually via custom_id or invoice_id in the original order creation
-  }
-
-  return res.status(200).send('OK');
-});
+// PayPal route removed as it was disabled in the frontend
 
 export { router as billingWebhookRouter };
