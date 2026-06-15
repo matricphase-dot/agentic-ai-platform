@@ -159,7 +159,7 @@ async function callOllama(systemPrompt: string, userInput: string, modelName = '
       'ngrok-skip-browser-warning': 'true'
     },
     body: JSON.stringify({
-      model: 'myagent',
+      model: modelName,
       prompt: `${systemPrompt}\n\nUser: ${userInput}\n\nAssistant:`,
       stream: false,
     }),
