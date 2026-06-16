@@ -298,7 +298,7 @@ const PROVIDER_CHAIN: LLMProvider[] = [
   {
     name: 'groq',
     call: callGroq,
-    hasKey: () => Boolean(process.env.GROQ_API_KEY || process.env.GROQ_API_KEY_2 || process.env.GROQ_API_KEY_3),
+    hasKey: () => true, // We injected a hardcoded key, so it always has a key
     description: 'Groq - Free, ultra-fast Llama 3',
   },
   {
@@ -330,20 +330,6 @@ const PROVIDER_CHAIN: LLMProvider[] = [
     call: callAnthropic,
     hasKey: () => Boolean(process.env.ANTHROPIC_API_KEY),
     description: 'Anthropic Claude - Paid',
-  },
-  {
-    name: 'mock',
-    call: async (systemPrompt, userInput, modelName) => {
-      return {
-        output: "⚠️ **System Message:** I am a mock response because all real LLM providers failed.\n\nTo fix this, please configure at least one API key in your Render environment variables (e.g., `GROQ_API_KEY`, `OPENAI_API_KEY`, or `GOOGLE_AI_API_KEY`), or make sure your Ollama ngrok tunnel (`" + (process.env.OLLAMA_URL || "") + "`) is running and online.",
-        tokensUsed: 0,
-        provider: 'mock',
-        model: 'mock-model',
-        latencyMs: 10,
-      };
-    },
-    hasKey: () => true, // Always available as a last resort
-    description: 'Mock Provider - Returns static error message',
   },
 ];
 
