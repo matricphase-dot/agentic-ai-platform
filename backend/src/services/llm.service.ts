@@ -34,6 +34,7 @@ const providerHealth: Record<string, ProviderHealth> = {
   google: { name: 'google', failureCount: 0, lastFailureAt: null, isCircuitOpen: false, circuitOpenedAt: null },
   openai: { name: 'openai', failureCount: 0, lastFailureAt: null, isCircuitOpen: false, circuitOpenedAt: null },
   anthropic: { name: 'anthropic', failureCount: 0, lastFailureAt: null, isCircuitOpen: false, circuitOpenedAt: null },
+  mock: { name: 'mock', failureCount: 0, lastFailureAt: null, isCircuitOpen: false, circuitOpenedAt: null },
 };
 
 const CIRCUIT_BREAK_THRESHOLD = 3; // failures before circuit opens
@@ -370,7 +371,10 @@ export async function callLLM(
 
     try {
       logger.info(`Calling LLM provider: ${provider.name}`);
-      const result = await provider.call(systemPrompt, userInput, modelName);
+      // Only pass the modelName if we are actually using the preferred provider.
+      // If we are falling back to a different provider, we don't want to accidentally pass an Anthropic model name to Groq!
+      const modelToUse = provider.name === preferredProvider ? modelName : undefined;
+      const result = await provider.call(systemPrompt, userInput, modelToUse);
       recordSuccess(provider.name);
 
       // Log if we used a fallback
