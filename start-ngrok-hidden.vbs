@@ -7,4 +7,5 @@ Dim domain
 domain = "starch-juniper-atrium.ngrok-free.dev" ' e.g., agenticai.ngrok-free.app
 
 ' Start ngrok silently
-WshShell.Run "cmd /c ngrok http --domain=" & domain & " 11434 --host-header=localhost:11434", 0, False
+WshShell.CurrentDirectory = "E:\AgenticAI"
+WshShell.Run "cmd /c ngrok.exe http --url=https://" & domain & " 11434 --host-header=rewrite", 0, False

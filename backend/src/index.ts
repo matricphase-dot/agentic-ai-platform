@@ -114,6 +114,10 @@ import statsRouter from "./routes/stats.routes";
 import contactRouter from "./routes/contact.routes";
 import { billingWebhookRouter } from "./routes/webhooks.billing.routes";
 import webhooksRouter from "./routes/webhooks.routes";
+import { ragRouter } from "./routes/rag.routes";
+import { schedulesRouter } from "./routes/schedules.routes";
+import { pipelinesRouter } from "./routes/pipelines.routes";
+import { SchedulerService } from './services/scheduler.service';
 
 app.use('/api/auth', authRouter);
 app.use('/api/agents', agentsRouter);
@@ -134,9 +138,13 @@ app.use('/api/stats', statsRouter);
 app.use('/api/contact', contactRouter);
 app.use('/api/webhooks/billing', billingWebhookRouter);
 app.use('/api/webhooks', webhooksRouter);
+app.use('/api', ragRouter);
+app.use('/api', schedulesRouter);
+app.use('/api', pipelinesRouter);
 
 // Documentation
 setupSwagger(app);
+
 
 // Health check
 app.get("/health", (req, res) => {
@@ -150,6 +158,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, async () => {
   logger.info(`🚀 Agentic AI Backend running on port ${PORT}`);
+  await SchedulerService.loadAllSchedules();
   EmailService.verifyConnection();
   
   // Keep-alive ping for Render free tier

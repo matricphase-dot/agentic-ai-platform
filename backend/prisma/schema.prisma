@@ -152,6 +152,9 @@ model User {
   delegationsTo     Delegation[] @relation("DelegationTo")
   notificationPrefs NotificationPreference?
   refreshTokens     RefreshToken[]
+  knowledgeBases    KnowledgeBase[]
+  schedules         AgentSchedule[]
+  pipelines         AgentPipeline[]
 }
 
 model ApiKey {
@@ -217,7 +220,9 @@ model Agent {
   stakes         Stake[]
   purchases      Purchase[]
   secretBindings AgentSecretBinding[]
-
+  knowledgeBases KnowledgeBase[]
+  ragEnabled     Boolean @default(false)
+  schedules      AgentSchedule[]
   @@index([isPublic, status])
   @@index([userId])
   @@index([category])
@@ -616,4 +621,98 @@ model NotificationPreference {
   pushGovernance   Boolean @default(true)
   pushNodes        Boolean @default(true)
   pushTeams        Boolean @default(true)
+}
+
+model KnowledgeBase {
+  id          String    @id @default(cuid())
+  agentId     String
+  agent       Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  name        String
+  description String?
+  status      String    @default("processing")
+  totalChunks Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  documents   KnowledgeDocument[]
+}
+
+model KnowledgeDocument {
+  id              String        @id @default(cuid())
+  knowledgeBaseId String
+  knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  filename        String
+  fileType        String
+  fileSize        Int
+  status          String        @default("processing")
+  chunkCount      Int           @default(0)
+  createdAt       DateTime      @default(now())
+}
+
+model VectorChunk {
+  id              String   @id @default(cuid())
+  knowledgeBaseId String
+  documentId      String
+  content         String   @db.Text
+  embedding       Float[]
+  metadata        Json     @default("{}")
+  chunkIndex      Int
+  createdAt       DateTime @default(now())
+}
+
+model AgentSchedule {
+  id             String        @id @default(cuid())
+  agentId        String
+  agent          Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  name           String
+  cronExpression String
+  inputPayload   Json          @default("{}")
+  isActive       Boolean       @default(true)
+  lastRunAt      DateTime?
+  nextRunAt      DateTime?
+  totalRuns      Int           @default(0)
+  failCount      Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  runs           ScheduleRun[]
+}
+
+model ScheduleRun {
+  id         String        @id @default(cuid())
+  scheduleId String
+  schedule   AgentSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  status     String
+  output     String?       @db.Text
+  error      String?
+  latencyMs  Int?
+  ranAt      DateTime      @default(now())
+}
+
+model AgentPipeline {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  name        String
+  description String?
+  config      Json
+  isActive    Boolean       @default(true)
+  totalRuns   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  runs        PipelineRun[]
+}
+
+model PipelineRun {
+  id         String        @id @default(cuid())
+  pipelineId String
+  pipeline   AgentPipeline @relation(fields: [pipelineId], references: [id])
+  input      Json
+  output     Json?
+  steps      Json          @default("[]")
+  status     String        @default("running")
+  latencyMs  Int?
+  createdAt  DateTime      @default(now())
 }

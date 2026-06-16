@@ -80,6 +80,7 @@ export default function DashboardLayout({
             </a>
             <div className="hidden md:flex gap-6 text-sm text-zinc-400">
               <a href="/dashboard" className="hover:text-white transition">Dashboard</a>
+              <a href="/dashboard/pipelines" className="hover:text-white transition">Pipelines</a>
               <a href="/dashboard/billing" className="hover:text-white transition">Billing</a>
               <a href="/marketplace" className="hover:text-white transition">Marketplace</a>
               <a href="/docs" className="hover:text-white transition">Docs</a>

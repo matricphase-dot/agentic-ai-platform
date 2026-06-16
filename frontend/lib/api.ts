@@ -170,3 +170,35 @@ export const secretsApi = {
   create: (name: string, value: string) => apiRequest('/secrets', { method: 'POST', body: JSON.stringify({ name, value }) }),
   delete: (name: string) => apiRequest(`/secrets/${name}`, { method: 'DELETE' }),
 };
+
+export const ragApi = {
+  listKbs: (agentId: string) => apiRequest(`/agents/${agentId}/knowledge-bases`),
+  createKb: (agentId: string, data: any) => apiRequest(`/agents/${agentId}/knowledge-bases`, {
+    method: 'POST', body: JSON.stringify(data)
+  }),
+  deleteKb: (id: string) => apiRequest(`/knowledge-bases/${id}`, { method: 'DELETE' }),
+  search: (id: string, query: string) => apiRequest(`/knowledge-bases/${id}/search`, {
+    method: 'POST', body: JSON.stringify({ query })
+  }),
+};
+
+export const schedulesApi = {
+  list: (agentId: string) => apiRequest(`/agents/${agentId}/schedules`),
+  create: (agentId: string, data: any) => apiRequest(`/agents/${agentId}/schedules`, {
+    method: 'POST', body: JSON.stringify(data)
+  }),
+  toggle: (id: string) => apiRequest(`/schedules/${id}/toggle`, { method: 'PUT' }),
+  runNow: (id: string) => apiRequest(`/schedules/${id}/run-now`, { method: 'POST' }),
+  delete: (id: string) => apiRequest(`/schedules/${id}`, { method: 'DELETE' }),
+};
+
+export const pipelinesApi = {
+  list: () => apiRequest('/pipelines'),
+  create: (data: any) => apiRequest('/pipelines', {
+    method: 'POST', body: JSON.stringify(data)
+  }),
+  run: (id: string, input: string) => apiRequest(`/pipelines/${id}/run`, {
+    method: 'POST', body: JSON.stringify({ input })
+  }),
+  delete: (id: string) => apiRequest(`/pipelines/${id}`, { method: 'DELETE' }),
+};

@@ -6,7 +6,10 @@ import { agentsApi } from '@/lib/api';
 import { API_URL } from '@/lib/config';
 import type { Agent, AgentAnalytics } from '@/types/api.types';
 
-const TABS = ['Overview', 'Analytics', 'Versions', 'Sandbox', 'Settings'];
+import KnowledgePage from './knowledge/page';
+import SchedulePage from './schedule/page';
+
+const TABS = ['Overview', 'Analytics', 'Versions', 'Knowledge', 'Schedule', 'Sandbox', 'Settings'];
 
 export default function AgentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -256,6 +259,16 @@ export default function AgentDetailPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Tab: Knowledge */}
+      {tab === 'Knowledge' && (
+        <KnowledgePage />
+      )}
+
+      {/* Tab: Schedule */}
+      {tab === 'Schedule' && (
+        <SchedulePage />
       )}
 
       {/* Tab: Sandbox — link to sandbox page */}

@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { callLLM } from './llm.service';
 import { SecretsService } from './secrets.service';
 import { logger } from '../lib/logger';
+import { RAGService } from './rag.service';
 
 const PLATFORM_FEE = Number(process.env.PLATFORM_FEE_PERCENT || 20) / 100;
 const STAKER_REWARD = Number(process.env.STAKER_REWARD_PERCENT || 30) / 100;
@@ -106,6 +107,14 @@ export const InvocationService = {
       );
     }
 
+    if (agent.ragEnabled) {
+      const ragContext = await RAGService.buildContext(agent.id, userInput);
+      if (ragContext) {
+        systemPrompt = systemPrompt + ragContext;
+        logger.info('RAG context added', { agentId: agent.id, contextLength: ragContext.length });
+      }
+    }
+
     let llmResult;
     let finalStatus: 'SUCCESS' | 'FAILED' = 'SUCCESS';
     let errorMessage: string | undefined;
@@ -137,7 +146,7 @@ export const InvocationService = {
           stream: false
         })
       });
-      const data = await response.json();
+      const data = await response.json() as any;
 
       llmResult = {
         output: data.response,

@@ -42,7 +42,8 @@ export class AgentService {
       outputSchema,
       cpuRequired,
       ramRequired,
-      gpuRequired
+      gpuRequired,
+      tags
     } = data;
 
     let uniqueSlug = slug;
@@ -71,6 +72,7 @@ export class AgentService {
         cpuRequired: cpuRequired || 1,
         ramRequired: ramRequired || 512,
         gpuRequired: gpuRequired || false,
+        tags: tags || [],
         status: AgentStatus.DRAFT, // Start as draft
         analytics: {
           create: {}

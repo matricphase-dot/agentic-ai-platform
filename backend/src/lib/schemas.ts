@@ -18,7 +18,7 @@ export const loginSchema = z.object({
 export const createAgentSchema = z.object({
   body: z.object({
     name: z.string().min(3).max(100),
-    slug: z.string().min(3).max(50).regex(/^[a-z0-z0-9-]+$/),
+    slug: z.string().min(3).max(50).regex(/^[a-z0-9-]+$/),
     description: z.string().min(20).max(2000),
     category: z.enum(['CHATBOT','DATA_ANALYST','CODE_ASSISTANT','RESEARCH','AUTOMATION','CUSTOMER_SUPPORT','FINANCE','LEGAL','OTHER']),
     modelProvider: z.enum(['groq','huggingface','ollama','google','openai','anthropic']),

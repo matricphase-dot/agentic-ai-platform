@@ -138,9 +138,10 @@ export default function CreateAgentPage() {
     setCreating(true);
     setError('');
 
-    const slug = form.name.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+    try {
+      const slug = form.name.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
 
     const payload = {
       name: form.name,
@@ -161,16 +162,26 @@ export default function CreateAgentPage() {
       status: publish ? 'PUBLISHED' : 'DRAFT',
     };
 
-    const res = await agentsApi.create(payload);
-    if (res.success) {
-      if (publish) {
-        await agentsApi.publish((res.data as any).id);
+      const res = await agentsApi.create(payload);
+      if (res.success) {
+        if (publish) {
+          const pubRes = await agentsApi.publish((res.data as any).id);
+          if (!pubRes.success) {
+            setError(pubRes.error || pubRes.message || 'Created successfully, but failed to publish.');
+            setCreating(false);
+            return;
+          }
+        }
+        router.push('/dashboard/agents');
+      } else {
+        const errorMsg = (res as any).error || (res as any).message || 'Failed to create agent';
+        setError(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
       }
-      router.push('/dashboard/agents');
-    } else {
-      setError((res as any).error || (res as any).message || 'Failed to create agent');
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred.');
+    } finally {
+      setCreating(false);
     }
-    setCreating(false);
   };
 
   return (
