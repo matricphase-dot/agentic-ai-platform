@@ -372,8 +372,14 @@ export async function callLLM(
     try {
       logger.info(`Calling LLM provider: ${provider.name}`);
       // Only pass the modelName if we are actually using the preferred provider.
-      // If we are falling back to a different provider, we don't want to accidentally pass an Anthropic model name to Groq!
-      const modelToUse = provider.name === preferredProvider ? modelName : undefined;
+      let modelToUse = provider.name === preferredProvider ? modelName : undefined;
+
+      // Auto-correct invalid model selections to prevent 404s and circuit breaker trips
+      if (provider.name === 'groq' && modelToUse && !modelToUse.includes('llama') && !modelToUse.includes('mixtral') && !modelToUse.includes('gemma')) {
+        logger.warn(`Auto-correcting invalid Groq model ${modelToUse} to llama3-8b-8192`);
+        modelToUse = 'llama3-8b-8192';
+      }
+
       const result = await provider.call(systemPrompt, userInput, modelToUse);
       recordSuccess(provider.name);
 
