@@ -120,39 +120,21 @@ export const InvocationService = {
     let errorMessage: string | undefined;
 
     try {
-      let ollamaUrl = (process.env.OLLAMA_URL || 'http://localhost:11434').replace(/\/$/, '');
-      if (!ollamaUrl.startsWith('http://') && !ollamaUrl.startsWith('https://')) {
-        ollamaUrl = `https://${ollamaUrl}`;
-      }
-      
-      // 7. Check if Ollama is running and call it
-      try {
-        await fetch(`${ollamaUrl}/`, { signal: AbortSignal.timeout(2000) });
-      } catch (err) {
-        logger.error(`Ollama is not reachable at ${ollamaUrl}.`);
-        throw new Error(`Ollama is not reachable at ${ollamaUrl}.`);
-      }
-
       const startMs = Date.now();
-      const response = await fetch(`${ollamaUrl}/api/generate`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
-        },
-        body: JSON.stringify({
-          model: 'myagent',
-          prompt: `${systemPrompt}\nUser: ${userInput}\nAssistant:`,
-          stream: false
-        })
-      });
-      const data = await response.json() as any;
+      
+      // 7. Call LLM Service (which handles fallbacks and circuit breakers)
+      const result = await callLLM(
+        systemPrompt,
+        userInput,
+        agent.modelProvider,
+        agent.modelName
+      );
 
       llmResult = {
-        output: data.response,
-        tokensUsed: data.eval_count || 0,
-        provider: 'ollama',
-        model: 'myagent',
+        output: result.output,
+        tokensUsed: result.tokensUsed || 0,
+        provider: result.provider,
+        model: result.model,
         latencyMs: Date.now() - startMs,
       };
     } catch (error: any) {
