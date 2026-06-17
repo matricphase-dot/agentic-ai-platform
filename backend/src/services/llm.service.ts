@@ -95,7 +95,7 @@ function getGroqApiKey(): string {
   return keys[index];
 }
 
-async function callGroq(systemPrompt: string, userInput: string, modelName = 'llama3-8b-8192'): Promise<LLMResponse> {
+async function callGroq(systemPrompt: string, userInput: string, modelName = 'llama-3.1-8b-instant'): Promise<LLMResponse> {
   const apiKey = getGroqApiKey();
   const start = Date.now();
   const groq = new Groq({ apiKey });
@@ -368,8 +368,8 @@ export async function callLLM(
 
       // Auto-correct invalid model selections to prevent 404s and circuit breaker trips
       if (provider.name === 'groq' && modelToUse && !modelToUse.includes('llama') && !modelToUse.includes('mixtral') && !modelToUse.includes('gemma')) {
-        logger.warn(`Auto-correcting invalid Groq model ${modelToUse} to llama3-8b-8192`);
-        modelToUse = 'llama3-8b-8192';
+        logger.warn(`Auto-correcting invalid Groq model ${modelToUse} to llama-3.1-8b-instant`);
+        modelToUse = 'llama-3.1-8b-instant';
       }
 
       const result = await provider.call(systemPrompt, userInput, modelToUse);

@@ -21,7 +21,7 @@ const PROVIDERS = [
     label: 'Groq (Free — Fastest)',
     badge: 'FREE',
     models: [
-      'llama3-8b-8192',
+      'llama-3.1-8b-instant',
       'llama3-70b-8192',
       'mixtral-8x7b-32768',
       'gemma-7b-it',
@@ -112,7 +112,7 @@ export default function CreateAgentPage() {
     category: 'CHATBOT',
     tags: '',
     modelProvider: 'groq',
-    modelName: 'llama3-8b-8192',
+    modelName: 'llama-3.1-8b-instant',
     customModel: '',
     systemPrompt: 'You are a helpful AI assistant.',
     gpuRequired: false,
