@@ -89,8 +89,8 @@ export const AuthService = {
         await tx.balance.create({
           data: {
             userId: newUser.id,
-            credits: 0,
-            tokenBalance: 0,
+            credits: 1000,
+            tokenBalance: 1000,
           },
         });
       } catch (e) {
