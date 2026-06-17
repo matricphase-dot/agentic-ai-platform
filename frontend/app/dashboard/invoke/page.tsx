@@ -91,10 +91,11 @@ export default function InvokePage() {
                          focus:outline-none focus:border-purple-500/50"
             />
             <a href="/dashboard/settings"
+               target="_blank"
                className="border border-zinc-700 text-zinc-400 px-3 py-3 
                           rounded-lg hover:text-white transition text-sm 
-                          flex items-center">
-              Get Key
+                          flex items-center gap-1">
+              Get Key ↗
             </a>
           </div>
         </div>
