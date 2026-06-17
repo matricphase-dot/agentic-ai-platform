@@ -15,17 +15,10 @@ export default function InvokePage() {
   const [jsonError, setJsonError] = useState('');
 
   useEffect(() => {
-    Promise.all([
-      agentsApi.list({ status: 'PUBLISHED' }),
-      keysApi.list(),
-    ]).then(([agentsRes, keysRes]) => {
+    agentsApi.list({ status: 'PUBLISHED' }).then(agentsRes => {
       const agentList = Array.isArray(agentsRes.data) ? agentsRes.data : (agentsRes.data as any)?.agents || [];
       setAgents(agentList);
       if (agentList.length > 0) setSelectedAgent(agentList[0].id);
-
-      const keyList = (keysRes.data as any) || [];
-      setKeys(keyList);
-      if (keyList.length > 0) setSelectedKey(keyList[0].keyPrefix);
     });
   }, []);
 
@@ -35,8 +28,8 @@ export default function InvokePage() {
   };
 
   const handleInvoke = async () => {
-    if (!selectedAgent || !selectedKey) {
-      setError('Select an agent and API key');
+    if (!selectedAgent) {
+      setError('Select an agent');
       return;
     }
     if (!validateJson(inputJson)) return;
@@ -56,9 +49,9 @@ export default function InvokePage() {
     setLoading(false);
   };
 
-  const curlCommand = selectedAgent && selectedKey
+      const curlCommand = selectedAgent
     ? `curl -X POST ${API_URL}/api/invoke/${selectedAgent} \\
-  -H "X-API-Key: ${selectedKey}" \\
+  -H "Authorization: Bearer <YOUR_SESSION_TOKEN>" \\${selectedKey ? `\n  -H "X-API-Key: ${selectedKey}" \\` : ''}
   -H "Content-Type: application/json" \\
   -d '${inputJson}'`
     : '';
@@ -83,29 +76,25 @@ export default function InvokePage() {
           </select>
         </div>
 
-        {/* API Key selector */}
+        {/* API Key input */}
         <div>
           <label className="text-zinc-400 text-sm block mb-1">
-            API Key
+            API Key (Optional for Playground)
           </label>
           <div className="flex gap-2">
-            <select value={selectedKey}
+            <input type="text"
+              value={selectedKey}
               onChange={e => setSelectedKey(e.target.value)}
+              placeholder="sk-agnt-..."
               className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] 
-                         text-white rounded-lg px-4 py-3
-                         focus:outline-none focus:border-purple-500/50">
-              <option value="">Select key...</option>
-              {keys.map(k => (
-                <option key={k.id} value={k.keyPrefix}>
-                  {k.name} ({k.keyPrefix})
-                </option>
-              ))}
-            </select>
+                         text-white rounded-lg px-4 py-3 font-mono text-sm
+                         focus:outline-none focus:border-purple-500/50"
+            />
             <a href="/dashboard/settings"
                className="border border-zinc-700 text-zinc-400 px-3 py-3 
                           rounded-lg hover:text-white transition text-sm 
                           flex items-center">
-              + New
+              Get Key
             </a>
           </div>
         </div>

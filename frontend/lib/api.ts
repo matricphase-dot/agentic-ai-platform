@@ -128,15 +128,12 @@ export const auditApi = {
 };
 
 export const invokeApi = {
-  run: (agentId: string, input: any, apiKey: string) =>
-    fetch(`${API_URL}/api/invoke/${agentId}`, {
+  run: (agentId: string, input: any, apiKey?: string) =>
+    apiRequest(`/invoke/${agentId}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': apiKey,
-      },
+      headers: apiKey ? { 'X-API-Key': apiKey } : undefined,
       body: JSON.stringify(input),
-    }).then(r => r.json()),
+    }),
 };
 
 export const usersApi = {
