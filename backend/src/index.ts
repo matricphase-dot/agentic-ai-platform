@@ -16,6 +16,21 @@ import { initializeJobs } from './jobs';
 import { prisma } from './lib/prisma';
 import { globalRateLimit } from './middleware/rate-limit.middleware';
 
+// 0. Auto-airdrop tokens for demo testing (temp fix for existing users)
+(async () => {
+  try {
+    const balances = await prisma.balance.updateMany({
+      where: { tokenBalance: { lt: 1000 } },
+      data: { tokenBalance: 1000, credits: 1000 }
+    });
+    if (balances.count > 0) {
+      console.log(`🎉 Airdropped 1000 tokens & credits to ${balances.count} existing users!`);
+    }
+  } catch (e) {
+    console.warn('Airdrop failed (db might not be ready):', e);
+  }
+})();
+
 // 1. Validate Environment
 dotenv.config();
 validateEnvironment();
