@@ -80,7 +80,7 @@ export const AuthService = {
           passwordHash,
           name: data.name,
           emailVerifyToken: verifyHash,
-          emailVerified: true, // Auto-verify for live demo
+          emailVerified: false, // Production mode: requires actual email verification
         },
       });
 
@@ -89,8 +89,8 @@ export const AuthService = {
         await tx.balance.create({
           data: {
             userId: newUser.id,
-            credits: 1000,
-            tokenBalance: 1000,
+            credits: 0,
+            tokenBalance: 0,
           },
         });
       } catch (e) {

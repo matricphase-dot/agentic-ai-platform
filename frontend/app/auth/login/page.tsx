@@ -58,10 +58,10 @@ export default function LoginPage() {
       } else {
         switch (result.code) {
           case 'INVALID_CREDENTIALS':
-            setError('Invalid email or password. Try demo: alice@agenticai.dev / Demo@1234');
+            setError('Invalid email or password.');
             break;
           case 'EMAIL_NOT_VERIFIED':
-            setError('Please verify your email first. Check your inbox or use a demo account below.');
+            setError('Please verify your email first. Check your inbox.');
             break;
           case 'RATE_LIMIT_EXCEEDED':
             setError('Too many attempts. Please wait a few minutes.');
@@ -75,13 +75,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const quickLogin = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('Demo@1234');
-  };
-
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -168,32 +161,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo accounts */}
-          <div className="mt-6 pt-6 border-t border-[#1E1E1E]">
-            <p className="text-zinc-500 text-xs text-center mb-3">
-              Try with demo accounts (pre-verified)
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { label: '👤 Admin', email: 'demo@agenticai.dev' },
-                { label: '🤖 Creator', email: 'alice@agenticai.dev' },
-                { label: '💰 Staker', email: 'bob@agenticai.dev' },
-              ].map(u => (
-                <button
-                  key={u.email}
-                  type="button"
-                  onClick={() => quickLogin(u.email)}
-                  className="text-xs bg-zinc-800 text-zinc-300 rounded-lg 
-                             px-2 py-2 hover:bg-zinc-700 transition border 
-                             border-zinc-700">
-                  {u.label}
-                </button>
-              ))}
-            </div>
-            <p className="text-zinc-600 text-xs text-center mt-2">
-              Password for all demo accounts: Demo@1234
-            </p>
-          </div>
+          {/* No demo accounts in production */}
 
           <p className="text-center text-zinc-500 text-sm mt-6">
             No account?{' '}

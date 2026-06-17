@@ -7,7 +7,6 @@ export default function StakingPage() {
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
   const [claimMsg, setClaimMsg] = useState('');
-  const [faucetMsg, setFaucetMsg] = useState('');
 
   useEffect(() => {
     stakingApi.portfolio().then(res => {
@@ -26,12 +25,6 @@ export default function StakingPage() {
       if (updated.success) setPortfolio(updated.data);
     }
     setClaiming(false);
-  };
-
-  const handleFaucet = async () => {
-    const res = await stakingApi.faucet();
-    setFaucetMsg((res as any).message || (res.success ? 
-      '1000 AGNT added!' : 'Already claimed'));
   };
 
   const handleUnstake = async (stakeId: string) => {
@@ -59,21 +52,7 @@ export default function StakingPage() {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-white">Staking</h1>
-        <button
-          onClick={handleFaucet}
-          className="text-sm bg-zinc-800 text-zinc-300 px-4 py-2 
-                     rounded-lg hover:bg-zinc-700 transition"
-        >
-          🚰 Claim Demo Tokens
-        </button>
       </div>
-
-      {faucetMsg && (
-        <div className="bg-green-500/10 border border-green-500/20 
-                        rounded-lg px-4 py-3 text-green-400 text-sm">
-          {faucetMsg}
-        </div>
-      )}
 
       {/* Portfolio Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

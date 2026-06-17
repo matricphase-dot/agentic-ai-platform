@@ -103,24 +103,6 @@ export default function BillingPage() {
     }
   };
 
-  const handleClaimFaucet = async () => {
-    setProcessing(true);
-    try {
-      // Assuming there's a faucet endpoint in userApi or billingApi
-      const res = await billingApi.claimFaucet();
-      if (res.success) {
-        toast.success('1,000 AGNT tokens added to your balance!');
-        fetchBalance();
-      } else {
-        toast.error(res.message || 'Faucet claim failed');
-      }
-    } catch (error: any) {
-      toast.error('Failed to claim tokens');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
   if (loading) return <div className="p-6 space-y-4 animate-pulse">
     <div className="h-32 bg-zinc-900 rounded-xl" />
     <div className="h-64 bg-zinc-900 rounded-xl" />
@@ -130,13 +112,6 @@ export default function BillingPage() {
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-white">Billing & Credits</h1>
-        <button 
-          onClick={handleClaimFaucet}
-          disabled={processing}
-          className="text-xs px-4 py-2 bg-purple-600/10 text-purple-400 border border-purple-500/20 rounded-full hover:bg-purple-600/20 transition disabled:opacity-50"
-        >
-          Claim 1,000 Free AGNT Tokens
-        </button>
       </div>
 
       {/* Balance Summary */}
