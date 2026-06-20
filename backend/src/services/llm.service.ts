@@ -5,8 +5,8 @@ import { logger } from '../lib/logger';
 
 interface LLMProvider {
   name: string;
-  hasKey: () => boolean;
-  call: (systemPrompt: string, userInput: string, modelName?: string) => Promise<LLMResponse>;
+  hasKey: (customKeys?: Record<string, string>, requireCustom?: boolean) => boolean;
+  call: (systemPrompt: string, userInput: string, modelName?: string, customKeys?: Record<string, string>) => Promise<LLMResponse>;
   description: string;
 }
 
@@ -75,7 +75,10 @@ function isProviderAvailable(providerName: string): boolean {
 }
 
 // --- GROQ PROVIDER ---
-function getGroqApiKey(): string {
+function getGroqApiKey(customKeys?: Record<string, string>, requireCustom?: boolean): string | undefined {
+  if (customKeys?.GROQ_API_KEY) return customKeys.GROQ_API_KEY;
+  if (requireCustom) return undefined;
+
   // Obfuscated to prevent GitHub Secret Scanners from auto-revoking the key
   const p1 = "gsk_m4Wt93CrUfiCb6tB";
   const p2 = "FSCDWGdyb3FYNXccrI";
@@ -88,15 +91,16 @@ function getGroqApiKey(): string {
     p1 + p2 + p3,
   ].filter(Boolean) as string[];
 
-  if (keys.length === 0) throw new Error('No Groq API keys configured');
+  if (keys.length === 0) return undefined;
 
   // Round-robin rotation based on time (rotates every minute or per request)
   const index = Math.floor(Date.now() / 60000) % keys.length;
   return keys[index];
 }
 
-async function callGroq(systemPrompt: string, userInput: string, modelName = 'llama-3.1-8b-instant'): Promise<LLMResponse> {
-  const apiKey = getGroqApiKey();
+async function callGroq(systemPrompt: string, userInput: string, modelName = 'llama-3.1-8b-instant', customKeys?: Record<string, string>): Promise<LLMResponse> {
+  const apiKey = getGroqApiKey(customKeys);
+  if (!apiKey) throw new Error('No Groq API keys configured');
   const start = Date.now();
   const groq = new Groq({ apiKey });
 
@@ -123,8 +127,8 @@ async function callGroq(systemPrompt: string, userInput: string, modelName = 'll
 }
 
 // --- HUGGING FACE PROVIDER ---
-async function callHuggingFace(systemPrompt: string, userInput: string, modelName = 'mistralai/Mistral-7B-Instruct-v0.2'): Promise<LLMResponse> {
-  const apiKey = process.env.HF_API_KEY;
+async function callHuggingFace(systemPrompt: string, userInput: string, modelName = 'mistralai/Mistral-7B-Instruct-v0.2', customKeys?: Record<string, string>): Promise<LLMResponse> {
+  const apiKey = customKeys?.HF_API_KEY || customKeys?.HUGGINGFACE_API_KEY || process.env.HF_API_KEY;
   if (!apiKey) throw new Error('HF_API_KEY not configured');
 
   const start = Date.now();
@@ -152,7 +156,7 @@ async function callHuggingFace(systemPrompt: string, userInput: string, modelNam
 }
 
 // --- OLLAMA PROVIDER ---
-async function callOllama(systemPrompt: string, userInput: string, modelName = 'llama3'): Promise<LLMResponse> {
+async function callOllama(systemPrompt: string, userInput: string, modelName = 'llama3', customKeys?: Record<string, string>): Promise<LLMResponse> {
   let ollamaUrl = (process.env.OLLAMA_URL || 'http://localhost:11434').replace(/\/$/, '');
   if (!ollamaUrl.startsWith('http://') && !ollamaUrl.startsWith('https://')) {
     ollamaUrl = `https://${ollamaUrl}`;
@@ -187,21 +191,27 @@ async function callOllama(systemPrompt: string, userInput: string, modelName = '
 }
 
 // --- GOOGLE GEMINI PROVIDER ---
-function getGoogleApiKey(): string {
+function getGoogleApiKey(customKeys?: Record<string, string>, requireCustom?: boolean): string | undefined {
+  if (customKeys?.GOOGLE_API_KEY || customKeys?.GEMINI_API_KEY) {
+    return customKeys.GOOGLE_API_KEY || customKeys.GEMINI_API_KEY;
+  }
+  if (requireCustom) return undefined;
+
   const keys = [
     process.env.GOOGLE_AI_API_KEY,
     process.env.GOOGLE_AI_API_KEY_2,
     process.env.GOOGLE_AI_API_KEY_3,
   ].filter(Boolean) as string[];
 
-  if (keys.length === 0) throw new Error('No Google AI API keys configured');
+  if (keys.length === 0) return undefined;
 
   const index = Math.floor(Date.now() / 1000) % keys.length;
   return keys[index];
 }
 
-async function callGemini(systemPrompt: string, userInput: string, modelName = 'gemini-1.5-flash'): Promise<LLMResponse> {
-  const apiKey = getGoogleApiKey();
+async function callGemini(systemPrompt: string, userInput: string, modelName = 'gemini-1.5-flash', customKeys?: Record<string, string>): Promise<LLMResponse> {
+  const apiKey = getGoogleApiKey(customKeys);
+  if (!apiKey) throw new Error('No Google AI API keys configured');
   const start = Date.now();
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
@@ -223,8 +233,8 @@ async function callGemini(systemPrompt: string, userInput: string, modelName = '
 }
 
 // --- OPENAI PROVIDER ---
-async function callOpenAI(systemPrompt: string, userInput: string, modelName = 'gpt-4o-mini'): Promise<LLMResponse> {
-  const apiKey = process.env.OPENAI_API_KEY;
+async function callOpenAI(systemPrompt: string, userInput: string, modelName = 'gpt-4o-mini', customKeys?: Record<string, string>): Promise<LLMResponse> {
+  const apiKey = customKeys?.OPENAI_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
 
   const start = Date.now();
@@ -259,8 +269,8 @@ async function callOpenAI(systemPrompt: string, userInput: string, modelName = '
 }
 
 // --- ANTHROPIC PROVIDER ---
-async function callAnthropic(systemPrompt: string, userInput: string, modelName = 'claude-3-haiku-20240307'): Promise<LLMResponse> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+async function callAnthropic(systemPrompt: string, userInput: string, modelName = 'claude-3-haiku-20240307', customKeys?: Record<string, string>): Promise<LLMResponse> {
+  const apiKey = customKeys?.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
 
   const start = Date.now();
@@ -298,13 +308,13 @@ const PROVIDER_CHAIN: LLMProvider[] = [
   {
     name: 'groq',
     call: callGroq,
-    hasKey: () => true, // We injected a hardcoded key, so it always has a key
+    hasKey: (customKeys, requireCustom) => Boolean(getGroqApiKey(customKeys, requireCustom)),
     description: 'Groq - Free, ultra-fast Llama 3',
   },
   {
     name: 'huggingface',
     call: callHuggingFace,
-    hasKey: () => Boolean(process.env.HF_API_KEY),
+    hasKey: (customKeys, requireCustom) => Boolean(customKeys?.HF_API_KEY || customKeys?.HUGGINGFACE_API_KEY || (!requireCustom && process.env.HF_API_KEY)),
     description: 'Hugging Face - Free open source models',
   },
   {
@@ -316,19 +326,19 @@ const PROVIDER_CHAIN: LLMProvider[] = [
   {
     name: 'google',
     call: callGemini,
-    hasKey: () => Boolean(process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_AI_API_KEY_2 || process.env.GOOGLE_AI_API_KEY_3),
+    hasKey: (customKeys, requireCustom) => Boolean(getGoogleApiKey(customKeys, requireCustom)),
     description: 'Google Gemini - Free tier',
   },
   {
     name: 'openai',
     call: callOpenAI,
-    hasKey: () => Boolean(process.env.OPENAI_API_KEY),
+    hasKey: (customKeys, requireCustom) => Boolean(customKeys?.OPENAI_API_KEY || (!requireCustom && process.env.OPENAI_API_KEY)),
     description: 'OpenAI - Paid',
   },
   {
     name: 'anthropic',
     call: callAnthropic,
-    hasKey: () => Boolean(process.env.ANTHROPIC_API_KEY),
+    hasKey: (customKeys, requireCustom) => Boolean(customKeys?.ANTHROPIC_API_KEY || (!requireCustom && process.env.ANTHROPIC_API_KEY)),
     description: 'Anthropic Claude - Paid',
   },
 ];
@@ -339,6 +349,8 @@ export async function callLLM(
   systemPrompt: string,
   userInput: string,
   modelName?: string,
+  customKeys?: Record<string, string>,
+  requireCustomKey?: boolean
 ): Promise<LLMResponse> {
   // Build ordered list: preferred provider first then fallbacks
   const orderedProviders = [
@@ -350,7 +362,7 @@ export async function callLLM(
 
   for (const provider of orderedProviders) {
     // Skip if no API key configured
-    if (!provider.hasKey()) {
+    if (!provider.hasKey(customKeys, requireCustomKey)) {
       errors.push(`${provider.name}: no API key`);
       continue;
     }
@@ -372,7 +384,7 @@ export async function callLLM(
         modelToUse = 'llama-3.1-8b-instant';
       }
 
-      const result = await provider.call(systemPrompt, userInput, modelToUse);
+      const result = await provider.call(systemPrompt, userInput, modelToUse, customKeys);
       recordSuccess(provider.name);
 
       // Log if we used a fallback
@@ -401,9 +413,11 @@ export const LLMService = {
     provider: string, 
     systemPrompt: string, 
     userInput: string, 
-    model?: string 
+    model?: string,
+    customKeys?: Record<string, string>,
+    requireCustomKey?: boolean
   }) => {
-    return callLLM(params.provider, params.systemPrompt, params.userInput, params.model);
+    return callLLM(params.provider, params.systemPrompt, params.userInput, params.model, params.customKeys, params.requireCustomKey);
   }
 };
 

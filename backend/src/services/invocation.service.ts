@@ -1,6 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { Prisma } from '@prisma/client';
-import { callLLM } from './llm.service';
+import { LLMService } from './llm.service';
 import { SecretsService } from './secrets.service';
 import { logger } from '../lib/logger';
 import { RAGService } from './rag.service';
@@ -123,12 +123,14 @@ export const InvocationService = {
       const startMs = Date.now();
       
       // 7. Call LLM Service (which handles fallbacks and circuit breakers)
-      const result = await callLLM(
+      const result = await LLMService.call({
         systemPrompt,
         userInput,
-        agent.modelProvider,
-        agent.modelName
-      );
+        provider: agent.modelProvider,
+        model: agent.modelName,
+        customKeys: secrets,
+        requireCustomKey: true,
+      });
 
       llmResult = {
         output: result.output,
