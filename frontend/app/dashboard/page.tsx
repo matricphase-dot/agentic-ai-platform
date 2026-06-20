@@ -24,6 +24,62 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Quick Start for New Users */}
+      {stats?.agentCount === 0 && (
+        <div className="bg-gradient-to-br from-purple-900/40 to-[#111111] border border-purple-500/30 rounded-xl p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl -mr-32 -mt-32" />
+          <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+            <span className="text-2xl">🚀</span> Quick Start: Your First Agent
+          </h2>
+          <p className="text-zinc-300 text-sm mb-6 max-w-2xl">
+            Welcome to AgenticAI! Follow these 4 steps to deploy your first AI agent and use the API. 
+            Our platform uses a <strong>Bring-Your-Own-Key (BYOK)</strong> model, which means you earn 100% of the invocation price!
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+            {/* Step 1 */}
+            <div className="bg-black/40 border border-white/5 p-4 rounded-lg hover:border-purple-500/50 transition group">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white">1</div>
+                <h3 className="font-bold text-white group-hover:text-purple-400 transition">Store your LLM Key</h3>
+              </div>
+              <p className="text-xs text-zinc-400 mb-3">Add your OpenAI or Groq API key to Secrets so your agent can run.</p>
+              <a href="/dashboard/secrets" className="text-xs font-bold text-purple-400 hover:text-purple-300 uppercase tracking-widest">Go to Secrets →</a>
+            </div>
+
+            {/* Step 2 */}
+            <div className="bg-black/40 border border-white/5 p-4 rounded-lg hover:border-purple-500/50 transition group">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white">2</div>
+                <h3 className="font-bold text-white group-hover:text-purple-400 transition">Get Platform Key</h3>
+              </div>
+              <p className="text-xs text-zinc-400 mb-3">Generate an AgenticAI API key to authenticate your app's requests.</p>
+              <a href="/dashboard/settings" className="text-xs font-bold text-purple-400 hover:text-purple-300 uppercase tracking-widest">Go to Settings →</a>
+            </div>
+
+            {/* Step 3 */}
+            <div className="bg-black/40 border border-white/5 p-4 rounded-lg hover:border-purple-500/50 transition group">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white">3</div>
+                <h3 className="font-bold text-white group-hover:text-purple-400 transition">Deploy Agent</h3>
+              </div>
+              <p className="text-xs text-zinc-400 mb-3">Create your agent, define a system prompt, and publish it.</p>
+              <a href="/dashboard/agents/create" className="text-xs font-bold text-purple-400 hover:text-purple-300 uppercase tracking-widest">Create Agent →</a>
+            </div>
+
+            {/* Step 4 */}
+            <div className="bg-black/40 border border-white/5 p-4 rounded-lg hover:border-purple-500/50 transition group">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white">4</div>
+                <h3 className="font-bold text-white group-hover:text-purple-400 transition">Use the API</h3>
+              </div>
+              <p className="text-xs text-zinc-400 mb-3">Test your agent in the Playground or integrate the REST API.</p>
+              <a href="/dashboard/invoke" className="text-xs font-bold text-purple-400 hover:text-purple-300 uppercase tracking-widest">Open Playground →</a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard 
