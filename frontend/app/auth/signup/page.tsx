@@ -1,11 +1,12 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,7 +37,8 @@ export default function SignupPage() {
         // Automatically log the user in and redirect to dashboard
         const loginResult = await auth.login(email, password);
         if (loginResult.success) {
-          router.replace('/dashboard');
+          const redirect = searchParams.get('redirect') || '/dashboard';
+          router.replace(redirect);
         } else {
           router.replace('/auth/login');
         }
@@ -192,5 +194,13 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0A0A0A]" />}>
+      <SignupForm />
+    </Suspense>
   );
 }

@@ -1,10 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -19,6 +19,7 @@ export default function LoginPage() {
     const verified = searchParams.get('verified');
     const token = searchParams.get('token');
     const err = searchParams.get('error');
+    const redirect = searchParams.get('redirect') || '/dashboard';
 
     if (verified && token) {
       // Auto-login after email verification
@@ -29,7 +30,7 @@ export default function LoginPage() {
       .then(data => {
         if (data.success) {
           auth.setSession(token, data.data);
-          router.replace('/dashboard');
+          router.replace(redirect);
         }
       });
       return;
@@ -41,7 +42,7 @@ export default function LoginPage() {
 
     // If already logged in go to dashboard
     if (auth.isLoggedIn()) {
-      router.replace('/dashboard');
+      router.replace(redirect);
     }
   }, []);
 
@@ -54,7 +55,8 @@ export default function LoginPage() {
       const result = await auth.login(email, password);
 
       if (result.success) {
-        router.push('/dashboard');
+        const redirect = searchParams.get('redirect') || '/dashboard';
+        router.push(redirect);
       } else {
         switch (result.code) {
           case 'INVALID_CREDENTIALS':
@@ -175,5 +177,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0A0A0A]" />}>
+      <LoginForm />
+    </Suspense>
   );
 }

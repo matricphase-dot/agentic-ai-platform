@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { marketplaceApi, stakingApi } from '@/lib/api';
 import { API_URL } from '@/lib/config';
+import { auth } from '@/lib/auth';
 
 export default function MarketplaceAgentPage() {
   const { agentId } = useParams<{ agentId: string }>();
@@ -17,8 +18,10 @@ export default function MarketplaceAgentPage() {
   const [comment, setComment] = useState('');
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    setIsLoggedIn(auth.isLoggedIn());
     marketplaceApi.get(agentId).then(res => {
       if (res.success) setAgent(res.data);
       else router.push('/marketplace');
@@ -261,14 +264,24 @@ export default function MarketplaceAgentPage() {
               <p className="text-zinc-400 text-sm mb-4">
                 Use this agent via API with your own API key.
               </p>
-              <Link href="/dashboard/invoke"
-                className="block w-full text-center bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-500 transition">
-                Open in Playground
-              </Link>
-              <Link href="/auth/signup"
-                className="block w-full text-center border border-zinc-700 text-zinc-300 py-3 rounded-lg hover:border-zinc-500 transition mt-2 text-sm">
-                Sign up to use API
-              </Link>
+              
+              {isLoggedIn ? (
+                <>
+                  <Link href={`/dashboard/invoke?agentId=${agent.id}`}
+                    className="block w-full text-center bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-500 transition">
+                    Open in Playground
+                  </Link>
+                  <Link href="/dashboard/settings"
+                    className="block w-full text-center border border-zinc-700 text-zinc-300 py-3 rounded-lg hover:border-zinc-500 transition mt-2 text-sm">
+                    Get API Key
+                  </Link>
+                </>
+              ) : (
+                <Link href={`/auth/signup?redirect=/dashboard/invoke?agentId=${agent.id}`}
+                  className="block w-full text-center bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-500 transition mt-2 text-sm">
+                  Sign up to use API
+                </Link>
+              )}
             </div>
 
             {/* Stake */}
