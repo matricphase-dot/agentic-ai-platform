@@ -40,7 +40,8 @@ function SignupForm() {
           const redirect = searchParams.get('redirect') || '/dashboard';
           router.replace(redirect);
         } else {
-          router.replace('/auth/login');
+          const redirect = searchParams.get('redirect');
+          router.replace(redirect ? `/auth/login?redirect=${encodeURIComponent(redirect)}` : '/auth/login');
         }
       } else {
         switch (result.code) {
@@ -186,7 +187,7 @@ function SignupForm() {
 
           <p className="text-center text-zinc-500 text-sm mt-6">
             Already have an account?{' '}
-            <Link href="/auth/login"
+            <Link href={searchParams.get('redirect') ? `/auth/login?redirect=${encodeURIComponent(searchParams.get('redirect')!)}` : "/auth/login"}
               className="text-purple-400 hover:text-purple-300">
               Sign in
             </Link>

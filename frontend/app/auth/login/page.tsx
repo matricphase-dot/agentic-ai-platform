@@ -169,7 +169,7 @@ function LoginForm() {
 
           <p className="text-center text-zinc-500 text-sm mt-6">
             No account?{' '}
-            <Link href="/auth/signup"
+            <Link href={searchParams.get('redirect') ? `/auth/signup?redirect=${encodeURIComponent(searchParams.get('redirect')!)}` : "/auth/signup"}
               className="text-purple-400 hover:text-purple-300">
               Sign up free
             </Link>
