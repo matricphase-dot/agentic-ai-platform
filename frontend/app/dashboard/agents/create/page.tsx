@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Shield } from 'lucide-react';
 import { agentsApi } from '@/lib/api';
 
 const STEPS = [
@@ -353,6 +354,16 @@ export default function CreateAgentPage() {
                              focus:outline-none focus:border-purple-500/50"/>
               </div>
             ) : null}
+
+            {/* BYOK Warning */}
+            <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-xl mt-4">
+              <h3 className="text-purple-400 font-bold text-sm mb-1 flex items-center gap-2">
+                <Shield className="w-4 h-4" /> Bring Your Own Key (BYOK)
+              </h3>
+              <p className="text-zinc-400 text-xs leading-relaxed">
+                To run this agent in production, you must add your <strong>{selectedProvider?.id.toUpperCase() === 'GOOGLE' ? 'GEMINI' : selectedProvider?.id.toUpperCase()}_API_KEY</strong> to the Secrets tab. The platform will use your key for all public inferences, and you will earn 100% of the invocation price (minus platform fees).
+              </p>
+            </div>
 
             <div>
               <label className="text-zinc-400 text-sm block mb-1">
