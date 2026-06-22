@@ -87,6 +87,7 @@ export interface Agent {
   currentVersion: string;
   tags: string[];
   readme?: string;
+  maxInvocationsPerMinute?: number;
   analytics?: AgentAnalytics;
   createdAt: string;
   updatedAt: string;
@@ -105,6 +106,7 @@ export interface AgentAnalytics {
   totalStaked: number;
   avgRating: number;
   reviewCount: number;
+  throttledRequests?: number;
 }
 
 export interface Balance {

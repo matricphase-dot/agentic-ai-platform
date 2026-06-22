@@ -36,6 +36,7 @@ export interface Agent {
   status: 'DRAFT' | 'PUBLISHED' | 'DEPRECATED';
   currentVersion: string;
   tags: string[];
+  maxInvocationsPerMinute?: number;
   createdAt: string;
   analytics?: AgentAnalytics;
   user?: { id: string; name: string; avatar?: string };
@@ -51,6 +52,7 @@ export interface AgentAnalytics {
   totalStaked: number;
   avgRating: number;
   reviewCount: number;
+  throttledRequests?: number;
 }
 
 export interface Stake {
