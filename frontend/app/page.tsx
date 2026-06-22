@@ -21,58 +21,6 @@ import {
 import { API_URL } from '@/lib/config';
 import StatsBar from "@/components/StatsBar";
 
-// Add this component to show while backend wakes up
-function WakeUpBanner() {
-  const [showing, setShowing] = useState(false);
-  const [awake, setAwake] = useState(false);
-
-  useEffect(() => {
-    const API = process.env.NEXT_PUBLIC_API_URL || 
-      'https://agenticai-backend-xao9.onrender.com';
-    
-    const timer = setTimeout(() => setShowing(true), 2000);
-    
-    fetch(`${API}/health`)
-      .then(() => {
-        setAwake(true);
-        setTimeout(() => setShowing(false), 2000);
-      })
-      .catch(() => setShowing(true));
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (!showing) return null;
-
-  return (
-    <div className="fixed bottom-4 right-4 z-50 bg-[#111111] 
-                    border border-[#1E1E1E] rounded-xl px-4 py-3 
-                    flex items-center gap-3 shadow-xl">
-      {awake ? (
-        <>
-          <div className="w-2 h-2 rounded-full bg-green-400" />
-          <span className="text-green-400 text-sm">Platform ready!</span>
-        </>
-      ) : (
-        <>
-          <div className="w-4 h-4 border-2 border-purple-500 
-                          border-t-transparent rounded-full animate-spin" />
-          <span className="text-zinc-400 text-sm">
-            Waking up servers... (30 sec)
-          </span>
-        </>
-      )}
-    </div>
-  );
-}
-
-interface Stats {
-  totalAgents: number;
-  totalInvocations: number;
-  activeNodes: number;
-  totalStaked: number;
-}
-
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -85,7 +33,6 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0a0a0a] text-white selection:bg-primary/30 selection:text-white">
-      <WakeUpBanner />
       {/* Navbar */}
       <nav className={`fixed top-0 w-full z-[100] transition-all duration-300 px-6 py-4 ${
         scrolled ? "bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/10" : "bg-transparent"

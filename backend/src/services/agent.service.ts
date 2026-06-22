@@ -3,6 +3,31 @@ import { encryptionService } from "./encryption.service";
 import logger from "../lib/logger";
 import { AgentCategory, AgentStatus, PricingModel } from "@prisma/client";
 
+const RESERVED_PROVIDER_KEYS = [
+  'GROQ_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY',
+  'GEMINI_API_KEY', 'HF_API_KEY', 'HF_TOKEN'
+];
+
+const PROVIDER_DEFAULT_LIMITS: Record<string, number> = {
+  groq: 25,
+  google: 12,
+  huggingface: 10,
+  openai: 60,
+  anthropic: 50,
+  custom: 20,
+};
+
+function validatePromptForReservedSecrets(systemPrompt?: string) {
+  if (!systemPrompt) return;
+  for (const key of RESERVED_PROVIDER_KEYS) {
+    if (systemPrompt.includes(`{{secret.${key}}}`)) {
+      const error: any = new Error(`{{secret.${key}}} cannot be used in system prompts — this key is automatically injected for authentication and referencing it directly would leak it to the LLM provider as conversation content.`);
+      error.status = 422;
+      throw error;
+    }
+  }
+}
+
 export class AgentService {
   static async listAgents(filters: { userId?: string; category?: string; status?: string; isPublic?: boolean }) {
     return prisma.agent.findMany({
@@ -43,8 +68,11 @@ export class AgentService {
       cpuRequired,
       ramRequired,
       gpuRequired,
+      maxInvocationsPerMinute,
       tags
     } = data;
+
+    validatePromptForReservedSecrets(systemPrompt);
 
     let uniqueSlug = slug;
     let counter = 1;
@@ -72,6 +100,7 @@ export class AgentService {
         cpuRequired: cpuRequired || 1,
         ramRequired: ramRequired || 512,
         gpuRequired: gpuRequired || false,
+        maxInvocationsPerMinute: maxInvocationsPerMinute || PROVIDER_DEFAULT_LIMITS[modelProvider] || 20,
         tags: tags || [],
         status: AgentStatus.DRAFT, // Start as draft
         analytics: {
@@ -101,6 +130,10 @@ export class AgentService {
     const agent = await prisma.agent.findUnique({ where: { id } });
     if (!agent || agent.userId !== userId) {
       throw new Error("Agent not found or unauthorized.");
+    }
+
+    if (data.systemPrompt) {
+      validatePromptForReservedSecrets(data.systemPrompt);
     }
 
     return prisma.agent.update({
@@ -137,6 +170,10 @@ export class AgentService {
     const agent = await prisma.agent.findUnique({ where: { id } });
     if (!agent || agent.userId !== userId) throw new Error("Unauthorized");
     
+    if (data.systemPrompt) {
+      validatePromptForReservedSecrets(data.systemPrompt);
+    }
+
     // Update current version string on agent
     await prisma.agent.update({ where: { id }, data: { currentVersion: data.version } });
 

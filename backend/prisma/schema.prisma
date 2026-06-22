@@ -208,6 +208,7 @@ model Agent {
   isPublic       Boolean       @default(false)
   status         AgentStatus   @default(DRAFT)
   currentVersion String        @default("1.0.0")
+  maxInvocationsPerMinute Int  @default(20)
   tags           String[]
   readme         String?       @db.Text
   githubUrl      String?
@@ -261,6 +262,7 @@ model AgentAnalytics {
   totalStaked      Float    @default(0)
   avgRating        Float    @default(0)
   reviewCount      Int      @default(0)
+  throttledRequests Int     @default(0)
   updatedAt        DateTime @updatedAt
 }
 

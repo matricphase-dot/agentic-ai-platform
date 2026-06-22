@@ -202,17 +202,19 @@ export default function AgentDetailPage() {
               { label: 'Total Staked', value: `${(analytics?.totalStaked || 0).toFixed(0)} AGNT` },
               { label: 'Avg Rating', value: `${(analytics?.avgRating || 0).toFixed(1)} ⭐` },
               { label: 'Reviews', value: analytics?.reviewCount || 0 },
-            ].map(stat => (
-              <div key={stat.label}
-                   className="bg-[#111111] border border-[#1E1E1E] 
-                              rounded-xl p-4">
-                <p className="text-2xl font-bold text-white mb-1">
-                  {stat.value}
-                </p>
-                <p className="text-zinc-400 text-xs">{stat.label}</p>
+              { label: 'Throttled (rate limited)', value: analytics?.throttledRequests || 0 }
+            ].map((stat, i) => (
+              <div key={i} className="bg-[#111111] border border-[#1E1E1E] rounded-xl p-4">
+                <p className="text-zinc-500 text-sm mb-1">{stat.label}</p>
+                <p className="text-white font-medium text-xl">{stat.value}</p>
               </div>
             ))}
           </div>
+          {(analytics?.throttledRequests || 0) > 0 && (
+            <p className="text-sm text-yellow-500 mt-4">
+              {analytics?.throttledRequests} requests were rate-limited today. Consider raising your limit in Settings if your provider plan supports more traffic.
+            </p>
+          )}
         </div>
       )}
 
@@ -304,6 +306,31 @@ export default function AgentDetailPage() {
                            px-3 py-3 border border-zinc-700 rounded-lg">
                 Copy
               </button>
+            </div>
+          </div>
+
+          <div className="bg-[#111111] border border-[#1E1E1E] 
+                          rounded-xl p-6">
+            <h3 className="text-white font-medium mb-2">Rate Limit</h3>
+            <p className="text-zinc-400 text-sm mb-4">
+              Control the maximum number of invocations per minute to protect your LLM provider API limits.
+            </p>
+            <div className="flex items-center gap-4">
+              <input 
+                type="number"
+                min="1"
+                max="500"
+                value={agent?.maxInvocationsPerMinute || 20}
+                onChange={async (e) => {
+                  const val = parseInt(e.target.value);
+                  if (isNaN(val)) return;
+                  setAgent(prev => prev ? {...prev, maxInvocationsPerMinute: val} : null);
+                  await agentsApi.update(id, { maxInvocationsPerMinute: val });
+                }}
+                className="w-24 bg-zinc-900 border border-[#1E1E1E] text-white text-sm 
+                           px-4 py-2 rounded-lg focus:outline-none focus:border-purple-500"
+              />
+              <span className="text-zinc-500 text-sm">requests / min</span>
             </div>
           </div>
 

@@ -17,10 +17,28 @@ const invokeLimiter = new RateLimiterRedis({
   duration: 60,
 });
 
+const agentInvokeLimiter = new RateLimiterRedis({
+  storeClient: redis,
+  keyPrefix: 'rl:agent',
+  points: 20, // Default, but we'll override per consume
+  duration: 60,
+  blockDuration: 10, // smooth bursts
+});
+
 // POST /invoke/:agentId
 // Accepts both cookie auth (sandbox) AND API key auth (programmatic)
 router.post('/:agentId', async (req: Request, res: Response) => {
   const agentId = req.params.agentId;
+
+  // Fetch Agent to check rate limits
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+    select: { maxInvocationsPerMinute: true },
+  });
+
+  if (!agent) {
+    return res.status(404).json({ success: false, message: 'Agent not found' });
+  }
 
   // Determine auth method
   const hasApiKey = !!req.headers['x-api-key'];
@@ -40,15 +58,31 @@ router.post('/:agentId', async (req: Request, res: Response) => {
   return new Promise<void>((resolve) => {
     authFn(req, res, async () => {
       try {
-        // Rate limit by user ID
         const limitKey = req.user!.id;
+        
         try {
-          await invokeLimiter.consume(limitKey);
-        } catch {
+          await Promise.all([
+            invokeLimiter.consume(limitKey),
+            agentInvokeLimiter.consume(agentId, 1, { points: agent.maxInvocationsPerMinute }),
+          ]);
+        } catch (rejRes: any) {
+          const isAgentLimit = rejRes?.keyPrefix?.includes('rl:agent');
+          
+          if (isAgentLimit) {
+            // Log throttled request for creator visibility
+            await prisma.agentAnalytics.update({
+              where: { agentId },
+              data: { throttledRequests: { increment: 1 } }
+            }).catch(e => logger.error('Failed to update throttledRequests', e));
+          }
+
           res.status(429).json({
             success: false,
-            code: 'RATE_LIMIT_EXCEEDED',
-            message: 'Too many invocations. Limit: 10/minute.',
+            code: isAgentLimit ? 'AGENT_RATE_LIMITED' : 'RATE_LIMIT_EXCEEDED',
+            message: isAgentLimit
+              ? 'This agent is receiving high traffic right now. Please retry in a few seconds.'
+              : 'Too many invocations. Limit: 10/minute.',
+            retryAfter: rejRes?.msBeforeNext ? Math.round(rejRes.msBeforeNext / 1000) : 10,
           });
           resolve();
           return;

@@ -43,10 +43,20 @@ export default function InvokePage() {
 
     if (res.success) {
       setResponse(res.data);
+      setLoading(false);
     } else {
-      setError((res as any).message || 'Invocation failed');
+      if ((res as any).code === 'AGENT_RATE_LIMITED') {
+        const retryAfter = (res as any).retryAfter || 10;
+        setError(`This agent is busy — retrying automatically in ${retryAfter}s...`);
+        // Keep loading=true and auto-retry
+        setTimeout(() => {
+          handleInvoke();
+        }, retryAfter * 1000);
+      } else {
+        setError((res as any).message || 'Invocation failed');
+        setLoading(false);
+      }
     }
-    setLoading(false);
   };
 
       const curlCommand = selectedAgent
@@ -134,7 +144,7 @@ export default function InvokePage() {
                        disabled:opacity-50">
             {loading ? 'Invoking...' : '⚡ Invoke Agent'}
           </button>
-          {error && (
+          {error && !error.includes('retrying automatically') && (
             <p className="text-red-400 text-sm mt-2">{error}</p>
           )}
         </div>
@@ -156,7 +166,9 @@ export default function InvokePage() {
                 <div className="w-4 h-4 border-2 border-purple-500 
                                 border-t-transparent rounded-full 
                                 animate-spin" />
-                <span className="text-sm">Invoking agent...</span>
+                <span className="text-sm">
+                  {error && error.includes('retrying automatically') ? error : 'Invoking agent...'}
+                </span>
               </div>
             )}
             {response && (
