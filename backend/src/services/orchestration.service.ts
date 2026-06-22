@@ -48,7 +48,7 @@ export const OrchestrationService = {
 
     if (!pipeline) throw new Error('Pipeline not found');
 
-    const config = pipeline.config as PipelineConfig;
+    const config = pipeline.config as unknown as PipelineConfig;
     const steps = config.steps || [];
     const maxSteps = config.maxSteps || 10;
 

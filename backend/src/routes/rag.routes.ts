@@ -102,7 +102,8 @@ router.post(
   upload.single('file'),
   async (req: Request, res: Response) => {
     try {
-      if (!req.file) {
+      const file = (req as any).file;
+      if (!file) {
         return res.status(400).json({ success: false, message: 'No file uploaded' });
       }
       
@@ -117,9 +118,9 @@ router.post(
       const document = await prisma.knowledgeDocument.create({
         data: {
           knowledgeBaseId: kb.id,
-          filename: req.file.originalname,
-          fileType: req.file.mimetype,
-          fileSize: req.file.size,
+          filename: file.originalname,
+          fileType: file.mimetype,
+          fileSize: file.size,
           status: 'processing',
         },
       });
@@ -128,8 +129,8 @@ router.post(
       RAGService.processDocument(
         kb.id,
         document.id,
-        req.file.path,
-        req.file.mimetype
+        file.path,
+        file.mimetype
       ).catch(err => {
         logger.error('Background document processing failed', { err });
       });
