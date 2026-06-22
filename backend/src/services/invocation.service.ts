@@ -18,12 +18,14 @@ export interface InvokeInput {
 }
 
 export interface InvokeResult {
+  success: boolean;
   invocationId: string;
-  output: unknown;
-  latencyMs: number;
+  output?: string | any;
+  errorMessage?: string;
   tokensUsed: number;
   cost: number;
-  status: 'SUCCESS' | 'FAILED';
+  status: string;
+  latencyMs: number;
   provider?: string;
 }
 
@@ -235,12 +237,14 @@ export const InvocationService = {
     }
 
     return {
+      success: finalStatus === 'SUCCESS',
       invocationId: invocation.id,
-      output: llmResult ? llmResult.output : null,
-      latencyMs: llmResult?.latencyMs || 0,
+      output: llmResult?.output,
+      errorMessage,
       tokensUsed: llmResult?.tokensUsed || 0,
       cost,
       status: finalStatus,
+      latencyMs: llmResult?.latencyMs || 0,
       provider: llmResult?.provider,
     };
   },

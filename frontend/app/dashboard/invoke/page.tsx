@@ -179,9 +179,11 @@ export default function InvokePage() {
                 <pre className="text-zinc-200 text-sm font-mono 
                                 whitespace-pre-wrap break-all 
                                 bg-zinc-900/50 rounded-lg p-3">
-                  {typeof response.output === 'string'
-                    ? response.output
-                    : JSON.stringify(response.output, null, 2)
+                  {response.errorMessage
+                    ? response.errorMessage
+                    : typeof response.output === 'string'
+                      ? response.output
+                      : JSON.stringify(response.output, null, 2)
                   }
                 </pre>
               </div>

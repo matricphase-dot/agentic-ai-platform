@@ -77,6 +77,7 @@ router.post('/:agentId', async (req: Request, res: Response) => {
           data: {
             invocationId: result.invocationId,
             output: result.output,
+            errorMessage: result.errorMessage,
             latencyMs: result.latencyMs,
             tokensUsed: result.tokensUsed,
             cost: result.cost,
