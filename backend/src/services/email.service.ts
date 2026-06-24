@@ -148,7 +148,7 @@ export const EmailService = {
   },
 
   sendVerification: async (email: string, name: string, token: string): Promise<void> => {
-    const url = `${FRONTEND_URL}/auth/verify-email?token=${token}`;
+    const url = `${FRONTEND_URL}/verify-email?token=${token}`;
     const subject = "Verify your AgenticAI account";
     const html = wrapTemplate(`
       <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 16px;">Verify your email</h1>
@@ -164,7 +164,7 @@ export const EmailService = {
   },
 
   sendPasswordReset: async (email: string, name: string, token: string): Promise<void> => {
-    const url = `${FRONTEND_URL}/auth/reset-password?token=${token}`;
+    const url = `${FRONTEND_URL}/reset-password?token=${token}`;
     const subject = "Reset your AgenticAI password";
     const html = wrapTemplate(`
       <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 16px;">Reset password</h1>
