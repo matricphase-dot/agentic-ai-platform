@@ -84,7 +84,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard 
           label="Credits" 
-          value={`$${(stats?.credits || 0).toFixed(2)}`}
+          value={`$${Number(stats?.credits || 0).toFixed(2)}`}
           icon="💳"
           trend="up"
         />
@@ -101,7 +101,7 @@ export default function DashboardPage() {
         />
         <StatCard 
           label="AGNT Staked" 
-          value={(stats?.totalStaked || 0).toFixed(0)}
+          value={Number(stats?.totalStaked || 0).toFixed(0)}
           icon="🪙"
         />
       </div>
@@ -141,7 +141,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-4 
                                 text-zinc-400 text-xs">
                   <span>{log.latencyMs}ms</span>
-                  <span>${(log.cost || 0).toFixed(4)}</span>
+                  <span>${Number(log.cost || 0).toFixed(4)}</span>
                   <span>{timeAgo(log.createdAt)}</span>
                 </div>
               </div>
