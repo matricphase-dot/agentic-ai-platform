@@ -80,7 +80,7 @@ export const AuthService = {
           passwordHash,
           name: data.name,
           emailVerifyToken: verifyHash,
-          emailVerified: process.env.NODE_ENV !== 'production', // Auto-verify email in development
+          emailVerified: true, // Auto-verify email so users can log in immediately upon signup
         },
       });
 
