@@ -110,7 +110,7 @@ export const RAGService = {
             knowledgeBaseId,
             documentId,
             content: chunks[i],
-            embedding,
+            embedding: JSON.stringify(embedding),
             chunkIndex: i,
             metadata: {
               chunkIndex: i,
@@ -172,7 +172,7 @@ export const RAGService = {
       // Calculate similarity scores
       const scored = chunks.map(chunk => ({
         content: chunk.content,
-        score: cosineSimilarity(queryEmbedding, chunk.embedding),
+        score: cosineSimilarity(queryEmbedding, JSON.parse(chunk.embedding || '[]')),
       }));
       
       // Sort by score and take top K

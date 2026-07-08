@@ -131,7 +131,7 @@ router.post('/payout', async (req: Request, res: Response) => {
       where: { userId: req.user!.id },
     });
 
-    if (!balance || balance.earnedCredits.lessThan(amount)) {
+    if (!balance || balance.earnedCredits < amount) {
       return res.status(400).json({
         success: false,
         message: 'Insufficient earned credits for payout',

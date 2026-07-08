@@ -48,7 +48,9 @@ router.post('/signup', rateLimitSignup, async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Account created! Please check your email to verify your account.',
+      message: user.emailVerified
+        ? 'Account created successfully! You can now log in.'
+        : 'Account created! Please check your email to verify your account.',
       data: {
         userId: user.id,
         // In development return token directly so testing works

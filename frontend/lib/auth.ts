@@ -1,7 +1,7 @@
 const TOKEN_KEY = 'agenticai_token';
 const USER_KEY = 'agenticai_user';
-const API = process.env.NEXT_PUBLIC_API_URL || 
-  'https://agenticai-backend-xao9.onrender.com';
+const API = (process.env.NEXT_PUBLIC_API_URL || 
+  'https://agenticai-backend-xao9.onrender.com').replace(/\/+$/, '').replace(/\/api$/, '');
 
 export const auth = {
   getToken: (): string | null => {

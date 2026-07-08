@@ -11,17 +11,26 @@ export class WebhookService {
         name: data.name,
         url: data.url,
         secret: data.secret || `whsec_${crypto.randomUUID()}`,
-        events: data.events
+        events: JSON.stringify(data.events || [])
       }
     });
   }
 
   static async trigger(userId: string, event: string, payload: any) {
     const webhooks = await prisma.webhook.findMany({
-      where: { userId, isActive: true, events: { has: event } }
+      where: { userId, isActive: true }
     });
 
-    for (const webhook of webhooks) {
+    const activeWebhooks = webhooks.filter(w => {
+      try {
+        const events = JSON.parse(w.events || '[]');
+        return Array.isArray(events) && events.includes(event);
+      } catch {
+        return false;
+      }
+    });
+
+    for (const webhook of activeWebhooks) {
       this.deliver(webhook, event, payload).catch(err => {
         logger.error(`Webhook delivery failure for ${webhook.id}:`, err);
       });

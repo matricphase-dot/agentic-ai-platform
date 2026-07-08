@@ -4,119 +4,37 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
-enum Role {
-  USER
-  ADMIN
-}
 
-enum AgentCategory {
-  CHATBOT
-  DATA_ANALYST
-  CODE_ASSISTANT
-  IMAGE_GENERATOR
-  RESEARCH
-  AUTOMATION
-  CUSTOMER_SUPPORT
-  FINANCE
-  LEGAL
-  OTHER
-}
 
-enum PricingModel {
-  FREE
-  PER_INVOCATION
-  PER_TOKEN
-}
 
-enum AgentStatus {
-  DRAFT
-  PUBLISHED
-  DEPRECATED
-}
 
-enum InvocationStatus {
-  PENDING
-  RUNNING
-  SUCCESS
-  FAILED
-  TIMEOUT
-}
 
-enum NodeStatus {
-  ONLINE
-  OFFLINE
-  BUSY
-  MAINTENANCE
-}
 
-enum TaskStatus {
-  PENDING
-  RUNNING
-  COMPLETED
-  FAILED
-  TIMEOUT
-}
 
-enum TransactionType {
-  TOPUP
-  INVOCATION_CHARGE
-  AGENT_EARNING
-  NODE_REWARD
-  STAKE
-  UNSTAKE
-  REWARD_CLAIM
-  WITHDRAWAL
-  PLATFORM_FEE
-  REFUND
-  PAYOUT
-}
 
-enum PayoutStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  REJECTED
-}
 
-enum StakeStatus {
-  ACTIVE
-  UNSTAKING
-  COMPLETED
-}
 
-enum ProposalType {
-  FEE_CHANGE
-  TREASURY
-  FEATURE
-  SLASH
-  OTHER
-}
 
-enum ProposalStatus {
-  DRAFT
-  ACTIVE
-  PASSED
-  REJECTED
-  EXECUTED
-  CANCELLED
-}
 
-enum VoteChoice {
-  FOR
-  AGAINST
-  ABSTAIN
-}
 
-enum TeamRole {
-  OWNER
-  ADMIN
-  MEMBER
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 model User {
   id                  String    @id @default(cuid())
@@ -126,7 +44,7 @@ model User {
   avatar              String?
   bio                 String?
   socialLinks         Json?
-  role                Role      @default(USER)
+  role                String      @default("USER")
   emailVerified       Boolean   @default(false)
   emailVerifyToken    String?
   passwordResetToken  String?
@@ -205,22 +123,22 @@ model Agent {
   description    String
   modelProvider  String
   modelName      String
-  systemPrompt   String        @db.Text
+  systemPrompt   String        
   inputSchema    Json?
   outputSchema   Json?
-  category       AgentCategory
-  pricingModel   PricingModel  @default(FREE)
-  pricePerCall   Decimal       @default(0) @db.Decimal(12, 4)
-  pricePerToken  Decimal       @default(0) @db.Decimal(12, 4)
+  category       String
+  pricingModel   String  @default("FREE")
+  pricePerCall   Float       @default(0) 
+  pricePerToken  Float       @default(0) 
   cpuRequired    Float         @default(1)
   ramRequired    Float         @default(512)
   gpuRequired    Boolean       @default(false)
   isPublic       Boolean       @default(false)
-  status         AgentStatus   @default(DRAFT)
+  status         String   @default("DRAFT")
   currentVersion String        @default("1.0.0")
   maxInvocationsPerMinute Int  @default(20)
-  tags           String[]
-  readme         String?       @db.Text
+  tags String? @default("[]")
+  readme         String?       
   githubUrl      String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -248,10 +166,10 @@ model AgentVersion {
   agentId       String
   agent         Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
   version       String
-  systemPrompt  String   @db.Text
+  systemPrompt  String   
   modelProvider String
   modelName     String
-  config        Json
+  config Json?
   changelog     String?
   isActive      Boolean  @default(false)
   createdAt     DateTime @default(now())
@@ -267,10 +185,10 @@ model AgentAnalytics {
   successCount     Int      @default(0)
   failureCount     Int      @default(0)
   avgLatencyMs     Int      @default(0)
-  totalEarnings    Decimal  @default(0) @db.Decimal(12, 4)
+  totalEarnings    Float  @default(0) 
   totalTokensUsed  Int      @default(0)
   stakerCount      Int      @default(0)
-  totalStaked      Decimal  @default(0) @db.Decimal(12, 4)
+  totalStaked      Float  @default(0) 
   avgRating        Float    @default(0)
   reviewCount      Int      @default(0)
   throttledRequests Int     @default(0)
@@ -282,7 +200,7 @@ model AgentStorage {
   agentId   String
   agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
   key       String
-  value     String   @db.Text
+  value     String   
   iv        String
   updatedAt DateTime @updatedAt
 
@@ -305,7 +223,7 @@ model Secret {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
-  value     String   @db.Text
+  value     String   
   iv        String
   createdAt DateTime @default(now())
   bindings  AgentSecretBinding[]
@@ -323,14 +241,14 @@ model Invocation {
   apiKey           ApiKey?          @relation(fields: [apiKeyId], references: [id])
   nodeId           String?
   node             Node?            @relation(fields: [nodeId], references: [id])
-  input            Json
+  input Json?
   output           Json?
-  status           InvocationStatus @default(PENDING)
+  status           String @default("PENDING")
   latencyMs        Int?
   tokensUsed       Int?
   promptTokens     Int?
   completionTokens Int?
-  cost             Decimal          @default(0) @db.Decimal(12, 4)
+  cost             Float          @default(0) 
   errorMessage     String?
   ipAddress        String?
   createdAt        DateTime         @default(now())
@@ -353,16 +271,16 @@ model Node {
   cpuCores        Int
   ramGb           Int
   storageGb       Int        @default(100)
-  supportedModels String[]
-  pricePerSecond  Decimal    @default(0) @db.Decimal(12, 4)
-  pricePerTask    Decimal    @default(0) @db.Decimal(12, 4)
-  status          NodeStatus @default(OFFLINE)
+  supportedModels String? @default("[]")
+  pricePerSecond  Float    @default(0) 
+  pricePerTask    Float    @default(0) 
+  status          String @default("OFFLINE")
   reputation      Float      @default(50)
   uptimePercent   Float      @default(0)
   totalTasks      Int        @default(0)
   successfulTasks Int        @default(0)
   failedTasks     Int        @default(0)
-  totalEarned     Decimal    @default(0) @db.Decimal(12, 4)
+  totalEarned     Float    @default(0) 
   lastHeartbeat   DateTime?
   registeredAt    DateTime   @default(now())
   tasks           NodeTask[]
@@ -376,10 +294,10 @@ model NodeTask {
   invocationId String     @unique
   invocation   Invocation @relation(fields: [invocationId], references: [id])
   agentId      String
-  input        Json
+  input Json?
   output       Json?
-  status       TaskStatus @default(PENDING)
-  reward       Decimal    @default(0) @db.Decimal(12, 4)
+  status       String @default("PENDING")
+  reward       Float    @default(0) 
   startedAt    DateTime?
   completedAt  DateTime?
   createdAt    DateTime   @default(now())
@@ -404,7 +322,7 @@ model Purchase {
   agent     Agent    @relation(fields: [agentId], references: [id])
   userId    String
   user      User     @relation(fields: [userId], references: [id])
-  amount    Decimal @db.Decimal(12, 4)
+  amount    Float 
   createdAt DateTime @default(now())
 
   @@unique([agentId, userId])
@@ -414,11 +332,11 @@ model Balance {
   id            String   @id @default(cuid())
   userId        String   @unique
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  credits       Decimal  @default(0) @db.Decimal(12, 4)
-  earnedCredits Decimal  @default(0) @db.Decimal(12, 4)
-  lockedCredits Decimal  @default(0) @db.Decimal(12, 4)
-  tokenBalance  Decimal  @default(0) @db.Decimal(12, 4)
-  lockedTokens  Decimal  @default(0) @db.Decimal(12, 4)
+  credits       Float  @default(0) 
+  earnedCredits Float  @default(0) 
+  lockedCredits Float  @default(0) 
+  tokenBalance  Float  @default(0) 
+  lockedTokens  Float  @default(0) 
   updatedAt     DateTime @updatedAt
 }
 
@@ -426,10 +344,10 @@ model PayoutRequest {
   id            String       @id @default(cuid())
   userId        String
   user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount        Decimal @db.Decimal(12, 4)
+  amount        Float 
   payoutMethod  String
   payoutDetails String
-  status        PayoutStatus @default(PENDING)
+  status        String @default("PENDING")
   notes         String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -439,8 +357,8 @@ model Transaction {
   id          String          @id @default(cuid())
   userId      String
   user        User            @relation(fields: [userId], references: [id])
-  type        TransactionType
-  amount      Decimal @db.Decimal(12, 4)
+  type        String
+  amount      Float 
   description String
   metadata    Json?
   txHash      String?
@@ -453,9 +371,9 @@ model Stake {
   user        User        @relation(fields: [userId], references: [id])
   agentId     String
   agent       Agent       @relation(fields: [agentId], references: [id])
-  amount      Decimal @db.Decimal(12, 4)
+  amount      Float 
   lockedUntil DateTime
-  status      StakeStatus @default(ACTIVE)
+  status      String @default("ACTIVE")
   onChain     Boolean     @default(false)
   txHash      String?
   createdAt    DateTime    @default(now())
@@ -473,7 +391,7 @@ model Reward {
   userId        String
   user          User     @relation(fields: [userId], references: [id])
   agentId       String
-  amount        Decimal @db.Decimal(12, 4)
+  amount        Float 
   claimed       Boolean  @default(false)
   distributedAt DateTime @default(now())
 }
@@ -481,18 +399,18 @@ model Reward {
 model Proposal {
   id            String         @id @default(cuid())
   title         String
-  description   String         @db.Text
-  type          ProposalType
+  description   String         
+  type          String
   proposerId    String
   proposer      User           @relation(fields: [proposerId], references: [id])
-  status        ProposalStatus @default(ACTIVE)
+  status        String @default("ACTIVE")
   startDate     DateTime
   endDate       DateTime
   executionData Json?
-  quorum        Decimal        @default(0.1) @db.Decimal(12, 4)
-  forVotes      Decimal        @default(0) @db.Decimal(12, 4)
-  againstVotes  Decimal        @default(0) @db.Decimal(12, 4)
-  abstainVotes  Decimal        @default(0) @db.Decimal(12, 4)
+  quorum        Float        @default(0.1) 
+  forVotes      Float        @default(0) 
+  againstVotes  Float        @default(0) 
+  abstainVotes  Float        @default(0) 
   onChain       Boolean        @default(false)
   txHash        String?
   createdAt     DateTime       @default(now())
@@ -505,8 +423,8 @@ model Vote {
   proposal   Proposal   @relation(fields: [proposalId], references: [id])
   userId     String
   user       User       @relation(fields: [userId], references: [id])
-  choice     VoteChoice
-  weight     Decimal @db.Decimal(12, 4)
+  choice     String
+  weight     Float 
   onChain    Boolean    @default(false)
   txHash     String?
   createdAt  DateTime   @default(now())
@@ -543,7 +461,7 @@ model TeamMember {
   team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   userId   String
   user     User     @relation(fields: [userId], references: [id])
-  role     TeamRole @default(MEMBER)
+  role     String @default("MEMBER")
   joinedAt DateTime @default(now())
 
   @@unique([teamId, userId])
@@ -557,7 +475,7 @@ model TeamInvite {
   inviter    User      @relation(fields: [inviterId], references: [id])
   email      String
   token      String    @unique
-  role       TeamRole  @default(MEMBER)
+  role       String  @default("MEMBER")
   expiresAt  DateTime
   acceptedAt DateTime?
   createdAt  DateTime  @default(now())
@@ -570,7 +488,7 @@ model Webhook {
   name            String
   url             String
   secret          String
-  events          String[]
+  events String? @default("[]")
   isActive        Boolean           @default(true)
   failureCount    Int               @default(0)
   lastTriggeredAt DateTime?
@@ -583,7 +501,7 @@ model WebhookDelivery {
   webhookId   String
   webhook     Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
   event       String
-  payload     Json
+  payload Json?
   statusCode  Int?
   response    String?
   success     Boolean  @default(false)
@@ -683,9 +601,9 @@ model VectorChunk {
   id              String   @id @default(cuid())
   knowledgeBaseId String
   documentId      String
-  content         String   @db.Text
-  embedding       Float[]
-  metadata        Json     @default("{}")
+  content         String   
+  embedding String?
+  metadata        Json?
   chunkIndex      Int
   createdAt       DateTime @default(now())
 }
@@ -698,7 +616,7 @@ model AgentSchedule {
   user           User          @relation(fields: [userId], references: [id])
   name           String
   cronExpression String
-  inputPayload   Json          @default("{}")
+  inputPayload   Json?
   isActive       Boolean       @default(true)
   lastRunAt      DateTime?
   nextRunAt      DateTime?
@@ -714,7 +632,7 @@ model ScheduleRun {
   scheduleId String
   schedule   AgentSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   status     String
-  output     String?       @db.Text
+  output     String?       
   error      String?
   latencyMs  Int?
   ranAt      DateTime      @default(now())
@@ -726,7 +644,7 @@ model AgentPipeline {
   user        User          @relation(fields: [userId], references: [id])
   name        String
   description String?
-  config      Json
+  config Json?
   isActive    Boolean       @default(true)
   totalRuns   Int           @default(0)
   createdAt   DateTime      @default(now())
@@ -738,31 +656,17 @@ model PipelineRun {
   id         String        @id @default(cuid())
   pipelineId String
   pipeline   AgentPipeline @relation(fields: [pipelineId], references: [id])
-  input      Json
+  input Json?
   output     Json?
-  steps      Json          @default("[]")
+  steps      Json?
   status     String        @default("running")
   latencyMs  Int?
   createdAt  DateTime      @default(now())
 }
 
-enum ReportReason {
-  HARMFUL_OUTPUT
-  ILLEGAL_CONTENT
-  DECEPTIVE_PRACTICE
-  PRIVACY_VIOLATION
-  MISINFORMATION
-  SPAM
-  OTHER
-}
 
-enum ReportStatus {
-  PENDING
-  UNDER_REVIEW
-  RESOLVED_NO_ACTION
-  RESOLVED_UNPUBLISHED
-  RESOLVED_WARNING_ISSUED
-}
+
+
 
 model AgentReport {
   id            String       @id @default(cuid())
@@ -770,10 +674,10 @@ model AgentReport {
   agent         Agent        @relation(fields: [agentId], references: [id], onDelete: Cascade)
   reporterId    String
   reporter      User         @relation(fields: [reporterId], references: [id])
-  reason        ReportReason
-  details       String       @db.Text
-  status        ReportStatus @default(PENDING)
-  adminNotes    String?      @db.Text
+  reason        String
+  details       String       
+  status        String @default("PENDING")
+  adminNotes    String?      
   resolvedAt    DateTime?
   resolvedById  String?
   createdAt     DateTime     @default(now())

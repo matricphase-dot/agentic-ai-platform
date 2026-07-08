@@ -80,7 +80,7 @@ export const AuthService = {
           passwordHash,
           name: data.name,
           emailVerifyToken: verifyHash,
-          emailVerified: false, // Production mode: requires actual email verification
+          emailVerified: process.env.NODE_ENV !== 'production', // Auto-verify email in development
         },
       });
 
