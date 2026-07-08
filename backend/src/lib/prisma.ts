@@ -3,6 +3,8 @@ import { logger } from "./logger";
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
+const dbUrl = process.env.DATABASE_URL || "file:./dev.db";
+
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
@@ -11,9 +13,9 @@ export const prisma =
       : ['error'],
     datasources: {
       db: {
-        url: process.env.DATABASE_URL + 
-          (process.env.DATABASE_URL?.includes('?') ? '&' : '?') + 
-          'connection_limit=5&pool_timeout=20&connect_timeout=10',
+        url: dbUrl.startsWith("file:")
+          ? dbUrl
+          : dbUrl + (dbUrl.includes('?') ? '&' : '?') + 'connection_limit=5&pool_timeout=20&connect_timeout=10',
       },
     },
   });
