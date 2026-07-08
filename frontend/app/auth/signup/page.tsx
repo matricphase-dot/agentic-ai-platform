@@ -34,15 +34,9 @@ function SignupForm() {
       const result = await auth.signup(name, email, password);
 
       if (result.success) {
-        // Automatically log the user in and redirect to dashboard
-        const loginResult = await auth.login(email, password);
-        if (loginResult.success) {
-          const redirect = searchParams.get('redirect') || '/dashboard';
-          router.replace(redirect);
-        } else {
-          const redirect = searchParams.get('redirect');
-          router.replace(redirect ? `/auth/login?redirect=${encodeURIComponent(redirect)}` : '/auth/login');
-        }
+        const redirectParam = searchParams.get('redirect');
+        const targetUrl = `/auth/login?signup=success&email=${encodeURIComponent(email)}${redirectParam ? `&redirect=${encodeURIComponent(redirectParam)}` : ''}`;
+        router.replace(targetUrl);
       } else {
         switch (result.code) {
           case 'EMAIL_EXISTS':

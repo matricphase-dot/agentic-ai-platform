@@ -40,8 +40,16 @@ function LoginForm() {
       setError('Invalid or expired verification link. Please request a new one.');
     }
 
-    // If already logged in go to dashboard
-    if (auth.isLoggedIn()) {
+    // Check for signup success redirect
+    const signupSuccess = searchParams.get('signup');
+    const signupEmail = searchParams.get('email');
+    if (signupSuccess === 'success') {
+      setSuccess('🎉 Account created successfully! Please enter your password to sign in.');
+      if (signupEmail) {
+        setEmail(signupEmail);
+      }
+    } else if (auth.isLoggedIn()) {
+      // If already logged in go to dashboard
       router.replace(redirect);
     }
   }, []);
