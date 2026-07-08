@@ -1,9 +1,17 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { execSync } from 'child_process';
 
 const prisma = new PrismaClient();
 
 async function main() {
+  console.log('🚀 Synchronizing database tables...');
+  try {
+    execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+  } catch (err: any) {
+    console.warn('Note: prisma db push warning:', err.message || err);
+  }
+
   console.log('🚀 Starting database seed...');
 
   const passwordHash = await bcrypt.hash('Demo@1234', 12);
