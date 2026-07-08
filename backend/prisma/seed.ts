@@ -5,11 +5,11 @@ import { execSync } from 'child_process';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🚀 Synchronizing database tables...');
+  console.log('🚀 Synchronizing database tables and migrations...');
   try {
-    execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
   } catch (err: any) {
-    console.warn('Note: prisma db push warning:', err.message || err);
+    console.warn('Note: prisma migrate deploy warning:', err.message || err);
   }
 
   console.log('🚀 Starting database seed...');
